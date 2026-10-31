@@ -1,0 +1,40 @@
+plugins { id 'com.android.application' }
+
+def ver = new groovy.json.JsonSlurper().parse(file('../../version.json')).version
+def parts = ver.tokenize('.').collect { it as int }
+def code = parts[0] * 10000 + parts[1] * 100 + (parts.size() > 2 ? parts[2] : 0)
+
+android {
+    namespace 'ru.mxdxck.gcodecnc'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'ru.mxdxck.gcodecnc'
+        minSdk 24
+        targetSdk 34
+        versionCode code
+        versionName ver
+    }
+    signingConfigs {
+        release {
+            storeFile file('../release.keystore')
+            storePassword 'gcodecnc'
+            keyAlias 'gcnc'
+            keyPassword 'gcodecnc'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.core:core:1.13.1'
+}

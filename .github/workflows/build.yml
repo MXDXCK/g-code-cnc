@@ -1,0 +1,139 @@
+name: Сборка APK и EXE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'version.json'
+      - 'android/**'
+      - 'windows/**'
+      - 'icons/**'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-release
+  cancel-in-progress: false
+
+jobs:
+  web:
+    name: Офлайн-сборка страницы
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: ver
+        run: echo "version=$(python3 -c 'import json;print(json.load(open("version.json"))["version"])')" >> "$GITHUB_OUTPUT"
+      - name: Страница + three.js локально (без интернета)
+        run: |
+          mkdir -p dist/lib
+          cp index.html version.json dist/
+          cp -r icons dist/icons
+          curl -fsSL https://unpkg.com/three@0.160.0/build/three.module.js -o dist/lib/three.module.js
+          curl -fsSL https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js -o dist/lib/OrbitControls.js
+          python3 - <<'PY'
+          import re
+          p = 'dist/index.html'
+          s = open(p, encoding='utf-8').read()
+          s, n = re.subn(r'<script type="importmap">.*?</script>',
+                         '<script type="importmap">{"imports":{"three":"./lib/three.module.js","three/addons/controls/OrbitControls.js":"./lib/OrbitControls.js"}}</script>',
+                         s, flags=re.S)
+          assert n == 1, 'importmap not found'
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: dist
+
+  android:
+    name: Android APK
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: android/app/src/main/assets
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Сборка
+        run: gradle -p android assembleRelease --no-daemon
+      - name: Имя файла
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk "out/GcodeCNC-${{ needs.web.outputs.version }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: out/*.apk
+
+  windows:
+    name: Windows EXE
+    needs: web
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: windows/web
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Сборка одного exe-файла
+        shell: pwsh
+        run: |
+          dotnet publish windows/GcodeCNC.csproj -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
+            -p:DebugType=none -o out
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item out/GcodeCNC.exe "dist/GcodeCNC-${{ needs.web.outputs.version }}.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: dist/*.exe
+
+  release:
+    name: Публикация в Releases
+    needs: [web, android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+          pattern: '{apk,exe}'
+      - name: Описание версии
+        run: |
+          python3 - <<'PY'
+          import json
+          j = json.load(open('version.json', encoding='utf-8'))
+          lines = ['## Что нового', ''] + ['- ' + n for n in j.get('notes', [])] + ['',
+            '**Android** — скачайте `.apk` и установите (поверх старой версии, настройки сохраняются).',
+            '**Windows 10/11** — скачайте `.exe` и запустите, установка не нужна. F11 — полный экран.',
+            '**iPhone** — https://mxdxck.github.io/g-code-cnc/ в Safari → «Поделиться» → «На экран „Домой“».']
+          open('notes.md', 'w', encoding='utf-8').write('\n'.join(lines))
+          PY
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.web.outputs.version }}
+          name: G-код ЧПУ ${{ needs.web.outputs.version }}
+          bodyFile: notes.md
+          artifacts: files/*
+          allowUpdates: true
+          replacesArtifacts: true
+          removeArtifacts: true
+          makeLatest: true

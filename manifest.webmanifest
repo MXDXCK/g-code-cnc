@@ -1,0 +1,15 @@
+{
+  "name": "G-код ЧПУ",
+  "short_name": "G-код ЧПУ",
+  "description": "Генератор G-кода для Fanuc 0i-MF Plus: циклы, 3D-симуляция, параметрические программы",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115",
+  "lang": "ru",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

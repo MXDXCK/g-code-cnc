@@ -1,0 +1,11 @@
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/
+android/local.properties
+windows/bin/
+windows/obj/
+windows/web/
+windows/out/
+*.iml
+.idea/

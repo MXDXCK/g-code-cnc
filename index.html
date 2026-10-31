@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="G-код ЧПУ">
 <meta name="theme-color" content="#0f1115">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>G-код ЧПУ — Fanuc 0i-MF Plus</title>
 <style>
 :root{--bg:#0f1115;--pan:#171a21;--pan2:#1f232c;--line:#2a2f3a;--tx:#e6e8ec;--mut:#8b93a3;--acc:#ffc400;--acc2:#ff8a00;--ok:#2ecc71;--bad:#ff5c5c}
@@ -211,7 +214,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.11.2';
+const APP_VERSION='1.12.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -369,7 +372,11 @@ function renderProj(){
  const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`+(g.bad?'<span style="color:var(--bad)">⚠ Мало точек контура — показан прямоугольник</span>':'');
  bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock,()=>{const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`;},()=>renderProj());
  $('#projStats').innerHTML=`<span>Инструментов: <b>${st.tools.length}</b></span><span>Операций: <b>${st.ops.length}</b></span><span>Пресетов: <b>${PRE.length}</b></span>`;}
-window.exportProj=()=>{const b=new Blob([JSON.stringify({...st,presets:PRE},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`project_O${st.prog.num}.json`;a.click();};
+/* приложение Android (APK) / Windows (EXE) / браузер */
+const NATIVE=window.AndroidApp?'android':(window.chrome&&window.chrome.webview?'windows':'');
+const RELEASES='https://github.com/MXDXCK/g-code-cnc/releases/latest',PAGES='https://mxdxck.github.io/g-code-cnc/';
+const saveNative=(name,text)=>{if(NATIVE!='android')return false;toast(window.AndroidApp.saveFile(name,text));return true;};
+window.exportProj=()=>{if(saveNative(`project_O${st.prog.num}.json`,JSON.stringify({...st,presets:PRE},null,1)))return;const b=new Blob([JSON.stringify({...st,presets:PRE},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`project_O${st.prog.num}.json`;a.click();};
 window.importProj=inp=>{const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;normStock();st.ops=st.ops.filter(o=>OPS[o.type]);manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
 window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();normStock();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
 
@@ -970,9 +977,9 @@ function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';}
 $('#code').addEventListener('input',()=>{manual=true;updCodeInfo();});
 const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
-window.downloadCode=e=>{const b=new Blob([$('#code').value.replace(/\n/g,'\r\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname(e);document.body.appendChild(a);a.click();a.remove();toast('Файл '+fname(e)+' сохранён');};
+window.downloadCode=e=>{if(saveNative(fname(e),$('#code').value.replace(/\n/g,'\r\n')))return;const b=new Blob([$('#code').value.replace(/\n/g,'\r\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname(e);document.body.appendChild(a);a.click();a.remove();toast('Файл '+fname(e)+' сохранён');};
 window.copyCode=()=>{navigator.clipboard.writeText($('#code').value).then(()=>toast('Скопировано'));};
-window.shareCode=async()=>{const f=new File([$('#code').value.replace(/\n/g,'\r\n')],fname('nc'),{type:'text/plain'});
+window.shareCode=async()=>{if(NATIVE=='android'){window.AndroidApp.shareFile(fname('nc'),$('#code').value.replace(/\n/g,'\r\n'));return;}const f=new File([$('#code').value.replace(/\n/g,'\r\n')],fname('nc'),{type:'text/plain'});
  if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:fname('nc')}).catch(()=>{});else downloadCode('nc');};
 
 /* ---------- модель заготовки (карта высот со стенками) ---------- */
@@ -1083,10 +1090,11 @@ window.fitCam=()=>aimCam(CAM,CTL);
 /* ---------- обновления ---------- */
 const cmpV=(a,b)=>{a=a.split('.').map(Number);b=b.split('.').map(Number);for(let i=0;i<3;i++){if((a[i]||0)!=(b[i]||0))return (a[i]||0)-(b[i]||0);}return 0;};
 window.checkUpd=async()=>{const el=$('#updRes');el.innerHTML='Проверка…';
- try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
-  if(cmpV(j.version,APP_VERSION)>0)el.innerHTML=`<p>Доступна версия <b>v${esc(j.version)}</b></p><p style="color:var(--mut)">${(j.notes||[]).map(n=>'• '+esc(n)).join('<br>')}</p><button class="btn p" onclick="doUpdate()">⬇ Обновить сейчас</button>`;
+ try{const r=await fetch((NATIVE?PAGES:'')+'version.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
+  if(cmpV(j.version,APP_VERSION)>0&&NATIVE)el.innerHTML=`<p>Доступна версия <b>v${esc(j.version)}</b></p><p style="color:var(--mut)">${(j.notes||[]).map(n=>'• '+esc(n)).join('<br>')}</p><a class="btn p" style="display:inline-block;text-decoration:none" href="${RELEASES}" target="_blank">⬇ Скачать ${NATIVE=='android'?'APK':'EXE'} (GitHub Releases)</a>`;
+  else if(cmpV(j.version,APP_VERSION)>0)el.innerHTML=`<p>Доступна версия <b>v${esc(j.version)}</b></p><p style="color:var(--mut)">${(j.notes||[]).map(n=>'• '+esc(n)).join('<br>')}</p><button class="btn p" onclick="doUpdate()">⬇ Обновить сейчас</button>`;
   else el.innerHTML='<span class="badge">✓ Установлена последняя версия</span>';}
- catch(e){el.innerHTML='<span class="badge warn">Не удалось проверить. Приложение должно быть открыто с GitHub Pages.</span>';}
+ catch(e){el.innerHTML=`<span class="badge warn">Не удалось проверить${NATIVE?' — нет интернета':'. Приложение должно быть открыто с GitHub Pages'}.</span>`;}
  const repo=$('#repo').value.trim();if(repo){try{const r=await fetch(`https://api.github.com/repos/${repo}/commits?per_page=6`);const c=await r.json();
   $('#commits').innerHTML='<h3 style="margin-top:8px">Последние изменения</h3>'+c.map(x=>`<div class="commit">${esc(x.commit.message.split('\n')[0])}<br><small>${new Date(x.commit.author.date).toLocaleString('ru')}</small></div>`).join('');}catch(e){}}};
 window.doUpdate=async()=>{try{if('caches' in window)for(const k of await caches.keys())await caches.delete(k);if(navigator.serviceWorker)for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();}catch(e){}
@@ -1102,7 +1110,8 @@ function renderAll(){renderProj();renderTools();renderOps();codeDirty=true;}
 document.querySelectorAll('.stkChk').forEach(c=>c.checked=showStock);
 normStock();
 st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.find(o=>o.id==selOp))selOp=st.ops[0]?.id;
-$('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'';
+$('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
+if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderAll();
 window.__fcam={st:()=>st,gen,parse,opCode,show,expand};
 </script>
