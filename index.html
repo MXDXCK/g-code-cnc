@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fanuc CAM">
+<meta name="theme-color" content="#0f1115">
+<title>Fanuc CAM — 0i-MF Plus</title>
+<style>
+:root{--bg:#0f1115;--pan:#171a21;--pan2:#1f232c;--line:#2a2f3a;--tx:#e6e8ec;--mut:#8b93a3;--acc:#ffc400;--acc2:#ff8a00;--ok:#2ecc71;--bad:#ff5c5c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.4 -apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(180deg,#151821,#111318);border-bottom:1px solid var(--line)}
+.logo{display:flex;gap:10px;align-items:center}
+.lg{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#111;font-weight:900;display:grid;place-items:center;font-size:20px;box-shadow:0 4px 14px #ffb30033}
+.logo b{letter-spacing:1px}.logo small{display:block;color:var(--mut);font-size:11px}
+nav{display:flex;gap:4px;margin-left:auto}
+nav button{background:none;border:0;color:var(--mut);padding:8px 14px;border-radius:10px;font:inherit;cursor:pointer;display:flex;gap:6px;align-items:center;transition:.15s}
+nav button:hover{color:var(--tx)}
+nav button.on{background:var(--pan2);color:var(--acc)}
+nav button i{font-style:normal}
+main{flex:1;overflow:auto;position:relative}
+.tab{display:none;padding:16px;max-width:1400px;margin:0 auto}
+.tab.on{display:block}
+#t-sim.on{display:flex;flex-direction:column;height:100%;max-width:none;padding:0}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+h3{margin:0 0 12px;font-size:15px;color:var(--acc);letter-spacing:.3px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
+input,select,textarea{background:var(--pan2);border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:9px 10px;font:inherit;font-size:15px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+.btn{background:var(--pan2);border:1px solid var(--line);color:var(--tx);padding:9px 14px;border-radius:10px;cursor:pointer;font:inherit;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:#3a4150}
+.btn.p{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#111;border:0}
+.btn.d{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.split{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}
+.it{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;border:1px solid transparent;cursor:pointer;margin-bottom:6px;background:var(--pan2)}
+.it.sel{border-color:var(--acc);box-shadow:0 0 0 3px #ffc40015}
+.it .n{width:36px;height:36px;border-radius:9px;background:#272c37;display:grid;place-items:center;font-weight:700;color:var(--acc);flex:none;font-size:13px}
+.it .m{flex:1;min-width:0}.it .m b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.it .m small{color:var(--mut)}
+.it.off{opacity:.45}
+.ib{background:none;border:0;color:var(--mut);font-size:16px;cursor:pointer;padding:4px 5px;border-radius:6px}
+.ib:hover{color:var(--tx);background:#2a2f3a}
+.empty{color:var(--mut);text-align:center;padding:40px}
+.hint{color:var(--mut);font-size:12px;margin-top:12px;padding:10px;border-left:3px solid var(--acc);background:#ffc40008;border-radius:6px}
+#code{height:calc(100vh - 290px);min-height:300px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;resize:vertical;white-space:pre;color:#cfe3ff}
+.stats{display:flex;gap:18px;flex-wrap:wrap;color:var(--mut);font-size:12px;margin:10px 0}
+.stats b{color:var(--tx)}
+#view{flex:1;position:relative;min-height:300px;overflow:hidden}
+#view canvas{display:block;touch-action:none}
+.hud{position:absolute;top:10px;left:10px;background:#0f1115cc;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font:12px ui-monospace,Menlo,monospace;pointer-events:none;backdrop-filter:blur(6px)}
+.hud .ln{color:var(--acc)}
+.simbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--pan);border-top:1px solid var(--line)}
+.simbar input[type=range]{flex:1;min-width:120px;accent-color:var(--acc);padding:0}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--mut)}
+.chip input{width:auto}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;background:#2ecc7122;color:var(--ok);font-size:12px}
+.warn{background:#ff5c5c22;color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#222733;border:1px solid var(--line);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+#toast.on{opacity:1;transform:translateX(-50%)}
+.commit{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.commit small{color:var(--mut)}
+@media(max-width:820px){
+ nav{position:fixed;bottom:0;left:0;right:0;background:#12151bf2;border-top:1px solid var(--line);justify-content:space-around;padding:6px 2px calc(6px + env(safe-area-inset-bottom));z-index:10;margin:0;backdrop-filter:blur(10px)}
+ nav button{flex-direction:column;font-size:10px;padding:6px 4px;gap:2px;flex:1}
+ nav button i{font-size:20px}
+ main{padding-bottom:72px}
+ #t-sim.on{height:calc(100% - 0px)}
+ .split{grid-template-columns:1fr}
+ header{justify-content:center}
+ .tab{padding:12px}
+ #code{height:55vh}
+}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<header>
+ <div class="logo"><div class="lg">F</div><div><b>FANUC CAM</b><small>0i-MF Plus · v<span id="ver"></span></small></div></div>
+ <nav id="tabs">
+  <button data-t="proj" class="on"><i>📐</i>Проект</button>
+  <button data-t="tools"><i>🔧</i>Инструмент</button>
+  <button data-t="ops"><i>⚙️</i>Операции</button>
+  <button data-t="code"><i>📄</i>G-код</button>
+  <button data-t="sim"><i>🧊</i>3D</button>
+  <button data-t="upd"><i>⟳</i>Обновл.</button>
+ </nav>
+</header>
+<main>
+ <section id="t-proj" class="tab on">
+  <div class="card"><h3>Программа</h3><div class="grid" id="progF"></div></div>
+  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div>
+   <div class="hint">Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
+  <div class="card"><h3>Проект</h3><div class="row">
+   <button class="btn" onclick="exportProj()">💾 Экспорт проекта</button>
+   <button class="btn" onclick="document.getElementById('impF').click()">📂 Импорт</button>
+   <button class="btn d" onclick="resetProj()">🗑 Новый проект</button>
+   <input type="file" id="impF" accept=".json" hidden onchange="importProj(this)"></div>
+   <div class="stats" id="projStats"></div></div>
+ </section>
+
+ <section id="t-tools" class="tab">
+  <div class="split">
+   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Магазин инструмента</h3><button class="btn p" onclick="addTool()">+ Добавить</button></div><div id="toolList"></div></div>
+   <div class="card" id="toolEd"></div>
+  </div>
+ </section>
+
+ <section id="t-ops" class="tab">
+  <div class="split">
+   <div class="card"><h3>Технология</h3>
+    <div class="row" style="margin-bottom:12px"><select id="newOp" style="flex:1"></select><button class="btn p" onclick="addOp()">+</button></div>
+    <div id="opList"></div></div>
+   <div class="card" id="opEd"></div>
+  </div>
+ </section>
+
+ <section id="t-code" class="tab">
+  <div class="card">
+   <div class="row">
+    <button class="btn p" onclick="downloadCode('nc')">⬇ Скачать .NC</button>
+    <button class="btn" onclick="downloadCode('txt')">⬇ .TXT</button>
+    <button class="btn" onclick="shareCode()">↗ Поделиться</button>
+    <button class="btn" onclick="copyCode()">⧉ Копировать</button>
+    <button class="btn" onclick="regen(true)">↻ Пересоздать</button>
+    <span id="editFlag"></span>
+   </div>
+   <div class="stats" id="codeStats"></div>
+   <textarea id="code" spellcheck="false"></textarea>
+  </div>
+ </section>
+
+ <section id="t-sim" class="tab">
+  <div id="view"><div class="hud" id="hud">—</div></div>
+  <div class="simbar">
+   <button class="btn p" id="playB" onclick="simPlay()">▶</button>
+   <button class="btn" onclick="simReset()">⏮</button>
+   <button class="btn" onclick="simFinish()">⏭ Результат</button>
+   <span class="chip">Скорость</span><input type="range" id="spd" min="1" max="100" value="20">
+   <label class="chip"><input type="checkbox" id="showPath" checked onchange="togglePath()">Траектория</label>
+   <button class="btn" onclick="fitCam()">⌖</button>
+  </div>
+ </section>
+
+ <section id="t-upd" class="tab">
+  <div class="card"><h3>Обновления</h3>
+   <p>Установлена версия: <b>v<span id="ver2"></span></b></p>
+   <div class="row"><button class="btn p" onclick="checkUpd()">⟳ Проверить обновления</button></div>
+   <div id="updRes" style="margin-top:12px"></div></div>
+  <div class="card"><h3>GitHub</h3>
+   <label>Репозиторий (пользователь/репо)<input id="repo" placeholder="username/fanuc-cam" onchange="localStorage.setItem('fcam_repo',this.value)"></label>
+   <div class="hint">Приложение размещается на GitHub Pages. Когда в репозиторий загружается новая версия, здесь появляется кнопка «Обновить», и все устройства получают новую версию.</div>
+   <div id="commits" style="margin-top:10px"></div></div>
+ </section>
+</main>
+<div id="toast"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+const APP_VERSION='1.0.0';
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n;};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2000);};
+const TR={а:'A',б:'B',в:'V',г:'G',д:'D',е:'E',ё:'E',ж:'ZH',з:'Z',и:'I',й:'Y',к:'K',л:'L',м:'M',н:'N',о:'O',п:'P',р:'R',с:'S',т:'T',у:'U',ф:'F',х:'H',ц:'C',ч:'CH',ш:'SH',щ:'SH',ы:'Y',э:'E',ю:'YU',я:'YA',ь:'',ъ:''};
+const lat=s=>String(s).toLowerCase().split('').map(c=>TR[c]??c).join('').toUpperCase().replace(/[()]/g,'');
+
+/* ---------- инструменты ---------- */
+const TT={
+ endmill:{n:'Фреза концевая',c:'END MILL'},ball:{n:'Фреза сферическая',c:'BALL MILL'},face:{n:'Фреза торцевая',c:'FACE MILL'},
+ drill:{n:'Сверло',c:'DRILL'},center:{n:'Центровка',c:'CENTER DRILL'},tap:{n:'Метчик',c:'TAP'},
+ thread:{n:'Резьбофреза',c:'THREAD MILL'},chamfer:{n:'Фаскосним',c:'CHAMFER'},reamer:{n:'Развёртка',c:'REAMER'}};
+const TF=[['num','Номер T / H',1,'n'],['type','Тип','endmill',Object.entries(TT).map(([k,v])=>[k,v.n])],['name','Название','','text'],
+ ['d','Диаметр D, мм',10,'n'],['len','Вылет L, мм',40,'n'],['fl','Кол-во зубьев',4,'n'],['s','Обороты S, об/мин',3000,'n'],
+ ['f','Подача F, мм/мин',500,'n'],['pitch','Шаг резьбы P, мм',1.25,'n',{type:['tap','thread']}]];
+
+/* ---------- операции ---------- */
+const SIDE=[['out','Снаружи'],['in','Внутри']];
+const PAT=[['pat','Расположение отверстий','list',[['list','Список точек'],['pcd','По окружности (PCD)'],['grid','Массив']]],
+ ['list','Точки: X,Y; X,Y; ...','0,0','text',{pat:'list'}],
+ ['cx','Центр X',0,'c',{pat:'pcd'}],['cy','Центр Y',0,'c',{pat:'pcd'}],['pr','Радиус PCD',30,'n',{pat:'pcd'}],['cnt','Кол-во',6,'n',{pat:'pcd'}],['ang','Нач. угол°',0,'c',{pat:'pcd'}],
+ ['gx','Старт X',-40,'c',{pat:'grid'}],['gy','Старт Y',-25,'c',{pat:'grid'}],['nx','Кол-во по X',3,'n',{pat:'grid'}],['ny','Кол-во по Y',2,'n',{pat:'grid'}],['dx','Шаг X',40,'c',{pat:'grid'}],['dy','Шаг Y',50,'c',{pat:'grid'}]];
+const OPS={
+ face:{n:'Торцевание',c:'FACING',k:['face','endmill'],f:[['x0','X от',-60,'c'],['y0','Y от',-40,'c'],['x1','X до',60,'c'],['y1','Y до',40,'c'],['depth','Съём, мм',1,'n'],['step','Шаг по Z',0.5,'n'],['over','Перекрытие, % D',70,'n']]},
+ pocketRect:{n:'Карман прямоугольный',c:'RECT POCKET',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['w','Длина X',50,'n'],['h','Ширина Y',30,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n']]},
+ contourRect:{n:'Контур прямоугольный',c:'RECT CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['w','Длина X',110,'n'],['h','Ширина Y',70,'n'],['side','Сторона',"out",SIDE],['depth','Глубина',10,'n'],['step','Шаг по Z',2,'n']]},
+ pocketCircle:{n:'Карман круглый',c:'CIRC POCKET',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',30,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n']]},
+ contourCircle:{n:'Контур круглый (бобышка/отверстие)',c:'CIRC CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',40,'n'],['side','Сторона','out',SIDE],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n']]},
+ slot:{n:'Паз',c:'SLOT',k:['endmill'],f:[['x1','X1',-30,'c'],['y1','Y1',0,'c'],['x2','X2',30,'c'],['y2','Y2',0,'c'],['depth','Глубина',3,'n'],['step','Шаг по Z',0.5,'n']]},
+ drill:{n:'Сверление / центровка',c:'DRILLING',k:['drill','center','reamer','chamfer'],f:[['cycle','Цикл','G81',[['G81','G81 простое'],['G82','G82 с выдержкой'],['G83','G83 глубокое с выводом'],['G73','G73 с ломкой стружки']]],['depth','Глубина (вершина)',10,'n'],['rp','Плоскость R',2,'n'],['q','Шаг Q',3,'n',{cycle:['G83','G73']}],['dwell','Выдержка P, мс',500,'n',{cycle:'G82'}],...PAT]},
+ tap:{n:'Нарезание резьбы метчиком',c:'RIGID TAPPING',k:['tap'],f:[['depth','Глубина',12,'n'],['rp','Плоскость R',5,'n'],...PAT]},
+ thread:{n:'Резьбофрезерование',c:'THREAD MILLING',k:['thread'],f:[['dia','Номинал резьбы D',8,'n'],['pitch','Шаг P',1.25,'n'],['depth','Длина резьбы',12,'n'],['hand','Направление',"R",[['R','Правая'],['L','Левая']]],...PAT]}
+};
+
+/* ---------- состояние ---------- */
+function defaults(){
+ const T=(num,type,d,s,f,o={})=>({id:uid(),num,type,name:'',d,len:40,fl:type=='drill'?2:4,s,f,pitch:1.25,...o});
+ const tools=[T(1,'face',50,1500,800,{fl:5}),T(2,'endmill',10,4000,600),T(3,'center',10,1500,150),T(4,'drill',6.8,1400,140),T(5,'tap',8,400,500,{pitch:1.25}),T(6,'thread',6,5000,300,{pitch:1.25})];
+ const s={prog:{num:1000,name:'DETAL',note:''},stock:{x:120,y:80,z:30,origin:'center',wcs:'G54',mat:'Д16Т'},tools,ops:[]};
+ const add=(type,tn,o={})=>{const op=newOp(type,s);op.tool=tools[tn].id;Object.assign(op,o);s.ops.push(op);};
+ add('face',0);add('contourRect',1);add('pocketRect',1);add('drill',2,{depth:2,pat:'pcd',pr:25});add('drill',3,{cycle:'G83',depth:16,pat:'pcd',pr:25});add('tap',4,{pat:'pcd',pr:25});
+ return s;
+}
+function newOp(type,s=st){const o={id:uid(),type,on:true,safe:10};OPS[type].f.forEach(f=>o[f[0]]=f[2]);const t=s.tools.find(t=>OPS[type].k.includes(t.type))||s.tools[0];o.tool=t?t.id:null;return o;}
+let st;try{st=JSON.parse(localStorage.getItem('fcam'))}catch(e){}
+if(!st||!st.tools)st=defaults();
+let selTool=st.tools[0]?.id,selOp=st.ops[0]?.id,manual=false;
+const save=()=>{localStorage.setItem('fcam',JSON.stringify(st));if(!manual)codeDirty=true;};
+let codeDirty=true;
+
+/* ---------- формы ---------- */
+const shown=(o,f)=>!f[4]||Object.entries(f[4]).every(([k,v])=>Array.isArray(v)?v.includes(o[k]):o[k]==v);
+function fld(o,f){const[k,l,,kind]=f,v=o[k]??'';
+ if(Array.isArray(kind))return `<label>${l}<select data-k="${k}">${kind.map(([a,b])=>`<option value="${a}" ${a==v?'selected':''}>${b}</option>`).join('')}</select></label>`;
+ if(kind=='text')return `<label>${l}<input data-k="${k}" data-s="1" value="${String(v).replace(/"/g,'&quot;')}"></label>`;
+ return `<label>${l}<input data-k="${k}" type="text" ${kind=='n'?'inputmode="decimal"':''} value="${v}"></label>`;}
+function bindForm(el,getObj,after,rer){
+ el.oninput=e=>{const k=e.target.dataset.k;if(!k||e.target.tagName=='SELECT')return;const o=getObj();o[k]=e.target.dataset.s?e.target.value:num(e.target.value);save();after&&after();};
+ el.onchange=e=>{const k=e.target.dataset.k;if(!k||e.target.tagName!='SELECT')return;const o=getObj();o[k]=e.target.value;save();after&&after();rer&&rer();};}
+
+/* ---------- проект ---------- */
+function renderProj(){
+ $('#progF').innerHTML=[['num','Номер O',1000,'n'],['name','Имя программы','','text'],['note','Комментарий','','text']].map(f=>fld(st.prog,f)).join('');
+ $('#stockF').innerHTML=[['x','Длина X',120,'n'],['y','Ширина Y',80,'n'],['z','Высота Z',30,'n'],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый нижний угол']]],['wcs','Система координат','G54',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x])],['mat','Материал','','text']].map(f=>fld(st.stock,f)).join('');
+ bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock);
+ $('#projStats').innerHTML=`<span>Инструментов: <b>${st.tools.length}</b></span><span>Операций: <b>${st.ops.length}</b></span>`;}
+window.exportProj=()=>{const b=new Blob([JSON.stringify(st,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`project_O${st.prog.num}.json`;a.click();};
+window.importProj=inp=>{const r=new FileReader();r.onload=()=>{try{st=JSON.parse(r.result);manual=false;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);};
+window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
+
+/* ---------- инструменты UI ---------- */
+function renderTools(){
+ $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div><div class="m"><b>${t.name||TT[t.type].n}</b><small>Ø${t.d} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
+ const t=st.tools.find(x=>x.id==selTool);
+ if(!t){$('#toolEd').innerHTML='<div class="empty">Выберите инструмент</div>';return;}
+ $('#toolEd').innerHTML=`<h3>T${t.num} — ${TT[t.type].n}</h3><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
+ <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||150}"></label><label>fz, мм/зуб<input id="fz" inputmode="decimal" value="${t.fz||0.05}"></label><label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div>
+ <div class="hint">S = 1000·Vc / (π·D), F = S·fz·z. Для метчика подача считается автоматически: F = S·P (жёсткое нарезание M29).</div>`;
+ bindForm($('#tf'),()=>t,()=>renderToolList(),()=>renderTools());}
+function renderToolList(){const sel=document.activeElement;const id=sel&&sel.dataset.k;renderTools();if(id){const e=$(`#tf [data-k="${id}"]`);if(e){e.focus();const L=e.value.length;try{e.setSelectionRange(L,L)}catch(_){}}}}
+window.selT=id=>{selTool=id;renderTools();};
+window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,len:40,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);selTool=t.id;save();renderTools();};
+window.delTool=id=>{if(!confirm('Удалить инструмент?'))return;st.tools=st.tools.filter(t=>t.id!=id);save();renderTools();};
+window.calcSF=()=>{const t=st.tools.find(x=>x.id==selTool);t.vc=num($('#vc').value);t.fz=num($('#fz').value);t.s=Math.round(1000*t.vc/(Math.PI*t.d));t.f=t.type=='tap'?Math.round(t.s*t.pitch):Math.round(t.s*t.fz*t.fl);save();renderTools();toast(`S${t.s} F${t.f}`);};
+
+/* ---------- операции UI ---------- */
+function renderOps(){
+ $('#newOp').innerHTML=Object.entries(OPS).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('');
+ renderOpList();renderOpEd();}
+function opInfo(o){const t=st.tools.find(x=>x.id==o.tool);return (t?`T${t.num} Ø${t.d}`:'⚠ нет инструмента')+(o.depth!=null?` · глуб. ${o.depth}`:'');}
+function renderOpList(){
+ $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n">${i+1}</div><div class="m"><b>${OPS[o.type].n}</b><small>${opInfo(o)}</small></div>
+ <button class="ib" title="Вкл/выкл" onclick="event.stopPropagation();opAct('tog','${o.id}')">${o.on?'◉':'○'}</button><button class="ib" onclick="event.stopPropagation();opAct('up','${o.id}')">↑</button><button class="ib" onclick="event.stopPropagation();opAct('dn','${o.id}')">↓</button><button class="ib" onclick="event.stopPropagation();opAct('dup','${o.id}')">⧉</button><button class="ib" onclick="event.stopPropagation();opAct('del','${o.id}')">✕</button></div>`).join('')||'<div class="empty">Добавьте первую операцию</div>';}
+function renderOpEd(){
+ const o=st.ops.find(x=>x.id==selOp);
+ if(!o){$('#opEd').innerHTML='<div class="empty">Выберите операцию</div>';return;}
+ const d=OPS[o.type],sug=st.tools.filter(t=>d.k.includes(t.type));
+ const toolF=['tool','Инструмент',null,(sug.length?sug:st.tools).concat(sug.length?st.tools.filter(t=>!sug.includes(t)):[]).map(t=>[t.id,`T${t.num} · ${TT[t.type].n} Ø${t.d}`])];
+ $('#opEd').innerHTML=`<h3>${d.n}</h3><div class="grid" id="of">${fld(o,toolF)}${fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint">${HINT[o.type]||''}</div>`;
+ bindForm($('#of'),()=>o,()=>renderOpList(),()=>renderOpEd());}
+const HINT={face:'Зигзаг по всей площади, фреза выходит за край на радиус + 2 мм.',pocketRect:'Выборка от центра к краям, без коррекции G41 — смещение на радиус считается программой.',contourRect:'Снаружи — попутное фрезерование по часовой, внутри — против часовой.',pocketCircle:'Концентрические окружности G03 от центра.',contourCircle:'Полная окружность G02/G03 с I. Снаружи — бобышка, внутри — растачивание отверстия.',slot:'Врезание на каждом проходе, чередование концов паза.',drill:'Канонические циклы Fanuc G81/G82/G83/G73 с G98 (возврат в начальную плоскость).',tap:'Жёсткое нарезание: M29 S.. + G84, F = S × P из шага метчика.',thread:'Винтовая интерполяция снизу вверх (попутное). Диаметр траектории = D резьбы − D фрезы.'};
+window.selO=id=>{selOp=id;renderOpList();renderOpEd();};
+window.addOp=()=>{const o=newOp($('#newOp').value);st.ops.push(o);selOp=o.id;save();renderOps();};
+window.opAct=(a,id)=>{const i=st.ops.findIndex(o=>o.id==id),o=st.ops[i];
+ if(a=='tog')o.on=!o.on;
+ if(a=='up'&&i>0)[st.ops[i-1],st.ops[i]]=[st.ops[i],st.ops[i-1]];
+ if(a=='dn'&&i<st.ops.length-1)[st.ops[i+1],st.ops[i]]=[st.ops[i],st.ops[i+1]];
+ if(a=='dup'){const c={...o,id:uid()};st.ops.splice(i+1,0,c);selOp=c.id;}
+ if(a=='del'){if(!confirm('Удалить операцию?'))return;st.ops.splice(i,1);}
+ save();renderOps();};
+
+/* ---------- генератор G-кода ---------- */
+function levels(depth,step){const a=[];let z=0;step=Math.max(0.01,+step||1);depth=Math.abs(+depth);while(z>-depth+1e-6){z=Math.max(z-step,-depth);a.push(z);}return a;}
+function pts(o){
+ if(o.pat=='pcd'){const a=[];for(let i=0;i<Math.max(1,Math.round(o.cnt));i++){const g=(o.ang+360*i/o.cnt)*Math.PI/180;a.push([o.cx+o.pr*Math.cos(g),o.cy+o.pr*Math.sin(g)]);}return a;}
+ if(o.pat=='grid'){const a=[];for(let j=0;j<o.ny;j++){const row=[];for(let i=0;i<o.nx;i++)row.push([o.gx+i*o.dx,o.gy+j*o.dy]);if(j%2)row.reverse();a.push(...row);}return a;}
+ return String(o.list).split(/[;\n]/).map(s=>s.split(',').map(num)).filter(p=>p.length==2);}
+const G={
+ face(c){const{o,t,r,L}=c,x0=Math.min(o.x0,o.x1)-r-2,x1=Math.max(o.x0,o.x1)+r+2,y0=Math.min(o.y0,o.y1),y1=Math.max(o.y0,o.y1),so=Math.max(0.1,t.d*o.over/100);
+  c.start(x0,y0);levels(o.depth,o.step).forEach(z=>{L.push(`G0 X${F(x0)} Y${F(y0)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(x1)} F${t.f}`);let y=y0,R=true;
+   while(y<y1-1e-6){y=Math.min(y+so,y1);R=!R;L.push(`G1 Y${F(y)}`,`G1 X${F(R?x1:x0)}`);}L.push(`G0 Z${F(c.safe)}`);});},
+ pocketRect(c){const{o,t,r,L}=c,hx=o.w/2-r,hy=o.h/2-r;if(hx<0||hy<0)throw Error('TOOL TOO BIG');
+  const so=Math.max(0.1,t.d*o.over/100),n=Math.max(1,Math.ceil(Math.max(hx,hy)/so));c.start(o.cx,o.cy);L.push('G0 Z1.');
+  levels(o.depth,o.step).forEach(z=>{L.push(`G1 Z${F(z)} F${c.fp}`);for(let i=1;i<=n;i++){const ax=hx*i/n,ay=hy*i/n,X=v=>F(o.cx+v),Y=v=>F(o.cy+v);
+   L.push(`G1 X${X(-ax)} Y${Y(-ay)} F${t.f}`,`G1 X${X(ax)}`,`G1 Y${Y(ay)}`,`G1 X${X(-ax)}`,`G1 Y${Y(-ay)}`);}L.push(`G1 X${F(o.cx)} Y${F(o.cy)}`);});L.push(`G0 Z${F(c.safe)}`);},
+ contourRect(c){const{o,t,r,L}=c,off=o.side=='out'?r:-r,hx=o.w/2+off,hy=o.h/2+off;if(hx<=0||hy<=0)throw Error('TOOL TOO BIG');
+  const P=o.side=='out'?[[-hx,-hy],[-hx,hy],[hx,hy],[hx,-hy],[-hx,-hy]]:[[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy],[-hx,-hy]];
+  c.start(o.cx-hx,o.cy-hy);L.push('G0 Z1.');levels(o.depth,o.step).forEach(z=>{L.push(`G1 Z${F(z)} F${c.fp}`);P.slice(1).forEach(([x,y],k)=>L.push(`G1 X${F(o.cx+x)} Y${F(o.cy+y)}${k?'':' F'+t.f}`));});L.push(`G0 Z${F(c.safe)}`);},
+ pocketCircle(c){const{o,t,r,L}=c,R=o.d/2-r;if(R<0)throw Error('TOOL TOO BIG');const so=Math.max(0.1,t.d*o.over/100),n=Math.max(1,Math.ceil(R/so));
+  c.start(o.cx,o.cy);L.push('G0 Z1.');levels(o.depth,o.step).forEach(z=>{L.push(`G1 X${F(o.cx)} Y${F(o.cy)} F${t.f}`,`G1 Z${F(z)} F${c.fp}`);
+   if(R>0.01)for(let i=1;i<=n;i++){const ri=R*i/n;L.push(`G1 X${F(o.cx+ri)} Y${F(o.cy)} F${t.f}`,`G3 X${F(o.cx+ri)} Y${F(o.cy)} I${F(-ri)} J0.`);}});L.push(`G0 Z${F(c.safe)}`);},
+ contourCircle(c){const{o,t,r,L}=c,R=o.d/2+(o.side=='out'?r:-r);if(R<=0)throw Error('TOOL TOO BIG');const g=o.side=='out'?'G2':'G3';
+  c.start(o.cx+R,o.cy);L.push('G0 Z1.');levels(o.depth,o.step).forEach(z=>L.push(`G1 Z${F(z)} F${c.fp}`,`${g} X${F(o.cx+R)} Y${F(o.cy)} I${F(-R)} J0. F${t.f}`));L.push(`G0 Z${F(c.safe)}`);},
+ slot(c){const{o,t,L}=c;c.start(o.x1,o.y1);L.push('G0 Z1.');let e=false;levels(o.depth,o.step).forEach(z=>{L.push(`G1 Z${F(z)} F${c.fp}`);e=!e;L.push(`G1 X${F(e?o.x2:o.x1)} Y${F(e?o.y2:o.y1)} F${t.f}`);});L.push(`G0 Z${F(c.safe)}`);},
+ drill(c){const{o,t,L}=c,P=pts(o);if(!P.length)throw Error('NO POINTS');c.start(P[0][0],P[0][1]);
+  let s=`G98 ${o.cycle} X${F(P[0][0])} Y${F(P[0][1])} Z${F(-Math.abs(o.depth))} R${F(o.rp)}`;if(o.cycle=='G83'||o.cycle=='G73')s+=` Q${F(o.q)}`;if(o.cycle=='G82')s+=` P${Math.round(o.dwell)}`;
+  L.push(s+` F${t.f}`);P.slice(1).forEach(p=>L.push(`X${F(p[0])} Y${F(p[1])}`));L.push('G80',`G0 Z${F(c.safe)}`);},
+ tap(c){const{o,t,L}=c,P=pts(o);if(!P.length)throw Error('NO POINTS');c.start(P[0][0],P[0][1],true);
+  L.push(`M29 S${t.s}`,`G98 G84 X${F(P[0][0])} Y${F(P[0][1])} Z${F(-Math.abs(o.depth))} R${F(o.rp)} F${F(t.s*t.pitch)}`);P.slice(1).forEach(p=>L.push(`X${F(p[0])} Y${F(p[1])}`));L.push('G80',`G0 Z${F(c.safe)}`);},
+ thread(c){const{o,t,L}=c,P=pts(o),R=(o.dia-t.d)/2;if(R<=0)throw Error('TOOL TOO BIG');if(!P.length)throw Error('NO POINTS');const g=o.hand=='L'?'G2':'G3',p=Math.max(0.1,o.pitch);
+  c.start(P[0][0],P[0][1]);P.forEach(([x,y])=>{L.push(`G0 X${F(x)} Y${F(y)}`,'G0 Z1.',`G1 Z${F(-Math.abs(o.depth))} F${c.fp}`,`G1 X${F(x+R)} F${Math.round(t.f/2)}`);
+   let z=-Math.abs(o.depth);while(z<-1e-6){z+=p;L.push(`${g} X${F(x+R)} Y${F(y)} Z${F(z)} I${F(-R)} J0. F${t.f}`);}L.push(`G1 X${F(x)} Y${F(y)}`,`G0 Z${F(c.safe)}`);});}
+};
+function gen(){
+ const L=[],s=st,w=s.stock.wcs;let cur=null;
+ L.push('%',`O${String(Math.round(s.prog.num)).padStart(4,'0')} (${lat(s.prog.name)})`);
+ if(s.prog.note)L.push(`(${lat(s.prog.note)})`);
+ L.push(`(STOCK X${s.stock.x} Y${s.stock.y} Z${s.stock.z} ${lat(s.stock.mat)})`,`(Z0 = TOP, XY0 = ${s.stock.origin=='center'?'CENTER':'LOWER LEFT'})`);
+ const used=[...new Set(s.ops.filter(o=>o.on).map(o=>o.tool))];
+ s.tools.filter(t=>used.includes(t.id)).forEach(t=>L.push(`(T${t.num} ${TT[t.type].c} D${F(t.d)}${t.name?' '+lat(t.name):''})`));
+ L.push('G21 G17 G40 G49 G80 G90 G94');
+ s.ops.forEach((o,i)=>{if(!o.on)return;const t=s.tools.find(x=>x.id==o.tool);if(!t){L.push(`(OP${i+1} NO TOOL)`);return;}
+  if(cur!==t.id){if(cur)L.push('M09','M05','G91 G28 Z0.','G90');L.push(`T${t.num} M06`);cur=t.id;}
+  L.push(`(OP${i+1} ${OPS[o.type].c})`);
+  const c={L,t,o,r:t.d/2,safe:+o.safe,fp:Math.max(1,Math.round(t.f/3)),start(x,y,noSp){L.push(`G0 G90 ${w} X${F(x)} Y${F(y)}`);if(!noSp)L.push(`S${Math.round(t.s)} M03`);L.push(`G43 H${t.num} Z${F(+o.safe)}`,'M08');}};
+  try{G[o.type](c)}catch(e){L.push(`(OP${i+1} ERROR: ${e.message})`);}});
+ L.push('M09','M05','G91 G28 Z0.','G28 Y0.','G90','M30','%');
+ return L.join('\n');}
+
+/* ---------- парсер для симуляции ---------- */
+function parse(code){
+ const segs=[];let p={x:0,y:0,z:50},mode=0,cyc=null,cz=0,cr=0,init=50,tool=0,feed=100,time=0,len={f:0,r:0};
+ const push=(a,b,rapid,ln)=>{const l=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);if(l<1e-6)return;segs.push({a,b,rapid,tool,len:l,ln});if(rapid){len.r+=l;time+=l/20000}else{len.f+=l;time+=l/Math.max(1,feed)}};
+ code.split('\n').forEach((raw,ln)=>{const l=raw.replace(/\(.*?\)/g,'').toUpperCase().trim();if(!l||l[0]=='%'||l[0]=='O')return;
+  const w={},gs=[];l.replace(/([A-Z])\s*(-?[\d.]+)/g,(m,k,v)=>{if(k=='G')gs.push(+v);else w[k]=+v;});
+  if(gs.includes(28)||gs.includes(91))return;
+  if(w.T!=null)tool=w.T;if(w.F!=null&&!gs.includes(84))feed=w.F;
+  gs.forEach(g=>{if(g<=3){mode=g;cyc=null;}if([73,81,82,83,84,85,86].includes(g)){cyc=g;init=p.z;}if(g==80)cyc=null;});
+  if(cyc){if(w.Z!=null)cz=w.Z;if(w.R!=null)cr=w.R;if(w.X==null&&w.Y==null)return;
+   const x=w.X??p.x,y=w.Y??p.y,A={x,y,z:p.z},Rr={x,y,z:cr},B={x,y,z:cz},I={x,y,z:init};
+   push(p,A,true,ln);push(A,Rr,true,ln);push(Rr,B,false,ln);push(B,I,cyc!=84,ln);if(cyc==84)push(B,Rr,false,ln);p=I;return;}
+  if(w.X==null&&w.Y==null&&w.Z==null)return;
+  const n={x:w.X??p.x,y:w.Y??p.y,z:w.Z??p.z};
+  if(mode<=1)push(p,n,mode==0,ln);
+  else{const cx=p.x+(w.I||0),cy=p.y+(w.J||0),r=Math.hypot(p.x-cx,p.y-cy),a0=Math.atan2(p.y-cy,p.x-cx),a1=Math.atan2(n.y-cy,n.x-cx);let da=a1-a0;
+   if(mode==2){if(da>=-1e-9)da-=2*Math.PI}else{if(da<=1e-9)da+=2*Math.PI}
+   const k=Math.min(360,Math.max(12,Math.ceil(Math.abs(da)*r/0.8)));let q=p;
+   for(let i=1;i<=k;i++){const a=a0+da*i/k,m={x:cx+r*Math.cos(a),y:cy+r*Math.sin(a),z:p.z+(n.z-p.z)*i/k};push(q,m,false,ln);q=m;}}
+  p=n;});
+ return {segs,time,len};}
+
+/* ---------- G-код UI ---------- */
+function regen(force){if(force){manual=false;}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast('G-код пересоздан');}
+window.regen=regen;
+function updCodeInfo(){const c=$('#code').value,r=parse(c);const m=r.time;
+ $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${Math.floor(m)} мин ${Math.round((m%1)*60)} с</b></span>`;
+ $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';}
+$('#code').addEventListener('input',()=>{manual=true;updCodeInfo();});
+const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
+window.downloadCode=e=>{const b=new Blob([$('#code').value.replace(/\n/g,'\r\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname(e);document.body.appendChild(a);a.click();a.remove();toast('Файл '+fname(e)+' сохранён');};
+window.copyCode=()=>{navigator.clipboard.writeText($('#code').value).then(()=>toast('Скопировано'));};
+window.shareCode=async()=>{const f=new File([$('#code').value.replace(/\n/g,'\r\n')],fname('nc'),{type:'text/plain'});
+ if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:fname('nc')}).catch(()=>{});else downloadCode('nc');};
+
+/* ---------- 3D ---------- */
+let R3,SC,CAM,CTL,hm,pathObj,toolObj,toolNum=-1,data={segs:[]},sim={i:0,t:0,play:false},box3,visible=false;
+function V(x,y,z){return new THREE.Vector3(x,z,-y);}
+function init3d(){
+ const box=$('#view');R3=new THREE.WebGLRenderer({antialias:true});R3.setPixelRatio(Math.min(2,devicePixelRatio));box.appendChild(R3.domElement);
+ SC=new THREE.Scene();SC.background=new THREE.Color(0x0f1115);
+ CAM=new THREE.PerspectiveCamera(40,1,0.5,10000);CTL=new OrbitControls(CAM,R3.domElement);CTL.enableDamping=true;
+ SC.add(new THREE.HemisphereLight(0xdde6ff,0x202530,1.1));const dl=new THREE.DirectionalLight(0xffffff,1.6);dl.position.set(150,300,200);SC.add(dl);
+ const d2=new THREE.DirectionalLight(0x99aaff,.5);d2.position.set(-200,100,-150);SC.add(d2);
+ new ResizeObserver(resize).observe(box);resize();loop();}
+function resize(){const b=$('#view');if(!R3||!b.clientWidth)return;R3.setSize(b.clientWidth,b.clientHeight);CAM.aspect=b.clientWidth/b.clientHeight;CAM.updateProjectionMatrix();}
+function build(){
+ [hm&&hm.mesh,pathObj,toolObj,box3,SC.getObjectByName('grid')].forEach(o=>o&&SC.remove(o));toolNum=-1;
+ data=parse($('#code').value);
+ const s=st.stock,x0=s.origin=='center'?-s.x/2:0,y0=s.origin=='center'?-s.y/2:0;
+ const res=Math.max(s.x,s.y)/(innerWidth<820?110:170),nx=Math.max(2,Math.ceil(s.x/res)),ny=Math.max(2,Math.ceil(s.y/res)),dx=s.x/nx,dy=s.y/ny,N=(nx+1)*(ny+1);
+ const H=new Float32Array(N),pos=new Float32Array(N*3),col=new Float32Array(N*3),idx=[];
+ for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const k=j*(nx+1)+i;pos[k*3]=x0+i*dx;pos[k*3+1]=0;pos[k*3+2]=-(y0+j*dy);col.set([.72,.75,.8],k*3);}
+ for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;idx.push(a,b,c,b,d,c);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
+ const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,metalness:.35,roughness:.45,side:THREE.DoubleSide}));SC.add(mesh);
+ hm={mesh,g,H,pos,col,nx,ny,dx,dy,x0,y0,res,dirty:false};
+ const bg=new THREE.BoxGeometry(s.x,s.z,s.y);box3=new THREE.LineSegments(new THREE.EdgesGeometry(bg),new THREE.LineBasicMaterial({color:0x56607a}));box3.position.set(x0+s.x/2,-s.z/2,-(y0+s.y/2));SC.add(box3);
+ const gr=new THREE.GridHelper(Math.max(s.x,s.y)*3,30,0x2a3040,0x1c2029);gr.position.y=-s.z-0.1;gr.name='grid';SC.add(gr);
+ const lp=[],lc=[];data.segs.forEach(sg=>{const a=V(sg.a.x,sg.a.y,sg.a.z),b=V(sg.b.x,sg.b.y,sg.b.z);lp.push(a.x,a.y,a.z,b.x,b.y,b.z);const c=sg.rapid?[.9,.3,.3]:[.2,.85,1];lc.push(...c,...c);});
+ const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(lp,3));pg.setAttribute('color',new THREE.Float32BufferAttribute(lc,3));
+ pathObj=new THREE.LineSegments(pg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.55}));pathObj.visible=$('#showPath').checked;SC.add(pathObj);
+ sim={i:0,t:0,play:false};$('#playB').textContent='▶';
+ const p0=data.segs[0]?.a||{x:0,y:0,z:50};setTool(p0,data.segs[0]?.tool);fitCam();hud(p0);}
+function setTool(p,n){
+ if(n!==toolNum){if(toolObj)SC.remove(toolObj);toolNum=n;const t=st.tools.find(t=>t.num==n)||{d:10,len:40,type:'endmill'},r=t.d/2,L=Math.max(t.len||40,t.d*1.5);
+  toolObj=new THREE.Group();const mat=new THREE.MeshStandardMaterial({color:0xffb000,metalness:.8,roughness:.25});
+  let cut;if(['drill','center','chamfer'].includes(t.type)){cut=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L*.6,24),mat);cut.position.y=L*.3+r*.6;const tip=new THREE.Mesh(new THREE.ConeGeometry(r,r*1.2,24),mat);tip.rotation.x=Math.PI;tip.position.y=r*.6;toolObj.add(tip);}
+  else if(t.type=='ball'){cut=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L*.6,24),mat);cut.position.y=L*.3+r;const b=new THREE.Mesh(new THREE.SphereGeometry(r,24,12),mat);b.position.y=r;toolObj.add(b);}
+  else{cut=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L*.6,24),mat);cut.position.y=L*.3;}
+  toolObj.add(cut);const sh=new THREE.Mesh(new THREE.CylinderGeometry(Math.max(r,4),Math.max(r,4),L*.4,24),new THREE.MeshStandardMaterial({color:0x9aa3b2,metalness:.9,roughness:.3}));sh.position.y=L*.8;toolObj.add(sh);
+  const ho=new THREE.Mesh(new THREE.CylinderGeometry(Math.max(r*1.6,12),Math.max(r*1.6,12),30,32),new THREE.MeshStandardMaterial({color:0x3a4252,metalness:.6,roughness:.4}));ho.position.y=L+15;toolObj.add(ho);
+  toolObj.userData={r,ball:t.type=='ball'};SC.add(toolObj);}
+ toolObj.position.copy(V(p.x,p.y,p.z));}
+function cut(x,y,z,r,ball){if(z>=0)return;const h=hm;const i0=Math.max(0,Math.floor((x-r-h.x0)/h.dx)),i1=Math.min(h.nx,Math.ceil((x+r-h.x0)/h.dx)),j0=Math.max(0,Math.floor((y-r-h.y0)/h.dy)),j1=Math.min(h.ny,Math.ceil((y+r-h.y0)/h.dy)),bot=-st.stock.z;
+ for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const px=h.x0+i*h.dx,py=h.y0+j*h.dy,d2=(px-x)**2+(py-y)**2;if(d2>r*r)continue;let zz=ball?z+r-Math.sqrt(r*r-d2):z;zz=Math.max(zz,bot);const k=j*(h.nx+1)+i;if(zz<h.H[k]){h.H[k]=zz;h.dirty=true;}}}
+function flush(){const h=hm;if(!h.dirty)return;const zt=st.stock.z;for(let k=0;k<h.H.length;k++){const z=h.H[k];h.pos[k*3+1]=z;if(z<-1e-4){const q=Math.min(1,-z/zt);h.col[k*3]=.35-.2*q;h.col[k*3+1]=.62-.25*q;h.col[k*3+2]=.9-.3*q;}}
+ h.g.attributes.position.needsUpdate=true;h.g.attributes.color.needsUpdate=true;h.g.computeVertexNormals();h.dirty=false;}
+function step(budget){const S=data.segs;let p=null,it=0;
+ while(budget>0&&sim.i<S.length&&it++<400000){const s=S[sim.i];const m=s.rapid?8:1,sl=Math.min(hm.res*.5,(1-sim.t)*s.len,budget*m);sim.t+=sl/s.len;budget-=sl/m;
+  if(s.tool!==toolNum)setTool(s.a,s.tool);const t=Math.min(1,sim.t);p={x:s.a.x+(s.b.x-s.a.x)*t,y:s.a.y+(s.b.y-s.a.y)*t,z:s.a.z+(s.b.z-s.a.z)*t};
+  if(!s.rapid)cut(p.x,p.y,p.z,toolObj.userData.r,toolObj.userData.ball);if(sim.t>=1-1e-9){sim.i++;sim.t=0;}}
+ if(p){setTool(p,toolNum);hud(p);}flush();
+ if(sim.i>=S.length){sim.play=false;$('#playB').textContent='▶';}}
+function hud(p){const S=data.segs,s=S[Math.min(sim.i,S.length-1)],line=s?$('#code').value.split('\n')[s.ln]:'';
+ $('#hud').innerHTML=`<div class="ln">${line||'—'}</div>X ${F(p.x)}  Y ${F(p.y)}  Z ${F(p.z)}<br>T${toolNum??'-'} · ${S.length?Math.round(sim.i/S.length*100):0}%`;}
+function loop(){requestAnimationFrame(loop);if(!visible)return;if(sim.play){const v=+$('#spd').value;step(v*v*.02+.3);}CTL.update();R3.render(SC,CAM);}
+window.simPlay=()=>{if(sim.i>=data.segs.length)simReset();sim.play=!sim.play;$('#playB').textContent=sim.play?'⏸':'▶';};
+window.simReset=()=>build();
+window.simFinish=()=>{step(1e12);};
+window.togglePath=()=>{if(pathObj)pathObj.visible=$('#showPath').checked;};
+window.fitCam=()=>{const s=st.stock,c=V(st.stock.origin=='center'?0:s.x/2,st.stock.origin=='center'?0:s.y/2,-s.z/2),d=Math.max(s.x,s.y,s.z)*1.7;CTL.target.copy(c);CAM.position.set(c.x+d*.6,c.y+d*.85,c.z+d*.9);CTL.update();};
+
+/* ---------- обновления ---------- */
+const cmpV=(a,b)=>{a=a.split('.').map(Number);b=b.split('.').map(Number);for(let i=0;i<3;i++){if((a[i]||0)!=(b[i]||0))return (a[i]||0)-(b[i]||0);}return 0;};
+window.checkUpd=async()=>{const el=$('#updRes');el.innerHTML='Проверка…';
+ try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
+  if(cmpV(j.version,APP_VERSION)>0)el.innerHTML=`<p>Доступна версия <b>v${j.version}</b></p><p style="color:var(--mut)">${(j.notes||[]).map(n=>'• '+n).join('<br>')}</p><button class="btn p" onclick="doUpdate()">⬇ Обновить сейчас</button>`;
+  else el.innerHTML='<span class="badge">✓ Установлена последняя версия</span>';}
+ catch(e){el.innerHTML='<span class="badge warn">Не удалось проверить. Приложение должно быть открыто с GitHub Pages.</span>';}
+ const repo=$('#repo').value.trim();if(repo){try{const r=await fetch(`https://api.github.com/repos/${repo}/commits?per_page=6`);const c=await r.json();
+  $('#commits').innerHTML='<h3 style="margin-top:8px">Последние изменения</h3>'+c.map(x=>`<div class="commit">${x.commit.message.split('\n')[0]}<br><small>${new Date(x.commit.author.date).toLocaleString('ru')}</small></div>`).join('');}catch(e){}}};
+window.doUpdate=async()=>{try{if('caches' in window)for(const k of await caches.keys())await caches.delete(k);if(navigator.serviceWorker)for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();}catch(e){}
+ location.replace(location.pathname+'?v='+Date.now());};
+
+/* ---------- вкладки ---------- */
+function show(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
+ visible=t=='sim';
+ if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code')regen();
+ if(t=='sim'){regen();if(!R3)init3d();resize();build();}}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+function renderAll(){renderProj();renderTools();renderOps();codeDirty=true;}
+$('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'';
+renderAll();
+</script>
+</body>
