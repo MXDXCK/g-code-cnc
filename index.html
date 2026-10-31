@@ -128,8 +128,8 @@ details.cycd[open] summary:before{content:'－'}
 <main>
  <section id="t-proj" class="tab on">
   <div class="card"><h3>Программа</h3><div class="grid" id="progF"></div></div>
-  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div><div id="stockX"></div><div class="stats" id="stockInfo"></div>
-   <div class="hint">Произвольный контур: точки X,Y через «;» в координатах детали (по часовой или против — не важно), или возьмите контур с фото. Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
+  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div><div class="stats" id="stockInfo"></div>
+   <div class="hint">Произвольный контур: точки X,Y через «;» в координатах детали (по часовой или против — не важно). Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
   <div class="card"><h3>Проект</h3><div class="row">
    <button class="btn" onclick="exportProj()">💾 Экспорт проекта</button>
    <button class="btn" onclick="document.getElementById('impF').click()">📂 Импорт</button>
@@ -164,10 +164,12 @@ details.cycd[open] summary:before{content:'－'}
     <button class="btn" onclick="shareCode()">↗ Поделиться</button>
     <button class="btn" onclick="copyCode()">⧉ Копировать</button>
     <button class="btn" onclick="regen(true)">↻ Пересоздать</button>
+    <select id="fmtSel" style="width:auto" onchange="setFmt(this.value)"><option value="macro">Параметрический (макро)</option><option value="plain">Обычный</option></select>
     <span id="editFlag"></span>
    </div>
    <div class="stats" id="codeStats"></div>
    <textarea id="code" spellcheck="false"></textarea>
+   <div class="hint">Параметрический G-код: в начале каждой операции идут переменные — размеры (#1, #2…) и режимы фрезы: <b>#20</b> диаметр, <b>#21</b> обороты S, <b>#22</b> подача F, <b>#23</b> подача врезания, <b>#24</b> безопасная Z. Поменяйте число прямо на стойке — проходы пересчитаются сами (циклы WHILE). Нужна опция Custom Macro B (на 0i-MF Plus обычно включена). Ручные правки проверяются в 3D.</div>
   </div>
  </section>
 
@@ -201,7 +203,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.2.0';
+const APP_VERSION='1.3.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -240,10 +242,9 @@ const OPS={
  slot:{n:'Паз',s:'Паз',c:'SLOT',k:['endmill'],f:[['x1','X1',-30,'c'],['y1','Y1',0,'c'],['x2','X2',30,'c'],['y2','Y2',0,'c'],['depth','Глубина',3,'n'],['step','Шаг по Z',0.5,'n']]},
  drill:{n:'Сверление / центровка',s:'Сверление',c:'DRILLING',k:['drill','center','reamer','chamfer'],f:[['cycle','Цикл','G81',[['G81','G81 простое'],['G82','G82 с выдержкой'],['G83','G83 глубокое с выводом'],['G73','G73 с ломкой стружки']]],['depth','Глубина (вершина)',10,'n'],['rp','Плоскость R',2,'n'],['q','Шаг Q',3,'n',{cycle:['G83','G73']}],['dwell','Выдержка P, мс',500,'n',{cycle:'G82'}],...PAT]},
  tap:{n:'Нарезание резьбы метчиком',s:'Метчик',c:'RIGID TAPPING',k:['tap'],f:[['depth','Глубина',12,'n'],['rp','Плоскость R',5,'n'],...PAT]},
- thread:{n:'Резьбофрезерование',s:'Резьбофреза',c:'THREAD MILLING',k:['thread'],f:[['dia','Номинал резьбы D',8,'n'],['pitch','Шаг P',1.25,'n'],['depth','Длина резьбы',12,'n'],['hand','Направление',"R",[['R','Правая'],['L','Левая']]],...PAT]},
- photo:{n:'Контур по фото',s:'Контур по фото',c:'PHOTO CONTOUR',k:['endmill'],f:[['w','Ширина по X, мм',60,'n'],['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['ang','Поворот°',0,'c'],['side','Обработка','out',[['out','Снаружи (цапфа)'],['in','Внутри (по контуру)'],['pocket','Карман (выборка)']]],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],WALL,['over','Шаг вбок, % D',45,'n',{side:['out','pocket']}]]}
+ thread:{n:'Резьбофрезерование',s:'Резьбофреза',c:'THREAD MILLING',k:['thread'],f:[['dia','Номинал резьбы D',8,'n'],['pitch','Шаг P',1.25,'n'],['depth','Длина резьбы',12,'n'],['hand','Направление',"R",[['R','Правая'],['L','Левая']]],...PAT]}
 };
-const CYC=[['Плоскость',['face']],['Карманы',['pocketRect','pocketCircle','pocketOval']],['Цапфы и контуры',['contourRect','contourCircle','contourOval','polygon']],['Пазы',['slot']],['Отверстия',['drill','tap','thread']],['Произвольный контур',['photo']]];
+const CYC=[['Плоскость',['face']],['Карманы',['pocketRect','pocketCircle','pocketOval']],['Цапфы и контуры',['contourRect','contourCircle','contourOval','polygon']],['Пазы',['slot']],['Отверстия',['drill','tap','thread']]];
 /* пиктограммы циклов */
 const SB='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/>',SD='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 2.5" opacity=".5"/>';
 const FL='fill="currentColor" fill-opacity=".85"',PK='fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.8"';
@@ -259,8 +260,7 @@ const ICO={
  slot:SB+'<path d="M11 20h18" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".5"/>',
  drill:SB+'<g fill="currentColor"><circle cx="11" cy="15" r="2.4"/><circle cx="20" cy="15" r="2.4"/><circle cx="29" cy="15" r="2.4"/><circle cx="11" cy="25" r="2.4"/><circle cx="20" cy="25" r="2.4"/><circle cx="29" cy="25" r="2.4"/></g>',
  tap:SB+'<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 16.5l9 7M14.5 20l6 4.8M19 15.3l6.3 5" stroke="currentColor" stroke-width="1.2"/>',
- thread:'<path d="M14 6h12M14 34h12" stroke="currentColor" stroke-width="1.6" opacity=".55"/><path d="M12 10l16 3-16 3 16 3-16 3 16 3-16 3 16 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
- photo:'<rect x="4" y="11" width="32" height="22" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14 11l2.5-4h7l2.5 4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14 26c-2-4 1-8 5-7 2-3 7-2 7 2 3 1 2 5-1 6z" fill="currentColor" fill-opacity=".85"/>'
+ thread:'<path d="M14 6h12M14 34h12" stroke="currentColor" stroke-width="1.6" opacity=".55"/><path d="M12 10l16 3-16 3 16 3-16 3 16 3-16 3 16 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
 };
 const svg=(k,c='')=>`<svg viewBox="0 0 40 40" ${c}>${ICO[k]||''}</svg>`;
 
@@ -273,7 +273,7 @@ function defaults(){
  add('face',0);add('contourRect',1);add('pocketRect',1);add('drill',2,{depth:2,pat:'pcd',pr:25});add('drill',3,{cycle:'G83',depth:16,pat:'pcd',pr:25});add('tap',4,{pat:'pcd',pr:25});
  return s;
 }
-function newOp(type,s=st){const o={id:uid(),type,on:true,safe:10};OPS[type].f.forEach(f=>o[f[0]]=f[2]);if(type=='photo')Object.assign(o,{shp:null,ratio:0,thr:128,eps:1.5,inv:false});const t=s.tools.find(t=>OPS[type].k.includes(t.type))||s.tools[0];o.tool=t?t.id:null;return o;}
+function newOp(type,s=st){const o={id:uid(),type,on:true,safe:10};OPS[type].f.forEach(f=>o[f[0]]=f[2]);const t=s.tools.find(t=>OPS[type].k.includes(t.type))||s.tools[0];o.tool=t?t.id:null;return o;}
 let st;try{st=JSON.parse(localStorage.getItem('fcam'))}catch(e){}
 if(!st||!st.tools)st=defaults();
 let PRE=[];try{PRE=JSON.parse(localStorage.getItem('fcam_presets'))||[]}catch(e){}
@@ -309,23 +309,16 @@ function stockGeo(){const s=st.stock;let P,bad=false;const sh=s.shape||'rect';
  P=orient(P,true);return{P,x0,y0,x1,y1,w:x1-x0,h:y1-y0,z:Math.max(.1,+s.z||1),rect:sh=='rect'||(sh=='custom'&&bad)||(sh=='poly'&&Math.round(+s.n)==4&&false),bad};}
 const pip=(P,x,y)=>{let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const[ax,ay]=P[i],[bx,by]=P[j];if((ay>y)!=(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)c=!c;}return c;};
 const nearOn=(P,x,y)=>{let best=null,bd=1e18;for(let i=0;i<P.length;i++){const[ax,ay]=P[i],[bx,by]=P[(i+1)%P.length],dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1))),qx=ax+t*dx,qy=ay+t*dy,d=(qx-x)**2+(qy-y)**2;if(d<bd){bd=d;best=[qx,qy];}}return best;};
-window.stockFromPhoto=()=>{const o=st.ops.find(x=>x.type=='photo'&&x.shp);if(!o)return toast('Нет операции с контуром по фото');
- const a=prompt('Припуск вокруг контура детали, мм','2');if(a===null)return;const off=Math.max(0,num(a));
- const Rt=rot(o);let P=o.shp.map(([x,y])=>Rt.p(x*o.w,y*o.w));
- if(off>0){const L=isoLoops(distField(P,off+1),off).sort((p,q)=>Math.abs(area(q))-Math.abs(area(p)));if(L[0])P=rdpClosed(L[0],.05);}
- st.stock.shape='custom';st.stock.pts=P.map(([x,y])=>F(x)+','+F(y)).join('; ');save();renderProj();toast('Контур заготовки задан');};
 
 /* ---------- проект ---------- */
 function renderProj(){
  $('#progF').innerHTML=[['num','Номер O',1000,'n'],['name','Имя программы','','text'],['note','Комментарий','','text']].map(f=>fld(st.prog,f)).join('');
  $('#stockF').innerHTML=SF.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');
- const ph=st.ops.some(o=>o.type=='photo'&&o.shp);
- $('#stockX').innerHTML=st.stock.shape=='custom'?`<div class="row" style="margin-top:10px"><button class="btn s" onclick="stockFromPhoto()" ${ph?'':'disabled'}>📷 Взять контур из операции «Контур по фото»</button></div>`:'';
  const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`+(g.bad?'<span style="color:var(--bad)">⚠ Мало точек контура — показан прямоугольник</span>':'');
  bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock,()=>{const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`;},()=>renderProj());
  $('#projStats').innerHTML=`<span>Инструментов: <b>${st.tools.length}</b></span><span>Операций: <b>${st.ops.length}</b></span><span>Пресетов: <b>${PRE.length}</b></span>`;}
 window.exportProj=()=>{const b=new Blob([JSON.stringify({...st,presets:PRE},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`project_O${st.prog.num}.json`;a.click();};
-window.importProj=inp=>{const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;normStock();manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
+window.importProj=inp=>{const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;normStock();st.ops=st.ops.filter(o=>OPS[o.type]);manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
 window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();normStock();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
 
 /* ---------- инструменты UI ---------- */
@@ -350,7 +343,7 @@ function renderCyc(){
  let h=CYC.map(([g,ks])=>`<div class="grp">${g}</div><div class="cyc">${ks.map(k=>`<button onclick="addOp('${k}')">${svg(k)}<span>${OPS[k].s}</span></button>`).join('')}</div>`).join('');
  h+=`<div class="grp">Мои пресеты</div>`+(PRE.length?`<div class="cyc">${PRE.map(p=>`<button onclick="addPreset('${p.id}')" title="${esc(OPS[p.type]?.n||'')}"><span class="x" onclick="event.stopPropagation();delPreset('${p.id}')">✕</span>${svg(p.type)}<span>${esc(p.name)}</span></button>`).join('')}</div>`:'<div style="color:var(--mut);font-size:12px">Настройте операцию и нажмите «★ В пресеты» — она появится здесь со всеми размерами.</div>');
  $('#cycG').innerHTML=h;}
-function opInfo(o){const t=st.tools.find(x=>x.id==o.tool);return (t?`T${t.num} Ø${t.d}`:'⚠ нет инструмента')+(o.depth!=null?` · глуб. ${o.depth}`:'')+(o.type=='photo'&&!o.shp?' · ⚠ нет фото':'');}
+function opInfo(o){const t=st.tools.find(x=>x.id==o.tool);return (t?`T${t.num} Ø${t.d}`:'⚠ нет инструмента')+(o.depth!=null?` · глуб. ${o.depth}`:'');}
 function renderOpList(){
  $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n" title="${i+1}">${svg(o.type,'style="color:var(--acc)"')}</div><div class="m" title="${OPS[o.type].n}"><b>${i+1}. ${OPS[o.type].s}</b><small>${opInfo(o)}</small></div>
  <button class="ib" title="Вкл/выкл" onclick="event.stopPropagation();opAct('tog','${o.id}')">${o.on?'◉':'○'}</button><button class="ib" onclick="event.stopPropagation();opAct('up','${o.id}')">↑</button><button class="ib" onclick="event.stopPropagation();opAct('dn','${o.id}')">↓</button><button class="ib" onclick="event.stopPropagation();opAct('dup','${o.id}')">⧉</button><button class="ib" onclick="event.stopPropagation();opAct('del','${o.id}')">✕</button></div>`).join('')||'<div class="empty">Добавьте первый цикл ниже</div>';}
@@ -361,18 +354,16 @@ function renderOpEd(){
  const d=OPS[o.type],sug=st.tools.filter(t=>d.k.includes(t.type));
  const toolF=['tool','Инструмент',null,(sug.length?sug:st.tools).concat(sug.length?st.tools.filter(t=>!sug.includes(t)):[]).map(t=>[t.id,`T${t.num} · ${TT[t.type].n} Ø${t.d}`])];
  $('#opEd').innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${d.n}</h3><button class="btn s" onclick="savePreset()">★ В пресеты</button></div>
- <div class="oped"><div>${o.type=='photo'?photoPanel(o):''}<div class="grid" id="of">${fld(o,toolF)}${fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint">${HINT[o.type]||''}</div></div>
+ <div class="oped"><div><div class="grid" id="of">${fld(o,toolF)}${fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint">${HINT[o.type]||''}</div></div>
  <div class="prevw"><div class="prev" id="opPrev"><div class="prevmsg" id="prevMsg"></div><div class="prevtag">3D-модель результата · вращайте пальцем</div>
   <div class="prevbar"><div class="row" style="gap:6px"><label class="chip"><input type="checkbox" ${prevAll?'checked':''} onchange="setPrevAll(this.checked)">с предыдущими</label><label class="chip"><input type="checkbox" class="stkChk" ${showStock?'checked':''} onchange="setStock(this.checked)">заготовка</label></div><button class="btn s" onclick="fitPrev()">⌖</button></div></div>
   <div class="stats" id="prevStats"></div></div></div>`;
- bindForm($('#of'),()=>o,()=>{renderOpList();if(o.type=='photo')phDraw(o);updPrev();},()=>renderOpEd());
- if(o.type=='photo')phDraw(o);
+ bindForm($('#of'),()=>o,()=>{renderOpList();updPrev();},()=>renderOpEd());
  updPrev(0);}
 const HINT={face:'Зигзаг по всей площади, фреза выходит за край на радиус + 2 мм.',pocketRect:'Выборка от центра к краям, без коррекции G41 — смещение на радиус считается программой.',contourRect:'Снаружи — попутное фрезерование по часовой, внутри — против часовой. «Съём вокруг» — ширина материала вокруг цапфы, которую нужно убрать (проходы снаружи внутрь).',pocketCircle:'Концентрические окружности G03 от центра.',contourCircle:'Полная окружность G02/G03 с I. Снаружи — бобышка (цапфа), внутри — растачивание отверстия. «Съём вокруг» — ширина кольца материала вокруг цапфы.',
  pocketOval:'Овал = две полуокружности, соединённые прямыми (L — общая длина, W — ширина). Врезание наклонно вдоль оси паза, затем выборка концентрическими овалами G03.',contourOval:'Овальная цапфа или контур овального окна. L — общая длина, W — ширина, угол поворачивает овал вокруг центра.',
  polygon:'Многогранник под ключ (шестигранник, квадрат и т.д.). SW — размер между параллельными гранями. «Съём вокруг» — сколько материала снять вокруг граней.',
- slot:'Врезание на каждом проходе, чередование концов паза.',drill:'Канонические циклы Fanuc G81/G82/G83/G73 с G98 (возврат в начальную плоскость).',tap:'Жёсткое нарезание: M29 S.. + G84, F = S × P из шага метчика.',thread:'Винтовая интерполяция снизу вверх (попутное). Диаметр траектории = D резьбы − D фрезы.',
- photo:'Снимайте строго сверху, деталь или шаблон — на контрастном однотонном фоне, без теней. Масштаб задаётся реальной шириной по X. Траектория смещается на радиус фрезы автоматически.'};
+ slot:'Врезание на каждом проходе, чередование концов паза.',drill:'Канонические циклы Fanuc G81/G82/G83/G73 с G98 (возврат в начальную плоскость).',tap:'Жёсткое нарезание: M29 S.. + G84, F = S × P из шага метчика.',thread:'Винтовая интерполяция снизу вверх (попутное). Диаметр траектории = D резьбы − D фрезы.'};
 window.selO=id=>{selOp=id;renderOpList();renderOpEd();};
 const narrow=()=>innerWidth<820;
 window.addOp=type=>{const o=newOp(type);st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+OPS[type].n);if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
@@ -397,44 +388,6 @@ const XY=([x,y])=>`X${F(x)} Y${F(y)}`,IJ=([i,j])=>`I${F(i)} J${F(j)}`;
 const rot=o=>{const a=(+o.ang||0)*Math.PI/180,c=Math.cos(a),s=Math.sin(a),v=(x,y)=>[x*c-y*s,x*s+y*c];return{v,p:(x,y)=>{const[q,w]=v(x,y);return[o.cx+q,o.cy+w]}};};
 const area=p=>{let a=0;for(let i=0,n=p.length;i<n;i++){const[x1,y1]=p[i],[x2,y2]=p[(i+1)%n];a+=x1*y2-x2*y1;}return a/2;};
 const orient=(p,ccw)=>(area(p)>0)===ccw?p:p.slice().reverse();
-function rdp(P,e){if(P.length<3)return P.slice();const keep=new Uint8Array(P.length);keep[0]=keep[P.length-1]=1;const stk=[[0,P.length-1]];
- while(stk.length){const[a,b]=stk.pop();const[ax,ay]=P[a],[bx,by]=P[b],dx=bx-ax,dy=by-ay,L=Math.hypot(dx,dy)||1e-9;let md=0,mi=-1;
-  for(let i=a+1;i<b;i++){const d=Math.abs((P[i][0]-ax)*dy-(P[i][1]-ay)*dx)/L;if(d>md){md=d;mi=i;}}if(md>e){keep[mi]=1;stk.push([a,mi],[mi,b]);}}
- return P.filter((_,i)=>keep[i]);}
-function rdpClosed(P,e){if(P.length<4)return P.slice();let f=0,fd=0;for(let i=1;i<P.length;i++){const d=Math.hypot(P[i][0]-P[0][0],P[i][1]-P[0][1]);if(d>fd){fd=d;f=i;}}
- const A=rdp(P.slice(0,f+1),e),B=rdp(P.slice(f).concat([P[0]]),e);return A.slice(0,-1).concat(B.slice(0,-1));}
-/* эквидистанта произвольного контура: поле расстояний + изолинии (без внешних библиотек) */
-function edt1(f,n,d,v,z){let k=0;v[0]=0;z[0]=-1e20;z[1]=1e20;for(let q=1;q<n;q++){let s;while(true){const p=v[k];s=((f[q]+q*q)-(f[p]+p*p))/(2*q-2*p);if(s<=z[k]){k--;if(k<0){k=0;break;}}else break;}k++;v[k]=q;z[k]=s;z[k+1]=1e20;}
- k=0;for(let q=0;q<n;q++){while(z[k+1]<q)k++;const p=v[k];d[q]=(q-p)*(q-p)+f[p];}}
-function edt2(g,nx,ny){const m=Math.max(nx,ny),f=new Float64Array(m),d=new Float64Array(m),v=new Int32Array(m),z=new Float64Array(m+1);
- for(let i=0;i<nx;i++){for(let j=0;j<ny;j++)f[j]=g[j*nx+i];edt1(f,ny,d,v,z);for(let j=0;j<ny;j++)g[j*nx+i]=d[j];}
- for(let j=0;j<ny;j++){for(let i=0;i<nx;i++)f[i]=g[j*nx+i];edt1(f,nx,d,v,z);for(let i=0;i<nx;i++)g[j*nx+i]=d[i];}}
-const FCACHE=[];
-function distField(poly,maxOff){const key=JSON.stringify(poly)+'|'+maxOff;const hit=FCACHE.find(c=>c.key==key);if(hit)return hit;
- let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;poly.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
- const ext=Math.max(x1-x0,y1-y0)+2*maxOff,c=Math.min(0.5,Math.max(0.04,ext/900)),pad=maxOff+4*c,ox=x0-pad,oy=y0-pad,nx=Math.ceil((x1-x0+2*pad)/c)+1,ny=Math.ceil((y1-y0+2*pad)/c)+1,N=nx*ny;
- const ins=new Uint8Array(N),n=poly.length;
- for(let j=0;j<ny;j++){const yc=oy+j*c,xs=[];for(let i=0;i<n;i++){const[ax,ay]=poly[i],[bx,by]=poly[(i+1)%n];if((ay>yc)!=(by>yc))xs.push(ax+(yc-ay)*(bx-ax)/(by-ay));}
-  xs.sort((a,b)=>a-b);for(let q=0;q+1<xs.length;q+=2){const ia=Math.max(0,Math.ceil((xs[q]-ox)/c)),ib=Math.min(nx-1,Math.floor((xs[q+1]-ox)/c));for(let i=ia;i<=ib;i++)ins[j*nx+i]=1;}}
- const A=new Float64Array(N),B=new Float64Array(N);for(let k=0;k<N;k++){A[k]=ins[k]?0:1e20;B[k]=ins[k]?1e20:0;}edt2(A,nx,ny);edt2(B,nx,ny);
- const sd=new Float32Array(N);for(let k=0;k<N;k++)sd[k]=ins[k]?-(Math.sqrt(B[k])-.5)*c:(Math.sqrt(A[k])-.5)*c;
- const res={key,nx,ny,c,ox,oy,sd};FCACHE.unshift(res);FCACHE.length=Math.min(FCACHE.length,4);return res;}
-function isoLoops(Fd,lev){const{nx,ny,c,ox,oy,sd}=Fd,adj=new Map(),pt=new Map();
- const val=(i,j)=>sd[j*nx+i]-lev;
- const eid=(i,j,e)=>e==0?(j*nx+i)*2:e==2?((j+1)*nx+i)*2:e==3?(j*nx+i)*2+1:(j*nx+i+1)*2+1;
- const link=(a,b)=>{(adj.get(a)||adj.set(a,[]).get(a)).push(b);(adj.get(b)||adj.set(b,[]).get(b)).push(a);};
- for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){const v0=val(i,j),v1=val(i+1,j),v2=val(i+1,j+1),v3=val(i,j+1);
-  const b=(v0<0)|(v1<0)<<1|(v2<0)<<2|(v3<0)<<3;if(b==0||b==15)continue;
-  const P=e=>{const id=eid(i,j,e);if(!pt.has(id)){let x,y,t;if(e==0){t=v0/(v0-v1);x=i+t;y=j;}else if(e==1){t=v1/(v1-v2);x=i+1;y=j+t;}else if(e==2){t=v3/(v3-v2);x=i+t;y=j+1;}else{t=v0/(v0-v3);x=i;y=j+t;}pt.set(id,[ox+x*c,oy+y*c]);}return id;};
-  const S=(a,b2)=>link(P(a),P(b2)),ctr=(v0+v1+v2+v3)/4<0;
-  switch(b){case 1:case 14:S(3,0);break;case 2:case 13:S(0,1);break;case 3:case 12:S(3,1);break;case 4:case 11:S(1,2);break;case 6:case 9:S(0,2);break;case 7:case 8:S(3,2);break;
-   case 5:if(ctr){S(0,1);S(3,2);}else{S(3,0);S(1,2);}break;case 10:if(ctr){S(3,0);S(1,2);}else{S(0,1);S(3,2);}break;}}
- const used=new Set(),loops=[];
- for(const s of adj.keys()){if(used.has(s))continue;const L=[];let prev=-1,cur=s;
-  while(cur!=null&&!used.has(cur)){used.add(cur);L.push(pt.get(cur));const nb=adj.get(cur)||[];const nx2=nb[0]!==prev&&!used.has(nb[0])?nb[0]:(nb[1]!==undefined&&!used.has(nb[1])?nb[1]:null);prev=cur;cur=nx2;}
-  if(L.length>=4){const q=rdpClosed(L,c*.2);if(q.length>=3&&Math.abs(area(q))>c*c*4)loops.push(q);}}
- return loops;}
-
 /* ---------- генератор G-кода ---------- */
 function levels(depth,step){const a=[];let z=0;step=Math.max(0.01,+step||1);depth=Math.abs(+depth);while(z>-depth+1e-6){z=Math.max(z-step,-depth);a.push(z);}return a;}
 function pts(o){
@@ -447,10 +400,6 @@ const passes=(o,t)=>{if(o.side!='out'||!(+o.wall>0))return[0];const so=Math.max(
 function oval(R,a,q,ccw){const c=[],h=a>1e-4;
  if(ccw){if(h)c.push(`G1 ${XY(R.p(a,-q))}`);c.push(`G3 ${XY(R.p(a,q))} ${IJ(R.v(0,q))}`);if(h)c.push(`G1 ${XY(R.p(-a,q))}`);c.push(`G3 ${XY(R.p(-a,-q))} ${IJ(R.v(0,-q))}`);return{s:R.p(-a,-q),c};}
  if(h)c.push(`G1 ${XY(R.p(a,q))}`);c.push(`G2 ${XY(R.p(a,-q))} ${IJ(R.v(0,-q))}`);if(h)c.push(`G1 ${XY(R.p(-a,-q))}`);c.push(`G2 ${XY(R.p(-a,q))} ${IJ(R.v(0,q))}`);return{s:R.p(-a,q),c};}
-/* общий обход замкнутых ломаных по уровням */
-function runLoops(c,P){const{o,t,L}=c;c.start(P[0][0][0],P[0][0][1]);L.push('G0 Z1.');
- levels(o.depth,o.step).forEach(z=>P.forEach(p=>{L.push('G0 Z1.',`G0 ${XY(p[0])}`,`G1 Z${F(z)} F${c.fp}`);p.slice(1).concat([p[0]]).forEach((q,i)=>L.push(`G1 ${XY(q)}${i?'':' F'+t.f}`));}));
- L.push(`G0 Z${F(c.safe)}`);}
 const G={
  face(c){const{o,t,r,L}=c,x0=Math.min(o.x0,o.x1)-r-2,x1=Math.max(o.x0,o.x1)+r+2,y0=Math.min(o.y0,o.y1),y1=Math.max(o.y0,o.y1),so=Math.max(0.1,t.d*o.over/100);
   c.start(x0,y0);levels(o.depth,o.step).forEach(z=>{L.push(`G0 X${F(x0)} Y${F(y0)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(x1)} F${t.f}`);let y=y0,R=true;
@@ -491,39 +440,146 @@ const G={
   L.push(`M29 S${t.s}`,`G98 G84 X${F(P[0][0])} Y${F(P[0][1])} Z${F(-Math.abs(o.depth))} R${F(o.rp)} F${F(t.s*t.pitch)}`);P.slice(1).forEach(p=>L.push(`X${F(p[0])} Y${F(p[1])}`));L.push('G80',`G0 Z${F(c.safe)}`);},
  thread(c){const{o,t,L}=c,P=pts(o),R=(o.dia-t.d)/2;if(R<=0)throw Error('TOOL TOO BIG');if(!P.length)throw Error('NO POINTS');const g=o.hand=='L'?'G2':'G3',p=Math.max(0.1,o.pitch);
   c.start(P[0][0],P[0][1]);P.forEach(([x,y])=>{L.push(`G0 X${F(x)} Y${F(y)}`,'G0 Z1.',`G1 Z${F(-Math.abs(o.depth))} F${c.fp}`,`G1 X${F(x+R)} F${Math.round(t.f/2)}`);
-   let z=-Math.abs(o.depth);while(z<-1e-6){z+=p;L.push(`${g} X${F(x+R)} Y${F(y)} Z${F(z)} I${F(-R)} J0. F${t.f}`);}L.push(`G1 X${F(x)} Y${F(y)}`,`G0 Z${F(c.safe)}`);});},
- photo(c){const{o,t,r}=c;if(!o.shp||o.shp.length<3)throw Error('NO SHAPE');if(!(o.w>0))throw Error('W = 0');
-  const R=rot(o),base=o.shp.map(([x,y])=>R.p(x*o.w,y*o.w)),so=Math.max(0.1,t.d*(+o.over||45)/100),E=passes(o,t);let P=[];
-  const Fd=distField(base,o.side=='out'?r+E[0]+1:1);
-  if(o.side=='out')E.forEach(e=>isoLoops(Fd,r+e).forEach(p=>P.push(orient(p,false))));
-  else if(o.side=='in')P=isoLoops(Fd,-r).map(p=>orient(p,true));
-  else{const rings=[];for(let d=-r,k=0;k<300;k++,d-=so){const q=isoLoops(Fd,d);if(!q.length)break;rings.push(q);}rings.reverse().forEach(q=>q.forEach(p=>P.push(orient(p,true))));}
-  if(!P.length)throw Error('TOOL TOO BIG');runLoops(c,P);}
+   let z=-Math.abs(o.depth);while(z<-1e-6){z+=p;L.push(`${g} X${F(x+R)} Y${F(y)} Z${F(z)} I${F(-R)} J0. F${t.f}`);}L.push(`G1 X${F(x)} Y${F(y)}`,`G0 Z${F(c.safe)}`);});}
 };
-const ctx=(L,t,o,w)=>({L,t,o,r:t.d/2,safe:+o.safe,fp:Math.max(1,Math.round(t.f/3)),start(x,y,noSp){L.push(`G0 G90 ${w} X${F(x)} Y${F(y)}`);if(!noSp)L.push(`S${Math.round(t.s)} M03`);L.push(`G43 H${t.num} Z${F(+o.safe)}`,'M08');}});
-const ERR={'TOOL TOO BIG':'Инструмент больше элемента','NO POINTS':'Нет точек','NO SHAPE':'Загрузите фото контура','L < W':'Длина L меньше ширины W','W = 0':'Задайте ширину','SW = 0':'Задайте размер SW'};
+const ctx=(L,t,o,w,nb=1000)=>({L,t,o,w,n:(k=>()=>++k)(nb),r:t.d/2,safe:+o.safe,fp:Math.max(1,Math.round(t.f/3)),start(x,y,noSp){L.push(`G0 G90 ${w} X${F(x)} Y${F(y)}`);if(!noSp)L.push(`S${Math.round(t.s)} M03`);L.push(`G43 H${t.num} Z${F(+o.safe)}`,'M08');}});
+/* ---------- параметрический G-код (Custom Macro B) ---------- */
+/* #1… — размеры операции, #20 D фрезы, #21 S, #22 F, #23 F врезания, #24 безопасная Z, #25 радиус фрезы, #26 текущая Z */
+const MV=(L,n,v,c)=>L.push(`#${n}=${F(v)} (${c})`);
+function mTool(c,cut=true){const{L,t,o}=c;if(cut)MV(L,20,t.d,'TOOL D');MV(L,21,Math.round(t.s),'SPINDLE S');MV(L,22,Math.round(t.f),'FEED F');if(cut)MV(L,23,c.fp,'PLUNGE F');MV(L,24,+o.safe,'SAFE Z');if(cut)L.push('#25=#20/2 (TOOL R)');}
+function mStart(c,X,Y,noSp){const{L,t}=c;L.push(`G0 G90 ${c.w} X${X} Y${Y}`);if(!noSp)L.push('S#21 M03');L.push(`G43 H${t.num} Z#24`,'M08');}
+const mAlarm=(c,cond,msg)=>{const n=c.n();c.L.push(`IF[${cond}]GOTO${n}`,`#3000=1 (${msg})`,`N${n}`);};
+const mLv=(c,d,s)=>c.L.push('#26=0 (Z)',`WHILE[[#26+#${d}]GT0.001]DO1`,`#26=#26-#${s}`,`IF[[#26+#${d}]LT0]THEN#26=0-#${d}`);
+/* наружные проходы цапфы: #pn = кол-во доп. проходов */
+const mPass=(c,pn,side,wall,so)=>{const n=c.n();c.L.push(`#${pn}=0`);if(side)c.L.push(`IF[#${side}LT0]GOTO${n}`);c.L.push(`IF[#${wall}LE0]GOTO${n}`,`#${pn}=FUP[[#${wall}-#20]/#${so}]`,`IF[#${pn}LT0]THEN#${pn}=0`,`N${n}`);};
+/* точка овала с поворотом: (±A, ±Q) */
+const RP=(sa,sq,A,Q)=>`X[#1${sa}${A}*#30${sq=='+'?'-':'+'}${Q}*#31] Y[#2${sa}${A}*#31${sq}${Q}*#30]`;
+const RIJ=(sq,Q)=>`I[0${sq=='+'?'-':'+'}${Q}*#31] J[0${sq}${Q}*#30]`;
+const SDN=o=>o.side=='out'?1:-1;
+const M={
+ face(c){const{o,L}=c;MV(L,1,Math.min(o.x0,o.x1),'X FROM');MV(L,2,Math.min(o.y0,o.y1),'Y FROM');MV(L,3,Math.max(o.x0,o.x1),'X TO');MV(L,4,Math.max(o.y0,o.y1),'Y TO');
+  MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');MV(L,7,o.over,'STEPOVER PCT D');mTool(c);
+  L.push('#10=#1-#25-2. (X START)','#11=#3+#25+2. (X END)','#12=#20*#7/100 (STEPOVER)');mStart(c,'#10','#2');mLv(c,5,6);
+  L.push('G0 X#10 Y#2','G0 Z[#26+1.]','G1 Z#26 F#23','G1 X#11 F#22','#13=#2','#14=1','WHILE[[#4-#13]GT0.001]DO2','#13=#13+#12','IF[#13GT#4]THEN#13=#4','#14=0-#14','G1 Y#13','#15=#11','IF[#14LT0]THEN#15=#10','G1 X#15','END2','G0 Z#24','END1');},
+ pocketRect(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.w,'LENGTH X');MV(L,4,o.h,'WIDTH Y');MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');MV(L,7,o.over,'STEPOVER PCT D');mTool(c);
+  L.push('#10=#3/2-#25','#11=#4/2-#25');mAlarm(c,'#10GE0','TOOL TOO BIG');mAlarm(c,'#11GE0','TOOL TOO BIG');
+  L.push('#12=#20*#7/100 (STEPOVER)','#13=#10','IF[#11GT#13]THEN#13=#11','#13=FUP[#13/#12] (RINGS)','IF[#13LT1]THEN#13=1');
+  mStart(c,'#1','#2');L.push('G0 Z1.');mLv(c,5,6);
+  L.push('G1 Z#26 F#23','#14=1','WHILE[#14LE#13]DO2','#15=#10*#14/#13','#16=#11*#14/#13','G1 X[#1-#15] Y[#2-#16] F#22','G1 X[#1+#15]','G1 Y[#2+#16]','G1 X[#1-#15]','G1 Y[#2-#16]','#14=#14+1','END2','G1 X#1 Y#2','END1','G0 Z#24');},
+ pocketCircle(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.d,'DIAMETER');MV(L,4,Math.abs(o.depth),'DEPTH');MV(L,5,o.step,'STEP Z');MV(L,6,o.over,'STEPOVER PCT D');mTool(c);
+  L.push('#10=#3/2-#25 (PATH R)');mAlarm(c,'#10GE0','TOOL TOO BIG');
+  L.push('#11=#20*#6/100 (STEPOVER)','#12=FUP[#10/#11]','IF[#12LT1]THEN#12=1','IF[#10LE0.01]THEN#12=0');
+  mStart(c,'#1','#2');L.push('G0 Z1.');mLv(c,4,5);
+  L.push('G1 X#1 Y#2 F#22','G1 Z#26 F#23','#13=1','WHILE[#13LE#12]DO2','#14=#10*#13/#12','G1 X[#1+#14] Y#2 F#22','G3 X[#1+#14] Y#2 I[0-#14] J0','#13=#13+1','END2','END1','G0 Z#24');},
+ contourCircle(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.d,'DIAMETER');MV(L,4,SDN(o),'SIDE 1=OUT -1=IN');MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');MV(L,7,+o.wall||0,'WALL AROUND');MV(L,8,+o.over||45,'STEPOVER PCT D');mTool(c);
+  L.push('#10=#3/2+#25*#4 (PATH R)');mAlarm(c,'#10GT0','TOOL TOO BIG');L.push('#11=#20*#8/100 (STEPOVER)');mPass(c,12,4,7,11);L.push('#13=2.5-#4*0.5 (G2 OUT G3 IN)');
+  mStart(c,'[#1+#10+#12*#11]','#2');L.push('G0 Z1.');mLv(c,5,6);
+  L.push('G1 X[#1+#10+#12*#11] Y#2 F#22','G1 Z#26 F#23','#14=#12','WHILE[#14GE0]DO2','#15=#10+#14*#11','G1 X[#1+#15] Y#2 F#22','G#13 X[#1+#15] Y#2 I[0-#15] J0 F#22','#14=#14-1','END2','END1','G0 Z#24');},
+ contourRect(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.w,'LENGTH X');MV(L,4,o.h,'WIDTH Y');MV(L,5,SDN(o),'SIDE 1=OUT -1=IN');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,+o.wall||0,'WALL AROUND');MV(L,9,+o.over||45,'STEPOVER PCT D');mTool(c);
+  L.push('#10=#3/2+#25*#5','#11=#4/2+#25*#5');mAlarm(c,'#10GT0','TOOL TOO BIG');mAlarm(c,'#11GT0','TOOL TOO BIG');L.push('#12=#20*#9/100 (STEPOVER)');mPass(c,13,5,8,12);
+  mStart(c,'[#1-#10-#13*#12]','[#2-#11-#13*#12]');L.push('G0 Z1.');mLv(c,6,7);
+  L.push('G1 X[#1-#10-#13*#12] Y[#2-#11-#13*#12] F#22','G1 Z#26 F#23','#14=#13','WHILE[#14GE0]DO2','#15=#10+#14*#12','#16=#11+#14*#12',
+   'G1 X[#1-#15] Y[#2-#16] F#22','G1 X[#1-#15*#5] Y[#2+#16*#5]','G1 X[#1+#15] Y[#2+#16]','G1 X[#1+#15*#5] Y[#2-#16*#5]','G1 X[#1-#15] Y[#2-#16]','#14=#14-1','END2','END1','G0 Z#24');},
+ pocketOval(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.l,'LENGTH L');MV(L,4,o.w,'WIDTH W');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,o.over,'STEPOVER PCT D');mTool(c);
+  L.push('#30=COS[#5]','#31=SIN[#5]','#10=[#3-#4]/2 (HALF STRAIGHT)','#11=#4/2-#25 (PATH Q)');mAlarm(c,'#10GE0','L LESS THAN W');mAlarm(c,'#11GE0','TOOL TOO BIG');
+  {const n=c.n();L.push('#12=#20*#8/100 (STEPOVER)','#13=0',`IF[#11LE0.01]GOTO${n}`,'#13=FUP[#11/#12]','IF[#13LT1]THEN#13=1',`N${n}`);}
+  mStart(c,`[#1-#10*#30]`,`[#2-#10*#31]`);L.push('G0 Z1.','#27=0');mLv(c,6,7);
+  const a=c.n(),b=c.n();
+  L.push('G1 X[#1-#10*#30] Y[#2-#10*#31] F#22',`IF[#10LE[#25*0.5]]GOTO${a}`,'G1 X[#1+#10*#30] Y[#2+#10*#31] Z[[#27+#26]/2] F#23','G1 X[#1-#10*#30] Y[#2-#10*#31] Z#26','G1 X[#1+#10*#30] Y[#2+#10*#31] F#22',`GOTO${b}`,`N${a} G1 Z#26 F#23`,`N${b} #14=1`,
+   'WHILE[#14LE#13]DO2','#15=#11*#14/#13',`G1 ${RP('-','-','#10','#15')} F#22`,`G1 ${RP('+','-','#10','#15')}`,`G3 ${RP('+','+','#10','#15')} ${RIJ('+','#15')}`,`G1 ${RP('-','+','#10','#15')}`,`G3 ${RP('-','-','#10','#15')} ${RIJ('-','#15')}`,'#14=#14+1','END2',
+   'G1 X[#1-#10*#30] Y[#2-#10*#31]','#27=#26','END1','G0 Z#24');},
+ contourOval(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.l,'LENGTH L');MV(L,4,o.w,'WIDTH W');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,SDN(o),'SIDE 1=OUT -1=IN');MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.step,'STEP Z');MV(L,9,+o.wall||0,'WALL AROUND');MV(L,10,+o.over||45,'STEPOVER PCT D');mTool(c);
+  L.push('#30=COS[#5]','#31=SIN[#5]','#11=[#3-#4]/2 (HALF STRAIGHT)','#12=#4/2+#25*#6 (PATH Q)');mAlarm(c,'#11GE0','L LESS THAN W');mAlarm(c,'#12GT0','TOOL TOO BIG');
+  L.push('#13=#20*#10/100 (STEPOVER)');mPass(c,14,6,9,13);L.push('#17=2.5-#6*0.5 (G2 OUT G3 IN)','#16=[#12+#14*#13]*#6');
+  mStart(c,'[#1-#11*#30-#16*#31]','[#2-#11*#31+#16*#30]');L.push('G0 Z1.');mLv(c,7,8);
+  L.push('#16=[#12+#14*#13]*#6',`G1 ${RP('-','+','#11','#16')} F#22`,'G1 Z#26 F#23','#15=#14','WHILE[#15GE0]DO2','#16=[#12+#15*#13]*#6',
+   `G1 ${RP('-','+','#11','#16')} F#22`,`G1 ${RP('+','+','#11','#16')}`,`G#17 ${RP('+','-','#11','#16')} ${RIJ('-','#16')}`,`G1 ${RP('-','-','#11','#16')}`,`G#17 ${RP('-','+','#11','#16')} ${RIJ('+','#16')}`,'#15=#15-1','END2','END1','G0 Z#24');},
+ polygon(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,Math.max(3,Math.round(o.n)),'NUMBER OF FACES');MV(L,4,o.sw,'ACROSS FLATS SW');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,+o.wall||0,'WALL AROUND');MV(L,9,+o.over||45,'STEPOVER PCT D');mTool(c);
+  mAlarm(c,'#4GT0','SW IS ZERO');L.push('#10=#20*#9/100 (STEPOVER)');mPass(c,11,0,8,10);L.push('#13=[#4/2+#25+#11*#10]/COS[180/#3]');
+  mStart(c,'[#1+#13*COS[180/#3+#5]]','[#2+#13*SIN[180/#3+#5]]');L.push('G0 Z1.');mLv(c,6,7);
+  L.push('#13=[#4/2+#25+#11*#10]/COS[180/#3]','G1 X[#1+#13*COS[180/#3+#5]] Y[#2+#13*SIN[180/#3+#5]] F#22','G1 Z#26 F#23','#12=#11','WHILE[#12GE0]DO2','#13=[#4/2+#25+#12*#10]/COS[180/#3] (VERTEX R)',
+   'G1 X[#1+#13*COS[180/#3+#5]] Y[#2+#13*SIN[180/#3+#5]] F#22','#14=#3','WHILE[#14GT0]DO3','#14=#14-1','#15=[#14+0.5]*360/#3+#5','G1 X[#1+#13*COS[#15]] Y[#2+#13*SIN[#15]]','END3','#12=#12-1','END2','END1','G0 Z#24');},
+ slot(c){const{o,L}=c;MV(L,1,o.x1,'X1');MV(L,2,o.y1,'Y1');MV(L,3,o.x2,'X2');MV(L,4,o.y2,'Y2');MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');mTool(c);
+  mStart(c,'#1','#2');L.push('G0 Z1.','#10=0');mLv(c,5,6);L.push('G1 Z#26 F#23','#10=1-#10','G1 X[#1+[#3-#1]*#10] Y[#2+[#4-#2]*#10] F#22','END1','G0 Z#24');},
+ drill(c){const{o,L}=c;if(o.pat=='list')return G.drill(c);mHoles(c,`G98 ${o.cycle} X#11 Y#12 Z[0-#7] R#8${o.cycle=='G83'||o.cycle=='G73'?' Q#9':''}${o.cycle=='G82'?' P#10':''} F#22`,()=>{MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.rp,'R PLANE');if(o.cycle=='G83'||o.cycle=='G73')MV(L,9,o.q,'PECK Q');if(o.cycle=='G82')MV(L,10,Math.round(o.dwell),'DWELL P');mTool(c,false);});},
+ tap(c){const{o,t,L}=c;if(o.pat=='list')return G.tap(c);mHoles(c,'G98 G84 X#11 Y#12 Z[0-#7] R#8 F#22',()=>{MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.rp,'R PLANE');MV(L,21,Math.round(t.s),'SPINDLE S');MV(L,19,t.pitch,'PITCH');L.push('#22=#21*#19 (FEED = S X P)');MV(L,24,+o.safe,'SAFE Z');},true);}
+};
+function mHoles(c,cyc,vars,tap){const{o,L}=c;
+ if(o.pat=='pcd'){MV(L,1,o.cx,'PCD CENTER X');MV(L,2,o.cy,'PCD CENTER Y');MV(L,3,o.pr,'PCD RADIUS');MV(L,4,Math.max(1,Math.round(o.cnt)),'HOLES');MV(L,5,+o.ang||0,'START ANGLE');vars();
+  L.push('#11=#1+#3*COS[#5]','#12=#2+#3*SIN[#5]');mStart(c,'#11','#12',tap);if(tap)L.push('M29 S#21');L.push(cyc,'#13=1','WHILE[#13LT#4]DO1','#14=#5+360*#13/#4','X[#1+#3*COS[#14]] Y[#2+#3*SIN[#14]]','#13=#13+1','END1');}
+ else{MV(L,1,o.gx,'START X');MV(L,2,o.gy,'START Y');MV(L,3,Math.max(1,Math.round(o.nx)),'COUNT X');MV(L,4,Math.max(1,Math.round(o.ny)),'COUNT Y');MV(L,5,o.dx,'PITCH X');MV(L,6,o.dy,'PITCH Y');vars();const n=c.n();
+  L.push('#11=#1','#12=#2');mStart(c,'#11','#12',tap);if(tap)L.push('M29 S#21');L.push(cyc,'#13=0 (ROW)','WHILE[#13LT#4]DO1','#14=0','WHILE[#14LT#3]DO2','#15=#14','IF[[#13-FIX[#13/2]*2]EQ1]THEN#15=#3-1-#14',`IF[[#13+#14]EQ0]GOTO${n}`,'X[#1+#15*#5] Y[#2+#13*#6]',`N${n} #14=#14+1`,'END2','#13=#13+1','END1');}
+ L.push('G80','G0 Z#24');}
+
+/* ---------- интерпретатор макро B для симуляции ---------- */
+const MFN={ROUND:v=>Math.sign(v)*Math.round(Math.abs(v)),ASIN:v=>Math.asin(v)*180/Math.PI,ACOS:v=>Math.acos(v)*180/Math.PI,ATAN:v=>Math.atan(v)*180/Math.PI,SQRT:Math.sqrt,FIX:Math.trunc,FUP:v=>Math.sign(v)*Math.ceil(Math.abs(v)-1e-9),
+ SIN:v=>Math.sin(v*Math.PI/180),COS:v=>Math.cos(v*Math.PI/180),TAN:v=>Math.tan(v*Math.PI/180),ABS:Math.abs,LN:Math.log,EXP:Math.exp};
+const MFK=Object.keys(MFN);
+function mexpr(s,V){let i=0;const kw=w=>s.startsWith(w,i),bad=()=>{throw Error('MACRO SYNTAX: '+s)};
+ const prim=()=>{if(s[i]=='['){i++;const v=cmp();if(s[i]!=']')bad();i++;return v;}
+  if(s[i]=='#'){i++;let n;if(s[i]=='[')n=prim();else{const m=/^\d+/.exec(s.slice(i));if(!m)bad();i+=m[0].length;n=+m[0];}return V.get(Math.round(n))??0;}
+  for(const f of MFK)if(kw(f+'[')){i+=f.length;return MFN[f](prim());}
+  const m=/^(\d+\.?\d*|\.\d+)/.exec(s.slice(i));if(!m)bad();i+=m[0].length;return+m[0];};
+ const un=()=>{if(s[i]=='-'){i++;return-un();}if(s[i]=='+'){i++;return un();}return prim();};
+ const term=()=>{let v=un();for(;;){if(s[i]=='*'){i++;v*=un();}else if(s[i]=='/'){i++;const d=un();if(!d)throw Error('MACRO: DIVISION BY 0');v/=d;}else if(kw('AND')){i+=3;const b=un();v=(v&&b)?1:0;}else if(kw('MOD')){i+=3;v%=un();}else return v;}};
+ const sum=()=>{let v=term();for(;;){if(s[i]=='+'){i++;v+=term();}else if(s[i]=='-'){i++;v-=term();}else if(kw('XOR')){i+=3;const b=term();v=(!v!=!b)?1:0;}else if(kw('OR')){i+=2;const b=term();v=(v||b)?1:0;}else return v;}};
+ const E=1e-9,CM={EQ:(a,b)=>Math.abs(a-b)<E,NE:(a,b)=>Math.abs(a-b)>=E,GT:(a,b)=>a>b+E,GE:(a,b)=>a>=b-E,LT:(a,b)=>a<b-E,LE:(a,b)=>a<=b+E};
+ function cmp(){const v=sum();for(const k in CM)if(kw(k)){i+=2;return CM[k](v,sum())?1:0;}return v;}
+ const v=cmp();if(i<s.length)bad();return v;}
+function mword(b,V){const out=[];let i=0;const fmtv=v=>String(Math.round(v*1e4)/1e4);
+ while(i<b.length){const L=b[i];if(!/[A-Z]/.test(L))throw Error('MACRO SYNTAX: '+b);i++;let j=i;
+  if(b[i]=='['||b[i]=='#'||(b[i]=='-'&&(b[i+1]=='#'||b[i+1]=='['))){if(b[j]=='-')j++;if(b[j]=='#')j++;
+   if(b[j]=='['){let d=0;do{if(b[j]=='[')d++;else if(b[j]==']')d--;j++;}while(d>0&&j<b.length);}else{while(j<b.length&&/\d/.test(b[j]))j++;}
+   out.push(L+fmtv(mexpr(b.slice(i,j),V)));}
+  else{const m=/^[-+]?(\d+\.?\d*|\.\d+)?/.exec(b.slice(i));j=i+m[0].length;out.push(L+b.slice(i,j));}
+  i=j;}
+ return out.join(' ');}
+function expand(code){const raw=code.split('\n');if(!/#|WHILE|GOTO/i.test(code))return raw.map((t,ln)=>({t,ln}));
+ const B=raw.map(r=>r.replace(/\(.*?\)/g,'').toUpperCase().replace(/\s+/g,''));
+ const lab=new Map(),endOf=new Map(),whOf=new Map(),stk=[];
+ B.forEach((b0,i)=>{const m0=/^N(\d+)/.exec(b0);if(m0)lab.set(+m0[1],i);const b=b0.replace(/^N\d+/,'');let m;
+  if(m=/^WHILE\[.*\]DO(\d+)$/.exec(b))stk.push([m[1],i]);else if(m=/^END(\d+)$/.exec(b)){for(let k=stk.length-1;k>=0;k--)if(stk[k][0]==m[1]){endOf.set(stk[k][1],i);whOf.set(i,stk[k][1]);stk.splice(k,1);break;}}});
+ const V=new Map(),out=[];let pc=0,guard=0;
+ const jump=e=>{const t=lab.get(Math.round(mexpr(e,V)));if(t==null)throw Error('MACRO: NO N'+e+' (LINE '+(pc+1)+')');return t;};
+ const asg=(l,r)=>{const n=Math.round(l[0]=='['?mexpr(l,V):+l),v=mexpr(r,V);if(n>=3000&&n<3007&&v)throw Error('ALARM: '+((raw[pc].match(/\((.*?)\)/)||[])[1]||n));V.set(n,v);};
+ while(pc<B.length){if(++guard>3e6)throw Error('MACRO: ENDLESS LOOP');const b=B[pc].replace(/^N\d+/,'');let m;
+  try{
+  if(!b||b[0]=='%'||/^O\d/.test(b)){pc++;continue;}
+  if(m=/^WHILE(\[.*\])DO\d+$/.exec(b)){if(mexpr(m[1],V))pc++;else{const e=endOf.get(pc);if(e==null)throw Error('MACRO: NO END (LINE '+(pc+1)+')');pc=e+1;}continue;}
+  if(/^END\d+$/.test(b)){const w=whOf.get(pc);if(w==null)throw Error('MACRO: END WITHOUT WHILE (LINE '+(pc+1)+')');pc=w;continue;}
+  if(m=/^IF(\[.*\])GOTO(.+)$/.exec(b)){pc=mexpr(m[1],V)?jump(m[2]):pc+1;continue;}
+  if(m=/^IF(\[.*\])THEN#(\d+|\[.*?\])=(.+)$/.exec(b)){if(mexpr(m[1],V))asg(m[2],m[3]);pc++;continue;}
+  if(m=/^GOTO(.+)$/.exec(b)){pc=jump(m[1]);continue;}
+  if(m=/^#(\d+|\[.*?\])=(.+)$/.exec(b)){asg(m[1],m[2]);pc++;continue;}
+  out.push({t:mword(b,V),ln:pc});if(/M(30|0?2|99)(?!\d)/.test(b))break;pc++;
+  }catch(e){if(/LINE|ALARM/.test(e.message))throw e;throw Error(e.message+' (LINE '+(pc+1)+')');}}
+ return out;}
+
+const ERR={'TOOL TOO BIG':'Инструмент больше элемента','NO POINTS':'Нет точек','L < W':'Длина L меньше ширины W','W = 0':'Задайте ширину','SW = 0':'Задайте размер SW'};
 function gen(){
- const L=[],s=st,w=s.stock.wcs;let cur=null;
+ const L=[],s=st,w=s.stock.wcs,macro=s.prog.fmt!='plain';let cur=null;
  L.push('%',`O${String(Math.round(s.prog.num)).padStart(4,'0')} (${lat(s.prog.name)})`);
  if(s.prog.note)L.push(`(${lat(s.prog.note)})`);
  {const k=s.stock,sh=k.shape||'rect',g=stockGeo(),d=sh=='round'?`D${F(k.d)}`:sh=='poly'?`POLY N${Math.round(k.n)} SW${F(k.sw)}`:sh=='custom'?`CONTOUR ${F(g.w)}X${F(g.h)}`:`X${F(k.x)} Y${F(k.y)}`;
  L.push(`(STOCK ${d} Z${F(k.z)} ${lat(k.mat)})`,`(Z0 = TOP, XY0 = ${sh=='custom'?'PART':k.origin=='center'?'CENTER':'LOWER LEFT'})`);}
  const used=[...new Set(s.ops.filter(o=>o.on).map(o=>o.tool))];
  s.tools.filter(t=>used.includes(t.id)).forEach(t=>L.push(`(T${t.num} ${TT[t.type].c} D${F(t.d)}${t.name?' '+lat(t.name):''})`));
+ if(macro)L.push('(PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE Z)');
  L.push('G21 G17 G40 G49 G80 G90 G94');
  s.ops.forEach((o,i)=>{if(!o.on)return;const t=s.tools.find(x=>x.id==o.tool);if(!t){L.push(`(OP${i+1} NO TOOL)`);return;}
   if(cur!==t.id){if(cur)L.push('M09','M05','G91 G28 Z0.','G90');L.push(`T${t.num} M06`);cur=t.id;}
   L.push(`(OP${i+1} ${OPS[o.type].c})`);
-  const n0=L.length;try{G[o.type](ctx(L,t,o,w))}catch(e){L.length=n0;L.push(`(OP${i+1} ERROR: ${e.message})`);}});
+  const n0=L.length;try{(macro&&M[o.type]?M:G)[o.type](ctx(L,t,o,w,1000+(i+1)*10))}catch(e){L.length=n0;L.push(`(OP${i+1} ERROR: ${e.message})`);}});
  L.push('M09','M05','G91 G28 Z0.','G28 Y0.','G90','M30','%');
  return L.join('\n');}
 function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Нет инструмента');const L=[];G[o.type](ctx(L,t,o,st.stock.wcs));return{code:L.join('\n'),t};}
 
 /* ---------- парсер для симуляции ---------- */
 function parse(code){
+ let X;try{X=expand(code)}catch(e){return{segs:[],time:0,len:{f:0,r:0},err:e.message};}
  const segs=[];let p={x:0,y:0,z:50},mode=0,cyc=null,cz=0,cr=0,init=50,tool=0,feed=100,time=0,len={f:0,r:0};
  const push=(a,b,rapid,ln)=>{const l=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);if(l<1e-6)return;segs.push({a,b,rapid,tool,len:l,ln});if(rapid){len.r+=l;time+=l/20000}else{len.f+=l;time+=l/Math.max(1,feed)}};
- code.split('\n').forEach((raw,ln)=>{const l=raw.replace(/\(.*?\)/g,'').toUpperCase().trim();if(!l||l[0]=='%'||l[0]=='O')return;
+ X.forEach(({t:raw,ln})=>{const l=raw.replace(/\(.*?\)/g,'').toUpperCase().trim();if(!l||l[0]=='%'||l[0]=='O')return;
   const w={},gs=[];l.replace(/([A-Z])\s*(-?[\d.]+)/g,(m,k,v)=>{if(k=='G')gs.push(+v);else w[k]=+v;});
   if(gs.includes(28)||gs.includes(91))return;
   if(w.T!=null)tool=w.T;if(w.F!=null&&!gs.includes(84))feed=w.F;
@@ -544,9 +600,10 @@ function parse(code){
 /* ---------- G-код UI ---------- */
 function regen(force){if(force){manual=false;}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast('G-код пересоздан');}
 window.regen=regen;
+window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
 const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
- $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`;
+ $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+(r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'');
  $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';}
 $('#code').addEventListener('input',()=>{manual=true;updCodeInfo();});
 const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
@@ -617,65 +674,6 @@ window.setPrevAll=v=>{prevAll=v;updPrev(0);};
 window.fitPrev=()=>{if(PV)aimCam(PV.cam,PV.ctl,1.55);};
 addEventListener('resize',()=>{sizePV();resize();});
 
-/* ---------- контур по фото ---------- */
-let PH={g:null};
-function photoPanel(o){const has=PH.g&&PH.opId===o.id;
- return `<div class="ph"><div class="row"><button class="btn p s" onclick="document.getElementById('phF').click()">📷 ${o.shp?'Другое фото':'Снять / выбрать фото'}</button>
-  <label class="chip"><input type="checkbox" id="phInv" ${o.inv?'checked':''} onchange="phSet()">деталь светлее фона</label>
-  <input type="file" id="phF" accept="image/*" hidden onchange="phLoad(this)"></div>
-  <canvas id="phC"></canvas>
-  <div class="grid"><label>Порог яркости <input type="range" id="phThr" min="1" max="254" value="${o.thr??128}" oninput="phSet()" ${has?'':'disabled'}></label>
-  <label>Упрощение контура <input type="range" id="phEps" min="0.3" max="6" step="0.1" value="${o.eps??1.5}" oninput="phSet()" ${has?'':'disabled'}></label></div>
-  <div class="stats" id="phInfo" style="margin:6px 0 0"></div></div>`;}
-function blur(g,W,H,r){const t=new Float32Array(W*H),o=new Float32Array(W*H);
- for(let y=0;y<H;y++){let s=0;for(let x=-r;x<=r;x++)s+=g[y*W+Math.min(W-1,Math.max(0,x))];for(let x=0;x<W;x++){t[y*W+x]=s/(2*r+1);s+=g[y*W+Math.min(W-1,x+r+1)]-g[y*W+Math.max(0,x-r)];}}
- for(let x=0;x<W;x++){let s=0;for(let y=-r;y<=r;y++)s+=t[Math.min(H-1,Math.max(0,y))*W+x];for(let y=0;y<H;y++){o[y*W+x]=s/(2*r+1);s+=t[Math.min(H-1,y+r+1)*W+x]-t[Math.max(0,y-r)*W+x];}}return o;}
-function otsu(g){const h=new Float64Array(256);g.forEach(v=>h[Math.max(0,Math.min(255,v|0))]++);const N=g.length;let sum=0;for(let i=0;i<256;i++)sum+=i*h[i];
- let sB=0,wB=0,best=0,th=128;for(let i=0;i<256;i++){wB+=h[i];if(!wB)continue;const wF=N-wB;if(!wF)break;sB+=i*h[i];const mB=sB/wB,mF=(sum-sB)/wF,v=wB*wF*(mB-mF)**2;if(v>best){best=v;th=i;}}return th;}
-window.phLoad=inp=>{const f=inp.files[0];if(!f)return;const o=st.ops.find(x=>x.id==selOp);if(!o)return;const url=URL.createObjectURL(f),im=new Image();
- im.onload=()=>{const k=Math.min(1,700/Math.max(im.width,im.height)),W=Math.max(8,Math.round(im.width*k)),H=Math.max(8,Math.round(im.height*k));
-  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.drawImage(im,0,0,W,H);const d=x.getImageData(0,0,W,H).data;
-  let g=new Float32Array(W*H);for(let i=0;i<W*H;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];g=blur(g,W,H,Math.max(1,Math.round(W/350)));
-  PH={g,W,H,cv,opId:o.id};o.thr=otsu(g);URL.revokeObjectURL(url);
-  /* фон обычно у краёв кадра: если края тёмные — значит деталь светлее */
-  let e=0,n=0;for(let i=0;i<W;i++){e+=g[i]+g[(H-1)*W+i];n+=2;}for(let j=0;j<H;j++){e+=g[j*W]+g[j*W+W-1];n+=2;}o.inv=e/n<o.thr;
-  renderOpEd();phSet();toast('Фото загружено');};
- im.onerror=()=>toast('Не удалось открыть фото');im.src=url;inp.value='';};
-function trace(isIn,sx,sy){const D=[[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];const P=[[sx,sy]];let px=sx,py=sy,d=4,second=null,lim=2e6;
- while(lim--){let found=false;for(let i=1;i<=8;i++){const nd=(d+i)%8,qx=px+D[nd][0],qy=py+D[nd][1];
-  if(isIn(qx,qy)){const pd=(d+i-1)%8,bx=px+D[pd][0]-qx,by=py+D[pd][1]-qy;d=D.findIndex(v=>v[0]==bx&&v[1]==by);
-   if(px==sx&&py==sy&&second&&qx==second[0]&&qy==second[1]){P.pop();return P;}if(!second)second=[qx,qy];px=qx;py=qy;P.push([px,py]);found=true;break;}}
-  if(!found)return P;}return P;}
-function phProcess(o){if(!PH.g||PH.opId!==o.id)return;const{W,H,g}=PH,N=W*H,m=new Uint8Array(N);for(let i=0;i<N;i++)m[i]=(o.inv?g[i]>o.thr:g[i]<o.thr)?1:0;
- const lab=new Int32Array(N),stk=new Int32Array(N);let id=0,best=null,bestB=null;
- for(let s=0;s<N;s++){if(!m[s]||lab[s])continue;id++;let sp=0,cnt=0,tb=false;stk[sp++]=s;lab[s]=id;
-  while(sp){const k=stk[--sp];cnt++;const x=k%W,y=(k-x)/W;if(x==0||y==0||x==W-1||y==H-1)tb=true;
-   if(x>0&&m[k-1]&&!lab[k-1]){lab[k-1]=id;stk[sp++]=k-1;}if(x<W-1&&m[k+1]&&!lab[k+1]){lab[k+1]=id;stk[sp++]=k+1;}
-   if(y>0&&m[k-W]&&!lab[k-W]){lab[k-W]=id;stk[sp++]=k-W;}if(y<H-1&&m[k+W]&&!lab[k+W]){lab[k+W]=id;stk[sp++]=k+W;}}
-  const c={id,cnt,s};if(!tb){if(!best||cnt>best.cnt)best=c;}else if(!bestB||cnt>bestB.cnt)bestB=c;}
- if(!best||best.cnt<N*.002)best=bestB;
- PH.lab=lab;PH.m=m;PH.best=best&&best.id;PH.P=null;
- if(!best||best.cnt<N*.002){o.shp=null;o.ratio=0;return;}
- const isIn=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&lab[y*W+x]==best.id;
- let P=trace(isIn,best.s%W,(best.s-best.s%W)/W);const n=P.length;
- if(n>8){const k=2;P=P.map((_,i)=>{let sx=0,sy=0;for(let j=-k;j<=k;j++){const q=P[(i+j+n)%n];sx+=q[0];sy+=q[1];}return[sx/(2*k+1),sy/(2*k+1)];});}
- P=rdpClosed(P,+o.eps||1.5);if(P.length<3){o.shp=null;return;}
- let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
- const w=Math.max(1,x1-x0),cx=(x0+x1)/2,cy=(y0+y1)/2;
- o.shp=P.map(([x,y])=>[Math.round((x-cx)/w*1e5)/1e5,Math.round(-(y-cy)/w*1e5)/1e5]);o.ratio=(y1-y0)/w;PH.P=P;}
-function phDraw(o){const c=$('#phC');if(!c)return;const x=c.getContext('2d');
- if(PH.g&&PH.opId===o.id){const{W,H}=PH;c.width=W;c.height=H;x.drawImage(PH.cv,0,0);
-  if(PH.lab){const ov=x.createImageData(W,H),d=ov.data;for(let i=0;i<W*H;i++){if(PH.lab[i]&&PH.lab[i]==PH.best){d[i*4]=255;d[i*4+1]=196;d[i*4+2]=0;d[i*4+3]=95;}else if(PH.m[i]){d[i*4]=255;d[i*4+1]=70;d[i*4+2]=70;d[i*4+3]=60;}}
-   const oc=document.createElement('canvas');oc.width=W;oc.height=H;oc.getContext('2d').putImageData(ov,0,0);x.drawImage(oc,0,0);}
-  if(PH.P){x.strokeStyle='#ffc400';x.lineWidth=Math.max(1.5,W/300);x.beginPath();PH.P.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.closePath();x.stroke();x.fillStyle='#fff';PH.P.forEach(([a,b])=>x.fillRect(a-1.5,b-1.5,3,3));}}
- else{const W=600,H=Math.round(W*Math.min(1,Math.max(.35,o.ratio||.5)));c.width=W;c.height=H;x.fillStyle='#0b0d11';x.fillRect(0,0,W,H);
-  if(o.shp){const k=Math.min((W-40),(H-40)/(o.ratio||1));x.strokeStyle='#ffc400';x.lineWidth=2;x.beginPath();o.shp.forEach(([a,b],i)=>{const X=W/2+a*k,Y=H/2-b*k;i?x.lineTo(X,Y):x.moveTo(X,Y);});x.closePath();x.stroke();
-   x.fillStyle='#8b93a3';x.font='12px sans-serif';x.fillText('Контур сохранён. Чтобы перенастроить — загрузите фото заново.',12,H-12);}
-  else{x.fillStyle='#8b93a3';x.font='14px sans-serif';x.textAlign='center';x.fillText('Сфотографируйте деталь или шаблон сверху',W/2,H/2-8);x.fillText('на контрастном фоне',W/2,H/2+14);}}
- const i=$('#phInfo');if(i)i.innerHTML=o.shp?`<span>Размер: <b>${+(+o.w).toFixed(2)} × ${+(o.w*o.ratio).toFixed(2)} мм</b></span><span>Точек: <b>${o.shp.length}</b></span>`:(PH.g&&PH.opId===o.id?'<span style="color:var(--bad)">Контур не найден — подвиньте порог или переключите «деталь светлее фона»</span>':'');}
-window.phSet=()=>{const o=st.ops.find(x=>x.id==selOp);if(!o)return;const t=$('#phThr'),e=$('#phEps'),v=$('#phInv');if(t)o.thr=+t.value;if(e)o.eps=+e.value;if(v)o.inv=v.checked;
- phProcess(o);phDraw(o);save();renderOpList();updPrev();};
-
 /* ---------- 3D симуляция ---------- */
 let R3,SC,CAM,CTL,hm,pathObj,toolObj,toolNum=-1,data={segs:[]},sim={i:0,t:0,play:false},box3,visible=false;
 function init3d(){
@@ -710,6 +708,7 @@ function step(budget){const S=data.segs;let p=null,it=0;
  if(p){setTool(p,toolNum);hud(p);}flushHM(hm);
  if(sim.i>=S.length){sim.play=false;$('#playB').textContent='▶';}}
 function hud(p){const S=data.segs,s=S[Math.min(sim.i,S.length-1)],line=s?$('#code').value.split('\n')[s.ln]:'';
+ if(data.err){$('#hud').innerHTML=`<div class="ln" style="color:var(--bad)">⚠ ${esc(data.err)}</div>`;return;}
  $('#hud').innerHTML=`<div class="ln">${esc(line||'—')}</div>X ${F(p.x)}  Y ${F(p.y)}  Z ${F(p.z)}<br>T${toolNum??'-'} · ${S.length?Math.round(sim.i/S.length*100):0}%`;}
 function loop(){requestAnimationFrame(loop);if(!visible)return;if(sim.play){const v=+$('#spd').value;step(v*v*.02+.3);}CTL.update();R3.render(SC,CAM);}
 window.simPlay=()=>{if(sim.i>=data.segs.length)simReset();sim.play=!sim.play;$('#playB').textContent=sim.play?'⏸':'▶';};
@@ -733,15 +732,16 @@ window.doUpdate=async()=>{try{if('caches' in window)for(const k of await caches.
 /* ---------- вкладки ---------- */
 function show(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
  visible=t=='sim';if(PV)PV.on=t=='ops';
- if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code')regen();
+ if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code'){$('#fmtSel').value=st.prog.fmt=='plain'?'plain':'macro';regen();}
  if(t=='sim'){regen();if(!R3)init3d();resize();build();}}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
 function renderAll(){renderProj();renderTools();renderOps();codeDirty=true;}
 document.querySelectorAll('.stkChk').forEach(c=>c.checked=showStock);
 normStock();
+st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.find(o=>o.id==selOp))selOp=st.ops[0]?.id;
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'';
 renderAll();
-window.__fcam={st:()=>st,gen,parse,opCode,distField,isoLoops,show};
+window.__fcam={st:()=>st,gen,parse,opCode,show,expand};
 </script>
 </body>
 </html>
