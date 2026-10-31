@@ -88,7 +88,8 @@ details.cycd[open] summary:before{content:'－'}
 .prevw{position:sticky;top:0}
 .prev{position:relative;height:380px;border-radius:12px;overflow:hidden;background:#0b0d11;border:1px solid var(--line)}
 .prev canvas{display:block;touch-action:none;max-width:100%}
-.prevmsg{position:absolute;top:8px;left:10px;right:10px;font-size:12px;color:var(--bad);pointer-events:none}
+.tsel{width:auto;max-width:100%;padding:3px 8px;margin-top:3px;border-radius:8px;font-size:16px;background:#272c37}
+.prevmsg{position:absolute;top:28px;left:10px;right:10px;font-size:12px;color:var(--bad);pointer-events:none}
 .prevtag{position:absolute;top:8px;right:10px;font-size:11px;color:var(--mut);pointer-events:none}
 .prevbar{position:absolute;left:8px;right:8px;bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .prevbar .chip{background:#0f1115cc;padding:5px 9px;border-radius:9px;border:1px solid var(--line)}
@@ -112,6 +113,9 @@ details.cycd[open] summary:before{content:'－'}
  .tab{padding:12px}
  #code{height:55vh}
  .cyc{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+ #opList .it{flex-wrap:wrap;row-gap:4px}
+ #opList .it .m{flex:1 1 calc(100% - 50px)}
+ #opList .it .ib{flex:1;font-size:18px;padding:6px 0}
 }
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
@@ -151,7 +155,7 @@ details.cycd[open] summary:before{content:'－'}
 
  <section id="t-ops" class="tab">
   <div class="split">
-   <div class="card"><h3>Технология</h3>
+   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Технология</h3><button class="btn d s" onclick="delAllOps()">🗑 Удалить всё</button></div>
     <div id="opList"></div>
     <details class="cycd" open><summary>Добавить цикл</summary><div id="cycG"></div></details>
    </div>
@@ -207,7 +211,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.11.0';
+const APP_VERSION='1.11.1';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -398,7 +402,7 @@ function renderCyc(){
  $('#cycG').innerHTML=h;}
 function opInfo(o){const t=st.tools.find(x=>x.id==o.tool);return (t?`T${t.num} Ø${t.d}`:'⚠ нет инструмента')+(o.depth!=null?` · глуб. ${o.depth}`:'');}
 function renderOpList(){
- $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n" title="${i+1}">${svg(o.type=='polygon'&&o.side=='in'?'polygonIn':o.type,'style="color:var(--acc)"')}</div><div class="m" title="${OPS[o.type].n}"><b>${i+1}. ${o.type=='polygon'?(o.side=='in'?'Гнездо ':'Выступ ')+Math.round(o.n)+'-гр.':OPS[o.type].s}</b><small>${opInfo(o)}</small></div>
+ $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n" title="${i+1}">${svg(o.type=='polygon'&&o.side=='in'?'polygonIn':o.type,'style="color:var(--acc)"')}</div><div class="m" title="${OPS[o.type].n}"><b>${i+1}. ${o.type=='polygon'?(o.side=='in'?'Гнездо ':'Выступ ')+Math.round(o.n)+'-гр.':OPS[o.type].s}</b><small><select class="tsel" onclick="event.stopPropagation()" onchange="setOpTool('${o.id}',this.value)">${st.tools.find(t=>t.id==o.tool)?'':'<option selected>⚠ нет инструмента</option>'}${st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<option value="${t.id}" ${t.id==o.tool?'selected':''}>T${t.num} ${TSH[t.type]||''} Ø${t.d}</option>`).join('')}</select>${o.depth!=null?` глуб. ${o.depth}`:''}</small></div>
  <button class="ib" title="Вкл/выкл" onclick="event.stopPropagation();opAct('tog','${o.id}')">${o.on?'◉':'○'}</button><button class="ib" onclick="event.stopPropagation();opAct('up','${o.id}')">↑</button><button class="ib" onclick="event.stopPropagation();opAct('dn','${o.id}')">↓</button><button class="ib" onclick="event.stopPropagation();opAct('dup','${o.id}')">⧉</button><button class="ib" onclick="event.stopPropagation();opAct('del','${o.id}')">✕</button></div>`).join('')||'<div class="empty">Добавьте первый цикл ниже</div>';}
 let prevAll=false;
 function renderOpEd(){
@@ -407,7 +411,7 @@ function renderOpEd(){
  const d=OPS[o.type],sug=st.tools.filter(t=>d.k.includes(t.type));
  const toolF=['tool','Инструмент',null,(sug.length?sug:st.tools).concat(sug.length?st.tools.filter(t=>!sug.includes(t)):[]).map(t=>[t.id,`T${t.num} · ${TT[t.type].n} Ø${t.d}`])];
  $('#opEd').innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${d.n}</h3><button class="btn s" onclick="savePreset()">★ В пресеты</button></div>
- <div class="oped"><div>${o.type=='contour'?ctrPanel(o):''}<div class="grid" id="of">${fld(o,toolF)}${fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint">${HINT[o.type]||''}${'rf' in o&&(o.type!='polygon'||o.side=='in')?HINT._rf:''}</div></div>
+ <div class="oped"><div>${o.type=='contour'?ctrPanel(o):''}<div class="grid" id="of">${fld(o,toolF)}${fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint">${HINT[o.type]||''}${['pocketRect','pocketCircle','pocketOval'].includes(o.type)||(o.type=='polygon'&&o.side=='in')?HINT._rf:''}</div></div>
  <div class="prevw"><div class="prev" id="opPrev"><div class="prevmsg" id="prevMsg"></div><div class="prevtag">3D-модель результата · вращайте пальцем</div>
   <div class="prevbar"><div class="row" style="gap:6px"><label class="chip"><input type="checkbox" ${prevAll?'checked':''} onchange="setPrevAll(this.checked)">с предыдущими</label><label class="chip"><input type="checkbox" class="stkChk" ${showStock?'checked':''} onchange="setStock(this.checked)">заготовка</label></div><button class="btn s" onclick="fitPrev()">⌖</button></div></div>
   <div class="stats" id="prevStats"></div></div></div>`;
@@ -423,7 +427,18 @@ const HINT={groove:'Канавка с заданным поперечным пр
  slot:'Врезание на каждом проходе, чередование концов паза.',drill:'Канонические циклы Fanuc G81/G82/G83/G73 с G98 (возврат в начальную плоскость).',tap:'Жёсткое нарезание: M29 S.. + G84, F = S × P из шага метчика.',thread:'Винтовая интерполяция снизу вверх (попутное). Диаметр траектории = D резьбы − D фрезы.'};
 window.selO=id=>{selOp=id;renderOpList();renderOpEd();};
 const narrow=()=>innerWidth<820;
-window.addOp=(type,pr)=>{const o=newOp(type);if(pr)Object.assign(o,pr);st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+OPS[type].n);if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
+/* подходящий инструмент для цикла: из магазина, а если нет — добавить в магазин */
+const TSH={endmill:'конц.',ball:'сфер.',bull:'радиус.',face:'торц.',drill:'сверло',center:'центр.',tap:'метчик',thread:'резьбоф.',chamfer:'фаск.',reamer:'развёрт.'};
+const TDEF={endmill:[10,150,.05,4],ball:[12,150,.05,2],bull:[10,150,.05,4],face:[50,200,.08,5],drill:[6.8,60,.1,2],center:[10,40,.05,2],tap:[8,10,0,1],thread:[6,100,.03,3],chamfer:[10,100,.05,4],reamer:[8,15,.15,6]};
+function newTool(type,d){const[d0,vc,fz,fl]=TDEF[type]||TDEF.endmill;d=d||d0;const n=Math.max(0,...st.tools.map(t=>t.num))+1,s=Math.round(1000*vc/(Math.PI*d)),
+  T={id:uid(),num:n,type,name:'',d,fl,s,f:type=='tap'?Math.round(s*1.25):PERREV.includes(type)?Math.round(s*fz):Math.round(s*fz*fl),pitch:1.25,cr:1,vc,fz};st.tools.push(T);return T;}
+function pickTool(o){const k=OPS[o.type].k;let T=null,want=null;
+ if(o.type=='groove'){const R=o.prof=='v'?3:Math.max(0.5,+o.rf||3);T=st.tools.filter(t=>t.type=='ball'&&t.d/2<=R+1e-9).sort((a,b)=>b.d-a.d)[0];if(!T)want=['ball',Math.min(2*R,12)];}
+ else{T=st.tools.find(t=>t.id==o.tool&&k.includes(t.type))||st.tools.find(t=>k.includes(t.type));if(!T)want=[k[0]];}
+ let msg='';if(!T){T=newTool(...want);msg=`в магазин добавлен T${T.num} — ${TT[T.type].n} Ø${T.d}`;}o.tool=T.id;return msg;}
+window.setOpTool=(id,v)=>{const o=st.ops.find(x=>x.id==id);if(!o)return;o.tool=v;save();renderOpList();if(id==selOp)renderOpEd();};
+window.delAllOps=()=>{if(!st.ops.length)return;if(!confirm(`Удалить все операции (${st.ops.length} шт.)?`))return;st.ops=[];selOp=null;save();renderOpList();renderOpEd();toast('Технология очищена');};
+window.addOp=(type,pr)=>{const o=newOp(type);if(pr)Object.assign(o,pr);const tm=pickTool(o);st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+OPS[type].n+(tm?' · '+tm:''));if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
 window.opAct=(a,id)=>{const i=st.ops.findIndex(o=>o.id==id),o=st.ops[i];
  if(a=='tog')o.on=!o.on;
  if(a=='up'&&i>0)[st.ops[i-1],st.ops[i]]=[st.ops[i],st.ops[i-1]];
@@ -435,7 +450,7 @@ window.opAct=(a,id)=>{const i=st.ops.findIndex(o=>o.id==id),o=st.ops[i];
 window.savePreset=()=>{const o=st.ops.find(x=>x.id==selOp);if(!o)return;const name=prompt('Название пресета',OPS[o.type].s);if(!name)return;
  const p=JSON.parse(JSON.stringify(o));delete p.id;delete p.on;const t=st.tools.find(x=>x.id==o.tool);p._tnum=t?t.num:null;
  PRE.push({id:uid(),name:name.trim().slice(0,40),type:o.type,p});savePre();renderCyc();toast('Пресет сохранён');};
-window.addPreset=id=>{const P=PRE.find(x=>x.id==id);if(!P||!OPS[P.type])return;const o=newOp(P.type),def=o.tool;Object.assign(o,JSON.parse(JSON.stringify(P.p)));o.id=uid();o.on=true;
+window.addPreset=id=>{const P=PRE.find(x=>x.id==id);if(!P||!OPS[P.type])return;const o=newOp(P.type);pickTool(o);const def=o.tool;Object.assign(o,JSON.parse(JSON.stringify(P.p)));o.id=uid();o.on=true;
  const byNum=st.tools.find(t=>t.num==P.p._tnum&&OPS[P.type].k.includes(t.type));o.tool=byNum?byNum.id:(st.tools.find(t=>t.id==o.tool)?o.tool:def);delete o._tnum;
  st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+P.name);if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
 window.delPreset=id=>{const P=PRE.find(x=>x.id==id);if(!P||!confirm(`Удалить пресет «${P.name}»?`))return;PRE=PRE.filter(x=>x.id!=id);savePre();renderCyc();};
@@ -646,8 +661,8 @@ const G={
    else z=u<=a-Ru?-H:u<=a?Math.min(0,-H+Ru-Math.sqrt(Math.max(0,Ru*Ru-(u-(a-Ru))**2))):0;return z;};
   const sh=d=>d<=rfl||cr<=0?0:cr-Math.sqrt(Math.max(0,cr*cr-(d-rfl)**2)),du=Math.min(0.005,r/200);
   const KU=Math.max(2,Math.round(2*r/du)),tz=x=>{let z=-1e9;for(let k=0;k<=KU;k++){const u=k==KU?x+r:x-r+2*r*k/KU,v=prof(u)-sh(Math.abs(u-x));if(v>z)z=v;}return Math.max(z,-H-r);};
-  const so=Math.max(0.01,+o.so||0.5),rs=Math.max(so,t.d*0.4),nr=Math.max(1,Math.ceil(2*ext/rs)),XS=[...Array(nr+1)].map((_,i)=>-ext+i*2*ext/nr),ZS=XS.map(tz);
-  if(!ZS.some(z=>z<-0.001))throw Error('TOOL TOO BIG');
+  const so=Math.max(0.01,+o.so||0.5),rs=Math.max(so,t.d*0.4),fs=Math.min(so,0.1),FX=[];for(let k=0;k<=Math.round(2*ext/fs);k++){const x=-ext+k*fs;if(tz(x)<-0.001)FX.push(x);}
+  if(!FX.length)throw Error('GROOVE TOOL');const xa=FX[0],xb=FX[FX.length-1],nr=Math.max(1,Math.ceil((xb-xa)/rs)),XS=xb-xa<1e-9?[xa]:[...Array(nr+1)].map((_,i)=>xa+i*(xb-xa)/nr),ZS=XS.map(tz);
   /* чистовые строчки — по самому профилю (стенка → радиус → дно → радиус → стенка) с шагом so по поверхности */
   const PL=[];if(pr=='v')PL.push([-a,0],[0,-H],[a,0]);else{const Rc=pr=='round'?Rr:Ru,hf=pr=='round'?0:a-Ru,zc=-H+Rc,K=180;if(zc<0)PL.push([-(hf+Rc),0]);
    for(let i=0;i<=K;i++){const g=Math.PI*(1+0.5*i/K),q=[-hf+Rc*Math.cos(g),zc+Rc*Math.sin(g)];if(q[1]<=1e-9)PL.push(q);}
@@ -893,7 +908,7 @@ const CPH=[['STOCK','ЗАГОТОВКА'],['Z0 = TOP','Z0 = ВЕРХ'],['XY0 = L
 function trC(t,lang){if(lang=='en')return t;let r=CRU[t];if(r==null){r=t;for(const[a,b]of CPH)r=r.replace(new RegExp('(^|[^A-Z])'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[^A-Z]|$)','g'),(m,p)=>p+b);}
  return lang=='cyr'?r.toUpperCase():lat(r);}
 const trLines=(L,lang)=>lang=='en'?L:L.map(l=>l.replace(/\(([^()]*)\)/g,(m,t)=>'('+trC(t,lang)+')'));
-const ERR={'CORNER R LESS THAN TOOL R':'Радиус углов меньше радиуса фрезы','FILLET < TOOL CR':'Радиус фрезы при вершине больше радиуса у дна','FILLET TOO BIG':'Радиус у дна слишком большой для этого кармана и фрезы','ARC R < TOOL R':'Радиус вогнутой дуги меньше радиуса фрезы','TOOL TOO BIG':'Инструмент больше элемента','NO POINTS':'Нет точек','L < W':'Длина L меньше ширины W','W = 0':'Задайте ширину','SW = 0':'Задайте размер SW'};
+const ERR={'GROOVE TOOL':'Фреза не помещается в профиль — возьмите фрезу меньше (лучше сферическую с радиусом ≤ R)','CORNER R LESS THAN TOOL R':'Радиус углов меньше радиуса фрезы','FILLET < TOOL CR':'Радиус фрезы при вершине больше радиуса у дна','FILLET TOO BIG':'Радиус у дна слишком большой для этого кармана и фрезы','ARC R < TOOL R':'Радиус вогнутой дуги меньше радиуса фрезы','TOOL TOO BIG':'Инструмент больше элемента','NO POINTS':'Нет точек','L < W':'Длина L меньше ширины W','W = 0':'Задайте ширину','SW = 0':'Задайте размер SW'};
 function gen(){
  const L=[],s=st,w=s.stock.wcs,macro=s.prog.fmt!='plain';let cur=null;
  L.push('%',`O${String(Math.round(s.prog.num)).padStart(4,'0')} (${lat(s.prog.name)})`);
