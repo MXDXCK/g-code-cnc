@@ -211,7 +211,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.11.1';
+const APP_VERSION='1.11.2';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -331,7 +331,7 @@ if(!st||!st.tools)st=defaults();
 let PRE=[];try{PRE=JSON.parse(localStorage.getItem('fcam_presets'))||[]}catch(e){}
 const savePre=()=>{try{localStorage.setItem('fcam_presets',JSON.stringify(PRE))}catch(e){}};
 let selTool=st.tools[0]?.id,selOp=st.ops[0]?.id,manual=false;
-const save=()=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(!manual)codeDirty=true;};
+const save=()=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(manual){manual=false;setTimeout(()=>toast('Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}codeDirty=true;};
 let codeDirty=true;
 
 /* ---------- формы ---------- */
