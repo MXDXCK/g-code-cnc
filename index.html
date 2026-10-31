@@ -132,7 +132,7 @@ details.cycd[open] summary:before{content:'－'}
  <section id="t-proj" class="tab on">
   <div class="card"><h3>Программа</h3><div class="grid" id="progF"></div></div>
   <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div><div class="stats" id="stockInfo"></div>
-   <div class="hint">Произвольный контур: точки X,Y через «;» в координатах детали (по часовой или против — не важно). Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
+   <div class="hint">Произвольный контур: точки «X Y» через «;» в координатах детали (дробь можно через точку или запятую: 1.5 или 1,5) (по часовой или против — не важно). Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
   <div class="card"><h3>Проект</h3><div class="row">
    <button class="btn" onclick="exportProj()">💾 Экспорт проекта</button>
    <button class="btn" onclick="document.getElementById('impF').click()">📂 Импорт</button>
@@ -207,11 +207,14 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.6.1';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
-const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n;};
+const num=v=>{const n=parseFloat(String(v).trim().replace(/[−–]/g,'-').replace(/\s+/g,'').replace(',','.'));return isNaN(n)?0:n;};
+/* список точек «X Y; X Y»: дробь через точку или запятую — 1.5 2,5; 10,5 -3; 1.5,2.5; 1,5,2,5 */
+const parsePts=str=>String(str||'').split(/[;\n]/).map(q=>q.trim()).filter(Boolean).map(q=>{let t=q.split(/[\s\/]+/).filter(Boolean);
+ if(t.length!=2){const c=q.replace(/\s+/g,'').split(',');t=c.length==2?c:c.length==4?[c[0]+'.'+c[1],c[2]+'.'+c[3]]:null;}return t&&t.length==2?t.map(num):null;}).filter(Boolean);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2000);};
 const TR={а:'A',б:'B',в:'V',г:'G',д:'D',е:'E',ё:'E',ж:'ZH',з:'Z',и:'I',й:'Y',к:'K',л:'L',м:'M',н:'N',о:'O',п:'P',р:'R',с:'S',т:'T',у:'U',ф:'F',х:'H',ц:'C',ч:'CH',ш:'SH',щ:'SH',ы:'Y',э:'E',ю:'YU',я:'YA',ь:'',ъ:''};
@@ -231,7 +234,7 @@ const TF=[['num','Номер T / H',1,'n'],['type','Тип','endmill',Object.ent
 const SIDE=[['out','Снаружи — выступ'],['in','Внутри — окно / отверстие']];
 const WALL=['wall','Съём вокруг, мм',0,'n',{side:'out'}],OVO=['over','Шаг вбок, % D',45,'n',{side:'out'}];
 const PAT=[['pat','Расположение отверстий','list',[['list','Список точек'],['pcd','По окружности (PCD)'],['grid','Массив']]],
- ['list','Точки: X,Y; X,Y; ...','0,0','text',{pat:'list'}],
+ ['list','Точки: X Y; X Y (дробь . или ,)','0 0','text',{pat:'list'}],
  ['cx','Центр X',0,'c',{pat:'pcd'}],['cy','Центр Y',0,'c',{pat:'pcd'}],['pr','Радиус PCD',30,'n',{pat:'pcd'}],['cnt','Кол-во',6,'n',{pat:'pcd'}],['ang','Нач. угол°',0,'c',{pat:'pcd'}],
  ['gx','Старт X',-40,'c',{pat:'grid'}],['gy','Старт Y',-25,'c',{pat:'grid'}],['nx','Кол-во по X',3,'n',{pat:'grid'}],['ny','Кол-во по Y',2,'n',{pat:'grid'}],['dx','Шаг X',40,'c',{pat:'grid'}],['dy','Шаг Y',50,'c',{pat:'grid'}]];
 const OPS={
@@ -309,14 +312,14 @@ function bindForm(el,getObj,after,rer){
 /* ---------- заготовка ---------- */
 const STK=[['rect','Прямоугольная'],['round','Круглая (диск)'],['poly','Многогранник'],['custom','Произвольный контур']];
 const SF=[['shape','Форма','rect',STK],['x','Длина X',120,'n',{shape:'rect'}],['y','Ширина Y',80,'n',{shape:'rect'}],['d','Диаметр',100,'n',{shape:'round'}],
- ['n','Кол-во граней',6,'n',{shape:'poly'}],['sw','Под ключ SW',60,'n',{shape:'poly'}],['pts','Точки контура: X,Y; X,Y; …','','text',{shape:'custom'}],
+ ['n','Кол-во граней',6,'n',{shape:'poly'}],['sw','Под ключ SW',60,'n',{shape:'poly'}],['pts','Точки контура: X Y; X Y; …','','text',{shape:'custom'}],
  ['z','Высота Z',30,'n'],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый нижний угол']],{shape:['rect','round','poly']}],
  ['wcs','Система координат','G54',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x])],['mat','Материал','','text']];
 function normStock(){const s=st.stock;SF.forEach(f=>{if(s[f[0]]==null)s[f[0]]=f[2];});if(!STK.some(x=>x[0]==s.shape))s.shape='rect';}
 function stockGeo(){const s=st.stock;let P,bad=false;const sh=s.shape||'rect';
  if(sh=='round'){const R=Math.max(1,+s.d||1)/2,n=96;P=[...Array(n)].map((_,i)=>[R*Math.cos(2*Math.PI*i/n),R*Math.sin(2*Math.PI*i/n)]);}
  else if(sh=='poly'){const N=Math.max(3,Math.round(+s.n||6)),Rv=Math.max(1,+s.sw||1)/2/Math.cos(Math.PI/N);P=[...Array(N)].map((_,k)=>{const t=(k+.5)*2*Math.PI/N;return[Rv*Math.cos(t),Rv*Math.sin(t)];});}
- else if(sh=='custom'){P=String(s.pts||'').split(/[;\n]/).map(q=>q.split(',').map(num)).filter(p=>p.length==2);if(P.length<3||Math.abs(area(P))<1){bad=true;P=null;}}
+ else if(sh=='custom'){P=parsePts(s.pts);if(P.length<3||Math.abs(area(P))<1){bad=true;P=null;}}
  if(!P){const w=Math.max(1,+s.x||1)/2,h=Math.max(1,+s.y||1)/2;P=[[-w,-h],[w,-h],[w,h],[-w,h]];}
  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
  if(sh!='custom'&&s.origin=='corner'){P=P.map(([x,y])=>[x-x0,y-y0]);x1-=x0;y1-=y0;x0=0;y0=0;}
@@ -337,14 +340,19 @@ window.resetProj=()=>{if(!confirm('Создать новый проект? Те�
 
 /* ---------- инструменты UI ---------- */
 function renderTools(){
- $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div><div class="m"><b>${esc(t.name||TT[t.type].n)}</b><small>Ø${t.d} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}${FLUTED.includes(t.type)?' · z'+t.fl:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
+ toolListOnly();
  const t=st.tools.find(x=>x.id==selTool);
  if(!t){$('#toolEd').innerHTML='<div class="empty">Выберите инструмент</div>';return;}
+ renderToolEd(t);}
+function toolListOnly(){
+ $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div><div class="m"><b>${esc(t.name||TT[t.type].n)}</b><small>Ø${t.d} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}${FLUTED.includes(t.type)?' · z'+t.fl:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
+ }
+function renderToolEd(t){
+
  $('#toolEd').innerHTML=`<h3>T${t.num} — ${TT[t.type].n}</h3><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
  <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||(PERREV.includes(t.type)?60:t.type=='tap'?10:150)}"></label>${t.type=='tap'?'':`<label>${PERREV.includes(t.type)?'f, мм/об':'fz, мм/зуб'}<input id="fz" inputmode="decimal" value="${t.fz||(PERREV.includes(t.type)?0.1:0.05)}"></label>`}<label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div>
  <div class="hint">${t.type=='tap'?'Метчик: S = 1000·Vc / (π·D), подача F = S·P (жёсткое нарезание M29).':PERREV.includes(t.type)?'Сверло: S = 1000·Vc / (π·D), F = S·f (подача на оборот).':'Фреза: S = 1000·Vc / (π·D), F = S·fz·z.'} Вылет инструмента не задаётся — его меряет станок (корректор H).</div>`;
- bindForm($('#tf'),()=>t,()=>renderToolList(),()=>renderTools());}
-function renderToolList(){const sel=document.activeElement;const id=sel&&sel.dataset.k;renderTools();if(id){const e=$(`#tf [data-k="${id}"]`);if(e){e.focus();const L=e.value.length;try{e.setSelectionRange(L,L)}catch(_){}}}}
+ bindForm($('#tf'),()=>t,()=>toolListOnly(),()=>renderTools());}
 window.selT=id=>{selTool=id;renderTools();};
 window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);selTool=t.id;save();renderTools();};
 window.delAllTools=()=>{if(!st.tools.length)return;if(!confirm(`Удалить весь инструмент (${st.tools.length} шт.)? Операции останутся, но без инструмента.`))return;st.tools=[];selTool=null;save();renderTools();toast('Магазин очищен');};
@@ -529,7 +537,7 @@ function levels(depth,step){const a=[];let z=0;step=Math.max(0.01,+step||1);dept
 function pts(o){
  if(o.pat=='pcd'){const a=[];for(let i=0;i<Math.max(1,Math.round(o.cnt));i++){const g=(o.ang+360*i/o.cnt)*Math.PI/180;a.push([o.cx+o.pr*Math.cos(g),o.cy+o.pr*Math.sin(g)]);}return a;}
  if(o.pat=='grid'){const a=[];for(let j=0;j<o.ny;j++){const row=[];for(let i=0;i<o.nx;i++)row.push([o.gx+i*o.dx,o.gy+j*o.dy]);if(j%2)row.reverse();a.push(...row);}return a;}
- return String(o.list).split(/[;\n]/).map(s=>s.split(',').map(num)).filter(p=>p.length==2);}
+ return parsePts(o.list);}
 /* смещения проходов вокруг выступа: от внешнего к чистовому */
 const passes=(o,t)=>{if(o.side!='out'||!(+o.wall>0))return[0];const so=Math.max(0.1,t.d*(+o.over||45)/100),n=Math.max(0,Math.ceil((o.wall-t.d)/so)),a=[];for(let k=n;k>=0;k--)a.push(k*so);return a;};
 /* овал (две полуокружности + прямые): ccw — против часовой */
