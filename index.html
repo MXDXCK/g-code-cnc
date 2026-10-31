@@ -128,8 +128,8 @@ details.cycd[open] summary:before{content:'－'}
 <main>
  <section id="t-proj" class="tab on">
   <div class="card"><h3>Программа</h3><div class="grid" id="progF"></div></div>
-  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div>
-   <div class="hint">Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
+  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div><div id="stockX"></div><div class="stats" id="stockInfo"></div>
+   <div class="hint">Произвольный контур: точки X,Y через «;» в координатах детали (по часовой или против — не важно), или возьмите контур с фото. Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
   <div class="card"><h3>Проект</h3><div class="row">
    <button class="btn" onclick="exportProj()">💾 Экспорт проекта</button>
    <button class="btn" onclick="document.getElementById('impF').click()">📂 Импорт</button>
@@ -179,6 +179,7 @@ details.cycd[open] summary:before{content:'－'}
    <button class="btn" onclick="simFinish()">⏭ Результат</button>
    <span class="chip">Скорость</span><input type="range" id="spd" min="1" max="100" value="20">
    <label class="chip"><input type="checkbox" id="showPath" checked onchange="togglePath()">Траектория</label>
+   <label class="chip"><input type="checkbox" class="stkChk" checked onchange="setStock(this.checked)">Заготовка</label>
    <button class="btn" onclick="fitCam()">⌖</button>
   </div>
  </section>
@@ -200,7 +201,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.1.2';
+const APP_VERSION='1.2.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -291,15 +292,41 @@ function bindForm(el,getObj,after,rer){
  el.oninput=e=>{const k=e.target.dataset.k;if(!k||e.target.tagName=='SELECT')return;const o=getObj();o[k]=e.target.dataset.s?e.target.value:num(e.target.value);save();after&&after();};
  el.onchange=e=>{const k=e.target.dataset.k;if(!k||e.target.tagName!='SELECT')return;const o=getObj();o[k]=e.target.value;save();after&&after();rer&&rer();};}
 
+/* ---------- заготовка ---------- */
+const STK=[['rect','Прямоугольная'],['round','Круглая (диск)'],['poly','Многогранник'],['custom','Произвольный контур']];
+const SF=[['shape','Форма','rect',STK],['x','Длина X',120,'n',{shape:'rect'}],['y','Ширина Y',80,'n',{shape:'rect'}],['d','Диаметр',100,'n',{shape:'round'}],
+ ['n','Кол-во граней',6,'n',{shape:'poly'}],['sw','Под ключ SW',60,'n',{shape:'poly'}],['pts','Точки контура: X,Y; X,Y; …','','text',{shape:'custom'}],
+ ['z','Высота Z',30,'n'],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый нижний угол']],{shape:['rect','round','poly']}],
+ ['wcs','Система координат','G54',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x])],['mat','Материал','','text']];
+function normStock(){const s=st.stock;SF.forEach(f=>{if(s[f[0]]==null)s[f[0]]=f[2];});if(!STK.some(x=>x[0]==s.shape))s.shape='rect';}
+function stockGeo(){const s=st.stock;let P,bad=false;const sh=s.shape||'rect';
+ if(sh=='round'){const R=Math.max(1,+s.d||1)/2,n=96;P=[...Array(n)].map((_,i)=>[R*Math.cos(2*Math.PI*i/n),R*Math.sin(2*Math.PI*i/n)]);}
+ else if(sh=='poly'){const N=Math.max(3,Math.round(+s.n||6)),Rv=Math.max(1,+s.sw||1)/2/Math.cos(Math.PI/N);P=[...Array(N)].map((_,k)=>{const t=(k+.5)*2*Math.PI/N;return[Rv*Math.cos(t),Rv*Math.sin(t)];});}
+ else if(sh=='custom'){P=String(s.pts||'').split(/[;\n]/).map(q=>q.split(',').map(num)).filter(p=>p.length==2);if(P.length<3||Math.abs(area(P))<1){bad=true;P=null;}}
+ if(!P){const w=Math.max(1,+s.x||1)/2,h=Math.max(1,+s.y||1)/2;P=[[-w,-h],[w,-h],[w,h],[-w,h]];}
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
+ if(sh!='custom'&&s.origin=='corner'){P=P.map(([x,y])=>[x-x0,y-y0]);x1-=x0;y1-=y0;x0=0;y0=0;}
+ P=orient(P,true);return{P,x0,y0,x1,y1,w:x1-x0,h:y1-y0,z:Math.max(.1,+s.z||1),rect:sh=='rect'||(sh=='custom'&&bad)||(sh=='poly'&&Math.round(+s.n)==4&&false),bad};}
+const pip=(P,x,y)=>{let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const[ax,ay]=P[i],[bx,by]=P[j];if((ay>y)!=(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)c=!c;}return c;};
+const nearOn=(P,x,y)=>{let best=null,bd=1e18;for(let i=0;i<P.length;i++){const[ax,ay]=P[i],[bx,by]=P[(i+1)%P.length],dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1))),qx=ax+t*dx,qy=ay+t*dy,d=(qx-x)**2+(qy-y)**2;if(d<bd){bd=d;best=[qx,qy];}}return best;};
+window.stockFromPhoto=()=>{const o=st.ops.find(x=>x.type=='photo'&&x.shp);if(!o)return toast('Нет операции с контуром по фото');
+ const a=prompt('Припуск вокруг контура детали, мм','2');if(a===null)return;const off=Math.max(0,num(a));
+ const Rt=rot(o);let P=o.shp.map(([x,y])=>Rt.p(x*o.w,y*o.w));
+ if(off>0){const L=isoLoops(distField(P,off+1),off).sort((p,q)=>Math.abs(area(q))-Math.abs(area(p)));if(L[0])P=rdpClosed(L[0],.05);}
+ st.stock.shape='custom';st.stock.pts=P.map(([x,y])=>F(x)+','+F(y)).join('; ');save();renderProj();toast('Контур заготовки задан');};
+
 /* ---------- проект ---------- */
 function renderProj(){
  $('#progF').innerHTML=[['num','Номер O',1000,'n'],['name','Имя программы','','text'],['note','Комментарий','','text']].map(f=>fld(st.prog,f)).join('');
- $('#stockF').innerHTML=[['x','Длина X',120,'n'],['y','Ширина Y',80,'n'],['z','Высота Z',30,'n'],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый нижний угол']]],['wcs','Система координат','G54',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x])],['mat','Материал','','text']].map(f=>fld(st.stock,f)).join('');
- bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock);
+ $('#stockF').innerHTML=SF.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');
+ const ph=st.ops.some(o=>o.type=='photo'&&o.shp);
+ $('#stockX').innerHTML=st.stock.shape=='custom'?`<div class="row" style="margin-top:10px"><button class="btn s" onclick="stockFromPhoto()" ${ph?'':'disabled'}>📷 Взять контур из операции «Контур по фото»</button></div>`:'';
+ const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`+(g.bad?'<span style="color:var(--bad)">⚠ Мало точек контура — показан прямоугольник</span>':'');
+ bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock,()=>{const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`;},()=>renderProj());
  $('#projStats').innerHTML=`<span>Инструментов: <b>${st.tools.length}</b></span><span>Операций: <b>${st.ops.length}</b></span><span>Пресетов: <b>${PRE.length}</b></span>`;}
 window.exportProj=()=>{const b=new Blob([JSON.stringify({...st,presets:PRE},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`project_O${st.prog.num}.json`;a.click();};
-window.importProj=inp=>{const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
-window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
+window.importProj=inp=>{const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;normStock();manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
+window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();normStock();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
 
 /* ---------- инструменты UI ---------- */
 function renderTools(){
@@ -336,7 +363,7 @@ function renderOpEd(){
  $('#opEd').innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${d.n}</h3><button class="btn s" onclick="savePreset()">★ В пресеты</button></div>
  <div class="oped"><div>${o.type=='photo'?photoPanel(o):''}<div class="grid" id="of">${fld(o,toolF)}${fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint">${HINT[o.type]||''}</div></div>
  <div class="prevw"><div class="prev" id="opPrev"><div class="prevmsg" id="prevMsg"></div><div class="prevtag">3D-модель результата · вращайте пальцем</div>
-  <div class="prevbar"><label class="chip"><input type="checkbox" ${prevAll?'checked':''} onchange="setPrevAll(this.checked)">с предыдущими операциями</label><button class="btn s" onclick="fitPrev()">⌖</button></div></div>
+  <div class="prevbar"><div class="row" style="gap:6px"><label class="chip"><input type="checkbox" ${prevAll?'checked':''} onchange="setPrevAll(this.checked)">с предыдущими</label><label class="chip"><input type="checkbox" class="stkChk" ${showStock?'checked':''} onchange="setStock(this.checked)">заготовка</label></div><button class="btn s" onclick="fitPrev()">⌖</button></div></div>
   <div class="stats" id="prevStats"></div></div></div>`;
  bindForm($('#of'),()=>o,()=>{renderOpList();if(o.type=='photo')phDraw(o);updPrev();},()=>renderOpEd());
  if(o.type=='photo')phDraw(o);
@@ -479,7 +506,8 @@ function gen(){
  const L=[],s=st,w=s.stock.wcs;let cur=null;
  L.push('%',`O${String(Math.round(s.prog.num)).padStart(4,'0')} (${lat(s.prog.name)})`);
  if(s.prog.note)L.push(`(${lat(s.prog.note)})`);
- L.push(`(STOCK X${s.stock.x} Y${s.stock.y} Z${s.stock.z} ${lat(s.stock.mat)})`,`(Z0 = TOP, XY0 = ${s.stock.origin=='center'?'CENTER':'LOWER LEFT'})`);
+ {const k=s.stock,sh=k.shape||'rect',g=stockGeo(),d=sh=='round'?`D${F(k.d)}`:sh=='poly'?`POLY N${Math.round(k.n)} SW${F(k.sw)}`:sh=='custom'?`CONTOUR ${F(g.w)}X${F(g.h)}`:`X${F(k.x)} Y${F(k.y)}`;
+ L.push(`(STOCK ${d} Z${F(k.z)} ${lat(k.mat)})`,`(Z0 = TOP, XY0 = ${sh=='custom'?'PART':k.origin=='center'?'CENTER':'LOWER LEFT'})`);}
  const used=[...new Set(s.ops.filter(o=>o.on).map(o=>o.tool))];
  s.tools.filter(t=>used.includes(t.id)).forEach(t=>L.push(`(T${t.num} ${TT[t.type].c} D${F(t.d)}${t.name?' '+lat(t.name):''})`));
  L.push('G21 G17 G40 G49 G80 G90 G94');
@@ -530,37 +558,45 @@ window.shareCode=async()=>{const f=new File([$('#code').value.replace(/\n/g,'\r\
 /* ---------- модель заготовки (карта высот со стенками) ---------- */
 function V(x,y,z){return new THREE.Vector3(x,z,-y);}
 function makeStock(parent,res){
- const s=st.stock,x0=s.origin=='center'?-s.x/2:0,y0=s.origin=='center'?-s.y/2:0;
- const nx=Math.max(2,Math.ceil(s.x/res)),ny=Math.max(2,Math.ceil(s.y/res)),dx=s.x/nx,dy=s.y/ny,N=(nx+1)*(ny+1);
- const H=new Float32Array(N),pos=new Float32Array(N*3),col=new Float32Array(N*3),idx=[];
- for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const k=j*(nx+1)+i;pos[k*3]=x0+i*dx;pos[k*3+1]=0;pos[k*3+2]=-(y0+j*dy);col.set([.72,.75,.8],k*3);}
- for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;idx.push(a,b,c,b,d,c);}
+ const S=stockGeo(),P=S.P,x0=S.x0,y0=S.y0,Z=S.z;
+ const nx=Math.max(2,Math.ceil(S.w/res)),ny=Math.max(2,Math.ceil(S.h/res)),dx=S.w/nx,dy=S.h/ny,N=(nx+1)*(ny+1);
+ const H=new Float32Array(N),pos=new Float32Array(N*3),col=new Float32Array(N*3),px=new Float32Array(N),py=new Float32Array(N),ins=new Uint8Array(N),use=new Uint8Array(N),idx=[];
+ for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const k=j*(nx+1)+i;px[k]=x0+i*dx;py[k]=y0+j*dy;ins[k]=S.rect||pip(P,px[k],py[k])?1:0;}
+ for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;if(ins[a]|ins[b]|ins[c]|ins[d]){idx.push(a,b,c,b,d,c);use[a]=use[b]=use[c]=use[d]=1;}}
+ for(let k=0;k<N;k++){if(use[k]&&!ins[k]){const q=nearOn(P,px[k],py[k]);px[k]=q[0];py[k]=q[1];}pos[k*3]=px[k];pos[k*3+1]=0;pos[k*3+2]=-py[k];col.set([.72,.75,.8],k*3);}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
  const grp=new THREE.Group();
  grp.add(new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,metalness:.35,roughness:.45,side:THREE.DoubleSide})));
- /* стенки по периметру */
- const B=[];for(let i=0;i<=nx;i++)B.push(i);for(let j=1;j<=ny;j++)B.push(j*(nx+1)+nx);for(let i=nx-1;i>=0;i--)B.push(ny*(nx+1)+i);for(let j=ny-1;j>=1;j--)B.push(j*(nx+1));
- const wp=new Float32Array(B.length*6),wi=[];B.forEach((k,m)=>{wp.set([pos[k*3],0,pos[k*3+2],pos[k*3],-s.z,pos[k*3+2]],m*6);const n=(m+1)%B.length;wi.push(m*2,m*2+1,n*2,n*2,m*2+1,n*2+1);});
+ /* стенки по контуру заготовки, верх стенки берёт высоту ближайшей точки поверхности */
+ const W=[];P.forEach((a,i)=>{const b=P[(i+1)%P.length],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/res));for(let t=0;t<n;t++)W.push([a[0]+(b[0]-a[0])*t/n,a[1]+(b[1]-a[1])*t/n]);});
+ const B=W.map(([x,y])=>{const ci=Math.round((x-x0)/dx),cj=Math.round((y-y0)/dy);let bk=-1,bd=1e18;for(let j=cj-2;j<=cj+2;j++)for(let i=ci-2;i<=ci+2;i++){if(i<0||j<0||i>nx||j>ny)continue;const k=j*(nx+1)+i;if(!use[k])continue;const d=(px[k]-x)**2+(py[k]-y)**2;if(d<bd){bd=d;bk=k;}}return bk;});
+ const wp=new Float32Array(W.length*6),wi=[];W.forEach(([x,y],m)=>{wp.set([x,0,-y,x,-Z,-y],m*6);const n=(m+1)%W.length;wi.push(m*2,m*2+1,n*2,n*2,m*2+1,n*2+1);});
  const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.BufferAttribute(wp,3));wg.setIndex(wi);wg.computeVertexNormals();
  grp.add(new THREE.Mesh(wg,new THREE.MeshStandardMaterial({color:0x9ea6b4,metalness:.4,roughness:.5,side:THREE.DoubleSide,flatShading:true})));
- const bot=new THREE.Mesh(new THREE.PlaneGeometry(s.x,s.y),new THREE.MeshStandardMaterial({color:0x6d7482,side:THREE.DoubleSide}));bot.rotation.x=-Math.PI/2;bot.position.set(x0+s.x/2,-s.z,-(y0+s.y/2));grp.add(bot);
- parent.add(grp);
- return {grp,g,H,pos,col,nx,ny,dx,dy,x0,y0,res,B,wg,wp,bot:-s.z,zt:s.z,dirty:false};}
-function cutAt(h,x,y,z,r,ball){if(z>=0)return;const i0=Math.max(0,Math.floor((x-r-h.x0)/h.dx)),i1=Math.min(h.nx,Math.ceil((x+r-h.x0)/h.dx)),j0=Math.max(0,Math.floor((y-r-h.y0)/h.dy)),j1=Math.min(h.ny,Math.ceil((y+r-h.y0)/h.dy));
- for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const px=h.x0+i*h.dx,py=h.y0+j*h.dy,d2=(px-x)**2+(py-y)**2;if(d2>r*r)continue;let zz=ball?z+r-Math.sqrt(r*r-d2):z;zz=Math.max(zz,h.bot);const k=j*(h.nx+1)+i;if(zz<h.H[k]){h.H[k]=zz;h.dirty=true;}}}
+ const bot=new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(P.map(([x,y])=>new THREE.Vector2(x,y)))),new THREE.MeshStandardMaterial({color:0x6d7482,side:THREE.DoubleSide}));bot.rotation.x=-Math.PI/2;bot.position.y=-Z;grp.add(bot);
+ grp.visible=showStock;parent.add(grp);
+ /* контур заготовки линиями — виден всегда */
+ const op=[],e=(a,b,za,zb)=>op.push(a[0],za,-a[1],b[0],zb,-b[1]);P.forEach((a,i)=>{const b=P[(i+1)%P.length];e(a,b,0,0);e(a,b,-Z,-Z);});
+ (P.length<=12?P:P.filter((_,i)=>i%Math.ceil(P.length/8)==0)).forEach(a=>e(a,a,0,-Z));
+ const og=new THREE.BufferGeometry();og.setAttribute('position',new THREE.Float32BufferAttribute(op,3));const outline=new THREE.LineSegments(og,new THREE.LineBasicMaterial({color:0x56607a}));parent.add(outline);
+ return {grp,outline,g,H,pos,col,px,py,nx,ny,dx,dy,x0,y0,res,B,wg,wp,bot:-Z,zt:Z,dirty:false};}
+function cutAt(h,x,y,z,r,ball){if(z>=0)return;const i0=Math.max(0,Math.floor((x-r-h.x0)/h.dx)-1),i1=Math.min(h.nx,Math.ceil((x+r-h.x0)/h.dx)+1),j0=Math.max(0,Math.floor((y-r-h.y0)/h.dy)-1),j1=Math.min(h.ny,Math.ceil((y+r-h.y0)/h.dy)+1);
+ for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const k=j*(h.nx+1)+i,d2=(h.px[k]-x)**2+(h.py[k]-y)**2;if(d2>r*r)continue;let zz=ball?z+r-Math.sqrt(r*r-d2):z;zz=Math.max(zz,h.bot);if(zz<h.H[k]){h.H[k]=zz;h.dirty=true;}}}
 function cutSeg(h,s,r,ball){const n=Math.max(1,Math.ceil(s.len/(h.res*.5)));for(let i=0;i<=n;i++){const k=i/n;cutAt(h,s.a.x+(s.b.x-s.a.x)*k,s.a.y+(s.b.y-s.a.y)*k,s.a.z+(s.b.z-s.a.z)*k,r,ball);}}
 function flushHM(h){if(!h.dirty)return;for(let k=0;k<h.H.length;k++){const z=h.H[k];h.pos[k*3+1]=z;if(z<-1e-4){const q=Math.min(1,-z/h.zt);h.col[k*3]=.35-.2*q;h.col[k*3+1]=.62-.25*q;h.col[k*3+2]=.9-.3*q;}}
- h.B.forEach((k,m)=>{h.wp[m*6+1]=h.H[k];});h.wg.attributes.position.needsUpdate=true;h.wg.computeVertexNormals();
+ h.B.forEach((k,m)=>{h.wp[m*6+1]=k<0?0:h.H[k];});h.wg.attributes.position.needsUpdate=true;h.wg.computeVertexNormals();
  h.g.attributes.position.needsUpdate=true;h.g.attributes.color.needsUpdate=true;h.g.computeVertexNormals();h.dirty=false;}
 function pathLines(segs,op=.55){const lp=[],lc=[];segs.forEach(sg=>{const a=V(sg.a.x,sg.a.y,sg.a.z),b=V(sg.b.x,sg.b.y,sg.b.z);lp.push(a.x,a.y,a.z,b.x,b.y,b.z);const c=sg.rapid?[.9,.3,.3]:[.2,.85,1];lc.push(...c,...c);});
  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(lp,3));pg.setAttribute('color',new THREE.Float32BufferAttribute(lc,3));
  return new THREE.LineSegments(pg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:op}));}
 function lights(sc){sc.add(new THREE.HemisphereLight(0xdde6ff,0x202530,1.1));const dl=new THREE.DirectionalLight(0xffffff,1.6);dl.position.set(150,300,200);sc.add(dl);const d2=new THREE.DirectionalLight(0x99aaff,.5);d2.position.set(-200,100,-150);sc.add(d2);}
-function aimCam(cam,ctl,k=1.7){const s=st.stock,c=V(s.origin=='center'?0:s.x/2,s.origin=='center'?0:s.y/2,-s.z/2),d=Math.max(s.x,s.y,s.z)*k;ctl.target.copy(c);cam.position.set(c.x+d*.6,c.y+d*.85,c.z+d*.9);ctl.update();}
+function aimCam(cam,ctl,k=1.7){const g=stockGeo(),c=V((g.x0+g.x1)/2,(g.y0+g.y1)/2,-g.z/2),d=Math.max(g.w,g.h,g.z)*k;ctl.target.copy(c);cam.position.set(c.x+d*.6,c.y+d*.85,c.z+d*.9);ctl.update();}
 function disposeObj(o){o&&o.traverse&&o.traverse(m=>{m.geometry&&m.geometry.dispose();m.material&&m.material.dispose&&m.material.dispose();});}
 
 /* ---------- 3D-превью цикла в редакторе ---------- */
-let PV=null,prevTm=0;
+let PV=null,prevTm=0,showStock=true;try{showStock=localStorage.getItem('fcam_stock')!=='0'}catch(e){}
+window.setStock=v=>{showStock=v;try{localStorage.setItem('fcam_stock',v?'1':'0')}catch(e){}document.querySelectorAll('.stkChk').forEach(c=>c.checked=v);
+ if(hm)hm.grp.visible=v;if(pathObj){pathObj.material.opacity=v?.55:1;if(!v){pathObj.visible=true;$('#showPath').checked=true;}}updPrev(0);};
 function initPV(){const r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(2,devicePixelRatio));const sc=new THREE.Scene();sc.background=new THREE.Color(0x0b0d11);lights(sc);
  const cam=new THREE.PerspectiveCamera(35,1,0.5,10000),ctl=new OrbitControls(cam,r.domElement);ctl.enableDamping=true;
  PV={r,sc,cam,ctl,grp:null,key:'',on:true};const lp=()=>{requestAnimationFrame(lp);if(!PV.on||!r.domElement.isConnected)return;ctl.update();r.render(sc,cam);};lp();}
@@ -570,13 +606,13 @@ function sizePV(){const host=$('#opPrev');if(!PV||!host||!host.clientWidth)retur
 function buildPrev(){const host=$('#opPrev'),o=st.ops.find(x=>x.id==selOp);if(!host||!o||!host.offsetParent)return;if(!PV)initPV();
  const cv=PV.r.domElement;if(cv.parentNode!==host)host.prepend(cv);sizePV();
  if(PV.grp){PV.sc.remove(PV.grp);disposeObj(PV.grp);}const grp=new THREE.Group();PV.grp=grp;PV.sc.add(grp);
- const s=st.stock,hm=makeStock(grp,Math.max(s.x,s.y)/(narrow()?90:140));
+ const sg=stockGeo(),hm=makeStock(grp,Math.max(sg.w,sg.h)/(narrow()?90:140));
  const idx=st.ops.indexOf(o),list=prevAll?st.ops.slice(0,idx+1).filter(x=>x.on||x===o):[o];let err='',info=null;
- list.forEach(op=>{try{const{code,t}=opCode(op),P=parse(code),r=t.d/2,ball=t.type=='ball';P.segs.forEach(sg=>{if(!sg.rapid)cutSeg(hm,sg,r,ball)});if(op===o){grp.add(pathLines(P.segs,.4));info=P;}}catch(e){if(op===o)err=ERR[e.message]||e.message;}});
+ list.forEach(op=>{try{const{code,t}=opCode(op),P=parse(code),r=t.d/2,ball=t.type=='ball';P.segs.forEach(sg=>{if(!sg.rapid)cutSeg(hm,sg,r,ball)});if(op===o){grp.add(pathLines(P.segs,showStock?.4:1));info=P;}}catch(e){if(op===o)err=ERR[e.message]||e.message;}});
  flushHM(hm);
  $('#prevMsg').textContent=err?'⚠ '+err:'';
  $('#prevStats').innerHTML=info?`<span>Рабочий ход: <b>${(info.len.f/1000).toFixed(2)} м</b></span><span>Время цикла ≈ <b>${tfmt(info.time)}</b></span>`:'';
- const key=[s.x,s.y,s.z,s.origin].join('|');if(PV.key!==key){PV.key=key;aimCam(PV.cam,PV.ctl,1.55);}}
+ const key=JSON.stringify(st.stock);if(PV.key!==key){PV.key=key;aimCam(PV.cam,PV.ctl,1.55);}}
 window.setPrevAll=v=>{prevAll=v;updPrev(0);};
 window.fitPrev=()=>{if(PV)aimCam(PV.cam,PV.ctl,1.55);};
 addEventListener('resize',()=>{sizePV();resize();});
@@ -651,11 +687,10 @@ function resize(){const b=$('#view');if(!R3||!b.clientWidth)return;R3.setSize(b.
 function build(){
  [hm&&hm.grp,pathObj,toolObj,box3,SC.getObjectByName('grid')].forEach(o=>{if(o){SC.remove(o);disposeObj(o);}});toolNum=-1;
  data=parse($('#code').value);
- const s=st.stock,x0=s.origin=='center'?-s.x/2:0,y0=s.origin=='center'?-s.y/2:0;
- hm=makeStock(SC,Math.max(s.x,s.y)/(narrow()?110:170));
- const bg=new THREE.BoxGeometry(s.x,s.z,s.y);box3=new THREE.LineSegments(new THREE.EdgesGeometry(bg),new THREE.LineBasicMaterial({color:0x56607a}));box3.position.set(x0+s.x/2,-s.z/2,-(y0+s.y/2));SC.add(box3);
- const gr=new THREE.GridHelper(Math.max(s.x,s.y)*3,30,0x2a3040,0x1c2029);gr.position.y=-s.z-0.1;gr.name='grid';SC.add(gr);
- pathObj=pathLines(data.segs);pathObj.visible=$('#showPath').checked;SC.add(pathObj);
+ const sg=stockGeo();
+ hm=makeStock(SC,Math.max(sg.w,sg.h)/(narrow()?110:170));box3=hm.outline;
+ const gr=new THREE.GridHelper(Math.max(sg.w,sg.h)*3,30,0x2a3040,0x1c2029);gr.position.set((sg.x0+sg.x1)/2,-sg.z-0.1,-(sg.y0+sg.y1)/2);gr.name='grid';SC.add(gr);
+ pathObj=pathLines(data.segs,showStock?.55:1);pathObj.visible=$('#showPath').checked||!showStock;SC.add(pathObj);
  sim={i:0,t:0,play:false};$('#playB').textContent='▶';
  const p0=data.segs[0]?.a||{x:0,y:0,z:50};setTool(p0,data.segs[0]?.tool);fitCam();hud(p0);}
 function setTool(p,n){
@@ -702,6 +737,8 @@ function show(t){document.querySelectorAll('nav button').forEach(b=>b.classList.
  if(t=='sim'){regen();if(!R3)init3d();resize();build();}}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
 function renderAll(){renderProj();renderTools();renderOps();codeDirty=true;}
+document.querySelectorAll('.stkChk').forEach(c=>c.checked=showStock);
+normStock();
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'';
 renderAll();
 window.__fcam={st:()=>st,gen,parse,opCode,distField,isoLoops,show};
