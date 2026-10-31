@@ -207,7 +207,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.5.0';
+const APP_VERSION='1.5.1';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -243,7 +243,7 @@ const OPS={
  contourCircle:{n:'Выступ / контур круглый',s:'Выступ круглый',c:'CIRC CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',40,'n'],['side','Сторона','out',SIDE],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],WALL,OVO]},
  contourOval:{n:'Выступ / контур овальный',s:'Выступ овальный',c:'OVAL CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['l','Длина L',60,'n'],['w','Ширина W',30,'n'],['ang','Угол°',0,'c'],['side','Сторона','out',SIDE],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],WALL,OVO]},
  polygon:{n:'Многогранник (шестигранник и др.)',s:'Многогранник',c:'POLYGON',k:['endmill'],f:[['side','Тип','out',[['out','Выступ — как головка болта'],['in','Гнездо — карман под гайку']]],['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['n','Кол-во граней',6,'n'],['sw','Под ключ SW',40,'n'],['ang','Угол°',0,'c'],['depth','Глубина',8,'n'],['step','Шаг по Z',1,'n'],['blank','Ø круглой заготовки',0,'n',{side:'out'}],['wall','Съём вокруг, мм',10,'n',{side:'out'}],['over','Шаг вбок, % D',45,'n']]},
- contour:{n:'Контур по элементам',s:'Контур по элементам',c:'ELEMENT CONTOUR',k:['endmill'],f:[['comp','Коррекция','41',[['41','G41 — фреза слева по ходу (попутное)'],['42','G42 — фреза справа по ходу']]],['closed','Контур','0',[['0','Открытый'],['1','Замкнутый']]],['mirror','Копии','none',[['none','Нет'],['x','Зеркально по X (лево / право)'],['y','Зеркально по Y (верх / низ)'],['xy','Зеркально по X и Y (4 шт.)']]],['depth','Глубина',10,'n'],['step','Шаг по Z',2,'n'],['lead','Подход / отход, мм',5,'n'],['passes','Доп. проходов вбок',0,'n'],['over','Шаг вбок, % D',45,'n']]},
+ contour:{n:'Контур по элементам',s:'Контур по элементам',c:'ELEMENT CONTOUR',k:['endmill'],f:[['comp','Коррекция','41',[['41','G41 — фреза слева по ходу (попутное)'],['42','G42 — фреза справа по ходу']]],['closed','Контур','0',[['0','Открытый'],['1','Замкнутый']]],['mirror','Где обрабатывать','none',[['none','Как введено'],['R','Только справа'],['L','Только слева'],['x','Справа и слева'],['T','Только сверху'],['B','Только снизу'],['y','Сверху и снизу'],['xy','Все 4 стороны (X и Y)']]],['depth','Глубина',10,'n'],['step','Шаг по Z',2,'n'],['lead','Подход / отход, мм',5,'n'],['passes','Доп. проходов вбок',0,'n'],['over','Шаг вбок, % D',45,'n']]},
  slot:{n:'Паз',s:'Паз',c:'SLOT',k:['endmill'],f:[['x1','X1',-30,'c'],['y1','Y1',0,'c'],['x2','X2',30,'c'],['y2','Y2',0,'c'],['depth','Глубина',3,'n'],['step','Шаг по Z',0.5,'n']]},
  drill:{n:'Сверление / центровка',s:'Сверление',c:'DRILLING',k:['drill','center','reamer','chamfer'],f:[['cycle','Цикл','G81',[['G81','G81 простое'],['G82','G82 с выдержкой'],['G83','G83 глубокое с выводом'],['G73','G73 с ломкой стружки']]],['depth','Глубина (вершина)',10,'n'],['rp','Плоскость R',2,'n'],['q','Шаг Q',3,'n',{cycle:['G83','G73']}],['dwell','Выдержка P, мс',500,'n',{cycle:'G82'}],...PAT]},
  tap:{n:'Нарезание резьбы метчиком',s:'Метчик',c:'RIGID TAPPING',k:['tap'],f:[['depth','Глубина',12,'n'],['rp','Плоскость R',5,'n'],...PAT]},
@@ -368,7 +368,7 @@ function renderOpEd(){
  bindForm($('#of'),()=>o,()=>{renderOpList();if(o.type=='contour')ctrDraw(o);updPrev();},()=>renderOpEd());
  if(o.type=='contour'){ctrBind(o);ctrDraw(o);renderDxf();}
  updPrev(0);}
-const HINT={contour:'Вводите контур с чертежа по порядку: старт → прямая / дуга до точки X,Y. Дуга: R — радиус (минус, если дуга больше 180°), ↻ G2 — по часовой, ↺ G3 — против. Направление обхода и G41/G42 задают, с какой стороны идёт фреза: G41 — слева по ходу (попутное). В программе — контур по чертежу, коррекция G41/G42 D(номер инструмента): в корректор D на стойке занесите РАДИУС фрезы, размер подгоняйте износом D. Подход/отход по касательной. «Зеркально» — копии с другой стороны детали (G41 сам меняется на G42). Можно загрузить DXF из КОМПАС/AutoCAD (линии, дуги, полилинии) и удалить лишние элементы ✕.',face:'Зигзаг по всей площади, фреза выходит за край на радиус + 2 мм.',pocketRect:'Выборка от центра к краям, без коррекции G41 — смещение на радиус считается программой.',contourRect:'Снаружи — попутное фрезерование по часовой, внутри — против часовой. «Съём вокруг» — ширина материала вокруг выступа, которую нужно убрать (проходы снаружи внутрь).',pocketCircle:'Концентрические окружности G03 от центра.',contourCircle:'Полная окружность G02/G03 с I. Снаружи — круглый выступ (бобышка), внутри — растачивание отверстия. «Съём вокруг» — ширина кольца материала вокруг выступа.',
+const HINT={contour:'Вводите контур с чертежа по порядку: старт → прямая / дуга до точки X,Y. Дуга: R — радиус (минус, если дуга больше 180°), ↻ G2 — по часовой, ↺ G3 — против. Направление обхода и G41/G42 задают, с какой стороны идёт фреза: G41 — слева по ходу (попутное). В программе — контур по чертежу, коррекция G41/G42 D(номер инструмента): в корректор D на стойке занесите РАДИУС фрезы, размер подгоняйте износом D. Подход/отход по касательной. «Где обрабатывать»: вводите контур с одной стороны детали, а здесь выберите — только справа, только слева или с обеих сторон. С обеих сторон обработка идёт по очереди: сначала одна сторона на всю глубину, затем другая (G41 сам меняется на G42). Можно загрузить DXF из КОМПАС/AutoCAD (линии, дуги, полилинии) и удалить лишние элементы ✕.',face:'Зигзаг по всей площади, фреза выходит за край на радиус + 2 мм.',pocketRect:'Выборка от центра к краям, без коррекции G41 — смещение на радиус считается программой.',contourRect:'Снаружи — попутное фрезерование по часовой, внутри — против часовой. «Съём вокруг» — ширина материала вокруг выступа, которую нужно убрать (проходы снаружи внутрь).',pocketCircle:'Концентрические окружности G03 от центра.',contourCircle:'Полная окружность G02/G03 с I. Снаружи — круглый выступ (бобышка), внутри — растачивание отверстия. «Съём вокруг» — ширина кольца материала вокруг выступа.',
  pocketOval:'Овал = две полуокружности, соединённые прямыми (L — общая длина, W — ширина). Врезание наклонно вдоль оси паза, затем выборка концентрическими овалами G03.',contourOval:'Овальный выступ или контур овального окна. L — общая длина, W — ширина, угол поворачивает овал вокруг центра.',
  polygon:'Многогранник под ключ (шестигранник, квадрат, восьмигранник…). SW — размер между параллельными гранями. Выступ — как головка болта: фреза идёт снаружи граней. Шестигранник на круглом прутке/болте: укажите «Ø круглой заготовки» — съём до граней посчитается сам (для 3D выберите в «Проекте» круглую заготовку того же Ø). Если Ø = 0, используется «Съём вокруг». Гнездо — карман под гайку/головку: выборка изнутри, углы гнезда получаются скруглёнными радиусом фрезы.',
  slot:'Врезание на каждом проходе, чередование концов паза.',drill:'Канонические циклы Fanuc G81/G82/G83/G73 с G98 (возврат в начальную плоскость).',tap:'Жёсткое нарезание: M29 S.. + G84, F = S × P из шага метчика.',thread:'Винтовая интерполяция снизу вверх (попутное). Диаметр траектории = D резьбы − D фрезы.'};
@@ -427,13 +427,17 @@ function ctrEls(o,mx=1,my=1){const flip=mx*my<0,S0=[(+o.sx||0)*mx,(+o.sy||0)*my]
   p=b;});
  const closed=o.closed=='1';if(closed&&E.length&&V2.dist(p,S0)>1e-6)E.push({k:'L',a:p,b:S0});
  return{E,closed};}
+/* какие копии строить: справа/слева — по тому, где введён контур (среднее X/Y точек) */
+const ctrGrp=CH=>{const G=[];CH.forEach(c=>(G[c.gi]=G[c.gi]||[]).push(c));return G.filter(Boolean);};
+function ctrMir(o){const P=[[+o.sx||0,+o.sy||0],...(o.els||[]).map(q=>[+q.x||0,+q.y||0])],cx=P.reduce((a,p)=>a+p[0],0)/P.length,cy=P.reduce((a,p)=>a+p[1],0)/P.length,sx=cx<0?-1:1,sy=cy<0?-1:1;
+ return({R:[[sx,1]],L:[[-sx,1]],T:[[1,sy]],B:[[1,-sy]],x:[[1,1],[-1,1]],y:[[1,1],[1,-1]],xy:[[1,1],[-1,1],[-1,-1],[1,-1]]})[o.mirror]||[[1,1]];}
 const elG=e=>e.k=='L'?`G1 ${XY(e.b)}`:`G${e.cw?2:3} ${XY(e.b)} ${IJ(V2.sub(e.c,e.a))}`;
-function ctrChains(o,t){const r=t.d/2,M={x:[[1,1],[-1,1]],y:[[1,1],[1,-1]],xy:[[1,1],[-1,1],[-1,-1],[1,-1]]}[o.mirror]||[[1,1]];
+function ctrChains(o,t){const r=t.d/2,M=ctrMir(o);
  const so=Math.max(0.1,t.d*(+o.over||45)/100),np=Math.max(0,Math.round(+o.passes||0)),Ld=Math.max(+o.lead||0,r+1),out=[];
- M.forEach(([mx,my])=>{const{E,closed}=ctrEls(o,mx,my);if(!E.length)throw Error('Контур пуст — добавьте элементы');const s=(o.comp=='42'?-1:1)*mx*my;
+ M.forEach(([mx,my],gi)=>{const{E,closed}=ctrEls(o,mx,my);if(!E.length)throw Error('Контур пуст — добавьте элементы');const s=(o.comp=='42'?-1:1)*mx*my;
   for(let k=np;k>=0;k--){const P=offChain(E,k*so,s,closed);offChain(P,r,s,closed);
    const t0=tS(P[0]),tn=tE(P[P.length-1]);
-   out.push({E:P,g:s>0?41:42,app:V2.add(V2.sub(P[0].a,V2.mul(t0,Ld)),V2.mul(lft(t0),s*Ld)),out:V2.add(V2.add(P[P.length-1].b,V2.mul(tn,Ld)),V2.mul(lft(tn),s*Ld))});}});
+   out.push({gi,E:P,g:s>0?41:42,app:V2.add(V2.sub(P[0].a,V2.mul(t0,Ld)),V2.mul(lft(t0),s*Ld)),out:V2.add(V2.add(P[P.length-1].b,V2.mul(tn,Ld)),V2.mul(lft(tn),s*Ld))});}});
  return out;}
 
 /* ---------- импорт DXF ---------- */
@@ -496,7 +500,7 @@ window.ctrDel=i=>{const o=ctrCur();if(i==0&&o.els.length){o.sx=o.els[0].x;o.sy=o
 window.ctrRev=()=>{const o=ctrCur(),pts=[{x:o.sx,y:o.sy},...o.els],n=o.els.length;if(!n)return;const fl={L:'L',CW:'CCW',CCW:'CW'},E=[];
  for(let i=n-1;i>=0;i--)E.push({t:fl[o.els[i].t],x:pts[i].x,y:pts[i].y,r:o.els[i].r});o.sx=pts[n].x;o.sy=pts[n].y;o.els=E;save();renderOpEd();toast('Направление развёрнуто');};
 function ctrDraw(o){const c=$('#ctrC');if(!c)return;const W=600,H=360;c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#0b0d11';x.fillRect(0,0,W,H);
- const sg=stockGeo(),M={x:[[1,1],[-1,1]],y:[[1,1],[1,-1]],xy:[[1,1],[-1,1],[-1,-1],[1,-1]]}[o.mirror]||[[1,1]];let chains=[],err='',tp=[];
+ const sg=stockGeo(),M=ctrMir(o);let chains=[],err='',tp=[];
  try{M.forEach(([mx,my])=>chains.push(ctrEls(o,mx,my).E));}catch(e){err=e.message;}
  try{const t=st.tools.find(q=>q.id==o.tool);if(t){const P=parse(opCode(o).code);tp=P.segs.filter(s=>!s.rapid);if(P.err)err=P.err;}}catch(e){err=err||ERR[e.message]||e.message;}
  let x0=sg.x0,y0=sg.y0,x1=sg.x1,y1=sg.y1;const ex=(X,Y)=>{x0=Math.min(x0,X);y0=Math.min(y0,Y);x1=Math.max(x1,X);y1=Math.max(y1,Y);};chains.flat().forEach(e=>{ex(...e.a);ex(...e.b);});tp.forEach(s=>{ex(s.a.x,s.a.y);ex(s.b.x,s.b.y);});
@@ -564,7 +568,7 @@ const G={
   c.start(P[0][0],P[0][1]);P.forEach(([x,y])=>{L.push(`G0 X${F(x)} Y${F(y)}`,'G0 Z1.',`G1 Z${F(-Math.abs(o.depth))} F${c.fp}`,`G1 X${F(x+R)} F${Math.round(t.f/2)}`);
    let z=-Math.abs(o.depth);while(z<-1e-6){z+=p;L.push(`${g} X${F(x+R)} Y${F(y)} Z${F(z)} I${F(-R)} J0. F${t.f}`);}L.push(`G1 X${F(x)} Y${F(y)}`,`G0 Z${F(c.safe)}`);});},
  contour(c){const{o,t,L}=c,CH=ctrChains(o,t);c.start(...CH[0].app);L.push(`(D${t.num} - TOOL RADIUS IN OFFSET)`,'G0 Z1.');
-  levels(o.depth,o.step).forEach(z=>CH.forEach(ch=>L.push(`G0 ${XY(ch.app)}`,`G1 Z${F(z)} F${c.fp}`,`G${ch.g} D${t.num} G1 ${XY(ch.E[0].a)} F${t.f}`,...ch.E.map(elG),`G40 G1 ${XY(ch.out)}`,'G0 Z1.')));L.push(`G0 Z${F(c.safe)}`);}
+  ctrGrp(CH).forEach((GR,gi)=>{if(CH.length>1)L.push(`(SIDE ${gi+1})`);levels(o.depth,o.step).forEach(z=>GR.forEach(ch=>L.push(`G0 ${XY(ch.app)}`,`G1 Z${F(z)} F${c.fp}`,`G${ch.g} D${t.num} G1 ${XY(ch.E[0].a)} F${t.f}`,...ch.E.map(elG),`G40 G1 ${XY(ch.out)}`,'G0 Z1.')));});L.push(`G0 Z${F(c.safe)}`);}
 };
 const ctx=(L,t,o,w,nb=1000)=>({L,t,o,w,n:(k=>()=>++k)(nb),r:t.d/2,safe:+o.safe,fp:Math.max(1,Math.round(t.f/3)),start(x,y,noSp){L.push(`G0 G90 ${w} X${F(x)} Y${F(y)}`);if(!noSp)L.push(`S${Math.round(t.s)} M03`);L.push(`G43 H${t.num} Z${F(+o.safe)}`,'M08');}});
 /* ---------- параметрический G-код (Custom Macro B) ---------- */
@@ -632,7 +636,7 @@ const M={
  drill(c){const{o,L}=c;if(o.pat=='list')return G.drill(c);mHoles(c,`G98 ${o.cycle} X#11 Y#12 Z[0-#7] R#8${o.cycle=='G83'||o.cycle=='G73'?' Q#9':''}${o.cycle=='G82'?' P#10':''} F#22`,()=>{MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.rp,'R PLANE');if(o.cycle=='G83'||o.cycle=='G73')MV(L,9,o.q,'PECK Q');if(o.cycle=='G82')MV(L,10,Math.round(o.dwell),'DWELL P');mTool(c,false);});},
  tap(c){const{o,t,L}=c;if(o.pat=='list')return G.tap(c);mHoles(c,'G98 G84 X#11 Y#12 Z[0-#7] R#8 F#22',()=>{MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.rp,'R PLANE');MV(L,21,Math.round(t.s),'SPINDLE S');MV(L,19,t.pitch,'PITCH');L.push('#22=#21*#19 (FEED = S X P)');MV(L,24,+o.safe,'SAFE Z');},true);},
  contour(c){const{o,t,L}=c,CH=ctrChains(o,t);MV(L,1,Math.abs(o.depth),'DEPTH');MV(L,2,o.step,'STEP Z');mTool(c,false);MV(L,23,c.fp,'PLUNGE F');L.push(`(D${t.num} - TOOL RADIUS IN OFFSET)`);
-  mStart(c,F(CH[0].app[0]),F(CH[0].app[1]));L.push('G0 Z1.');mLv(c,1,2);CH.forEach(ch=>L.push(`G0 ${XY(ch.app)}`,'G1 Z#26 F#23',`G${ch.g} D${t.num} G1 ${XY(ch.E[0].a)} F#22`,...ch.E.map(elG),`G40 G1 ${XY(ch.out)}`,'G0 Z1.'));L.push('END1','G0 Z#24');}
+  mStart(c,F(CH[0].app[0]),F(CH[0].app[1]));L.push('G0 Z1.');ctrGrp(CH).forEach((GR,gi)=>{if(CH.length>1)L.push(`(SIDE ${gi+1})`);mLv(c,1,2);GR.forEach(ch=>L.push(`G0 ${XY(ch.app)}`,'G1 Z#26 F#23',`G${ch.g} D${t.num} G1 ${XY(ch.E[0].a)} F#22`,...ch.E.map(elG),`G40 G1 ${XY(ch.out)}`,'G0 Z1.'));L.push('END1');});L.push('G0 Z#24');}
 };
 function mHoles(c,cyc,vars,tap){const{o,L}=c;
  if(o.pat=='pcd'){MV(L,1,o.cx,'PCD CENTER X');MV(L,2,o.cy,'PCD CENTER Y');MV(L,3,o.pr,'PCD RADIUS');MV(L,4,Math.max(1,Math.round(o.cnt)),'HOLES');MV(L,5,+o.ang||0,'START ANGLE');vars();
@@ -696,7 +700,7 @@ const CRU={'PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE
  'START X':'НАЧАЛО X','START Y':'НАЧАЛО Y','COUNT X':'КОЛ-ВО ПО X','COUNT Y':'КОЛ-ВО ПО Y','PITCH X':'ШАГ X','PITCH Y':'ШАГ Y','ROW':'РЯД','Z':'ТЕКУЩАЯ Z',
  'BLANK DIAMETER':'ДИАМЕТР ЗАГОТОВКИ 0=НЕТ','TOOL TOO BIG':'ФРЕЗА БОЛЬШЕ ЭЛЕМЕНТА','L LESS THAN W':'L МЕНЬШЕ W','SW IS ZERO':'SW = 0'};
 const CPH=[['STOCK','ЗАГОТОВКА'],['Z0 = TOP','Z0 = ВЕРХ'],['XY0 = LOWER LEFT','XY0 = ЛЕВЫЙ НИЖНИЙ УГОЛ'],['XY0 = CENTER','XY0 = ЦЕНТР'],['XY0 = PART','XY0 = ПО ДЕТАЛИ'],['CONTOUR','КОНТУР'],['POLY','МНОГОГРАННИК'],
- ['TOOL RADIUS IN OFFSET','РАДИУС ФРЕЗЫ В КОРРЕКТОРЕ'],['ERROR','ОШИБКА'],['NO TOOL','НЕТ ИНСТРУМЕНТА'],...Object.values(TT).map(v=>[v.c,v.n.toUpperCase()]),...Object.values(OPS).map(v=>[v.c,v.n.toUpperCase()]),['OP','ОП']].sort((a,b)=>b[0].length-a[0].length);
+ ['TOOL RADIUS IN OFFSET','РАДИУС ФРЕЗЫ В КОРРЕКТОРЕ'],['SIDE','СТОРОНА'],['ERROR','ОШИБКА'],['NO TOOL','НЕТ ИНСТРУМЕНТА'],...Object.values(TT).map(v=>[v.c,v.n.toUpperCase()]),...Object.values(OPS).map(v=>[v.c,v.n.toUpperCase()]),['OP','ОП']].sort((a,b)=>b[0].length-a[0].length);
 function trC(t,lang){if(lang=='en')return t;let r=CRU[t];if(r==null){r=t;for(const[a,b]of CPH)r=r.replace(new RegExp('(^|[^A-Z])'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[^A-Z]|$)','g'),(m,p)=>p+b);}
  return lang=='cyr'?r.toUpperCase():lat(r);}
 const trLines=(L,lang)=>lang=='en'?L:L.map(l=>l.replace(/\(([^()]*)\)/g,(m,t)=>'('+trC(t,lang)+')'));
