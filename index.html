@@ -165,11 +165,12 @@ details.cycd[open] summary:before{content:'－'}
     <button class="btn" onclick="copyCode()">⧉ Копировать</button>
     <button class="btn" onclick="regen(true)">↻ Пересоздать</button>
     <select id="fmtSel" style="width:auto" onchange="setFmt(this.value)"><option value="macro">Параметрический (макро)</option><option value="plain">Обычный</option></select>
+    <select id="cmtSel" style="width:auto" onchange="setCmt(this.value)"><option value="lat">Пояснения: русские латиницей</option><option value="cyr">Пояснения: кириллица</option><option value="en">Пояснения: English</option></select>
     <span id="editFlag"></span>
    </div>
    <div class="stats" id="codeStats"></div>
    <textarea id="code" spellcheck="false"></textarea>
-   <div class="hint">Параметрический G-код: в начале каждой операции идут переменные — размеры (#1, #2…) и режимы фрезы: <b>#20</b> диаметр, <b>#21</b> обороты S, <b>#22</b> подача F, <b>#23</b> подача врезания, <b>#24</b> безопасная Z. Поменяйте число прямо на стойке — проходы пересчитаются сами (циклы WHILE). Нужна опция Custom Macro B (на 0i-MF Plus обычно включена). Ручные правки проверяются в 3D.</div>
+   <div class="hint">Параметрический G-код: в начале каждой операции идут переменные — размеры (#1, #2…) и режимы фрезы: <b>#20</b> диаметр, <b>#21</b> обороты S, <b>#22</b> подача F, <b>#23</b> подача врезания, <b>#24</b> безопасная Z. Поменяйте число прямо на стойке — проходы пересчитаются сами (циклы WHILE). Нужна опция Custom Macro B (на 0i-MF Plus обычно включена). Пояснения по умолчанию — русские слова латиницей (GLUBINA, PODACHA): кириллицу стойки Fanuc часто не отображают. Ручные правки проверяются в 3D.</div>
   </div>
  </section>
 
@@ -203,7 +204,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.3.0';
+const APP_VERSION='1.4.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -224,7 +225,7 @@ const TF=[['num','Номер T / H',1,'n'],['type','Тип','endmill',Object.ent
  ['f','Подача F, мм/мин',500,'n'],['pitch','Шаг резьбы P, мм',1.25,'n',{type:['tap','thread']}]];
 
 /* ---------- операции ---------- */
-const SIDE=[['out','Снаружи (цапфа)'],['in','Внутри']];
+const SIDE=[['out','Снаружи — выступ'],['in','Внутри — окно / отверстие']];
 const WALL=['wall','Съём вокруг, мм',0,'n',{side:'out'}],OVO=['over','Шаг вбок, % D',45,'n',{side:'out'}];
 const PAT=[['pat','Расположение отверстий','list',[['list','Список точек'],['pcd','По окружности (PCD)'],['grid','Массив']]],
  ['list','Точки: X,Y; X,Y; ...','0,0','text',{pat:'list'}],
@@ -235,16 +236,16 @@ const OPS={
  pocketRect:{n:'Карман прямоугольный',s:'Карман прямоуг.',c:'RECT POCKET',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['w','Длина X',50,'n'],['h','Ширина Y',30,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n']]},
  pocketCircle:{n:'Карман круглый',s:'Карман круглый',c:'CIRC POCKET',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',30,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n']]},
  pocketOval:{n:'Карман овальный (продольный паз)',s:'Карман овальный',c:'OVAL POCKET',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['l','Длина L',50,'n'],['w','Ширина W',16,'n'],['ang','Угол°',0,'c'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n']]},
- contourRect:{n:'Цапфа / контур прямоугольный',s:'Цапфа прямоуг.',c:'RECT CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['w','Длина X',110,'n'],['h','Ширина Y',70,'n'],['side','Сторона','out',SIDE],['depth','Глубина',10,'n'],['step','Шаг по Z',2,'n'],WALL,OVO]},
- contourCircle:{n:'Цапфа / контур круглый',s:'Цапфа круглая',c:'CIRC CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',40,'n'],['side','Сторона','out',SIDE],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],WALL,OVO]},
- contourOval:{n:'Цапфа / контур овальный',s:'Цапфа овальная',c:'OVAL CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['l','Длина L',60,'n'],['w','Ширина W',30,'n'],['ang','Угол°',0,'c'],['side','Сторона','out',SIDE],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],WALL,OVO]},
- polygon:{n:'Многогранник (цапфа)',s:'Многогранник',c:'POLYGON',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['n','Кол-во граней',6,'n'],['sw','Под ключ SW',40,'n'],['ang','Угол°',0,'c'],['depth','Глубина',8,'n'],['step','Шаг по Z',1,'n'],['wall','Съём вокруг, мм',10,'n'],['over','Шаг вбок, % D',45,'n']]},
+ contourRect:{n:'Выступ / контур прямоугольный',s:'Выступ прямоуг.',c:'RECT CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['w','Длина X',110,'n'],['h','Ширина Y',70,'n'],['side','Сторона','out',SIDE],['depth','Глубина',10,'n'],['step','Шаг по Z',2,'n'],WALL,OVO]},
+ contourCircle:{n:'Выступ / контур круглый',s:'Выступ круглый',c:'CIRC CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',40,'n'],['side','Сторона','out',SIDE],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],WALL,OVO]},
+ contourOval:{n:'Выступ / контур овальный',s:'Выступ овальный',c:'OVAL CONTOUR',k:['endmill'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['l','Длина L',60,'n'],['w','Ширина W',30,'n'],['ang','Угол°',0,'c'],['side','Сторона','out',SIDE],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],WALL,OVO]},
+ polygon:{n:'Многогранник (шестигранник и др.)',s:'Многогранник',c:'POLYGON',k:['endmill'],f:[['side','Тип','out',[['out','Выступ — как головка болта'],['in','Гнездо — карман под гайку']]],['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['n','Кол-во граней',6,'n'],['sw','Под ключ SW',40,'n'],['ang','Угол°',0,'c'],['depth','Глубина',8,'n'],['step','Шаг по Z',1,'n'],['blank','Ø круглой заготовки',0,'n',{side:'out'}],['wall','Съём вокруг, мм',10,'n',{side:'out'}],['over','Шаг вбок, % D',45,'n']]},
  slot:{n:'Паз',s:'Паз',c:'SLOT',k:['endmill'],f:[['x1','X1',-30,'c'],['y1','Y1',0,'c'],['x2','X2',30,'c'],['y2','Y2',0,'c'],['depth','Глубина',3,'n'],['step','Шаг по Z',0.5,'n']]},
  drill:{n:'Сверление / центровка',s:'Сверление',c:'DRILLING',k:['drill','center','reamer','chamfer'],f:[['cycle','Цикл','G81',[['G81','G81 простое'],['G82','G82 с выдержкой'],['G83','G83 глубокое с выводом'],['G73','G73 с ломкой стружки']]],['depth','Глубина (вершина)',10,'n'],['rp','Плоскость R',2,'n'],['q','Шаг Q',3,'n',{cycle:['G83','G73']}],['dwell','Выдержка P, мс',500,'n',{cycle:'G82'}],...PAT]},
  tap:{n:'Нарезание резьбы метчиком',s:'Метчик',c:'RIGID TAPPING',k:['tap'],f:[['depth','Глубина',12,'n'],['rp','Плоскость R',5,'n'],...PAT]},
  thread:{n:'Резьбофрезерование',s:'Резьбофреза',c:'THREAD MILLING',k:['thread'],f:[['dia','Номинал резьбы D',8,'n'],['pitch','Шаг P',1.25,'n'],['depth','Длина резьбы',12,'n'],['hand','Направление',"R",[['R','Правая'],['L','Левая']]],...PAT]}
 };
-const CYC=[['Плоскость',['face']],['Карманы',['pocketRect','pocketCircle','pocketOval']],['Цапфы и контуры',['contourRect','contourCircle','contourOval','polygon']],['Пазы',['slot']],['Отверстия',['drill','tap','thread']]];
+const CYC=[['Плоскость',['face']],['Карманы',['pocketRect','pocketCircle','pocketOval',['polygon',{side:'in'},'Гнездо 6-гранное','polygonIn']]],['Выступы и контуры',['contourRect','contourCircle','contourOval',['polygon',{side:'out',n:6,blank:42,sw:36,depth:15,step:1.5},'Шестигранник на круглом'],['polygon',{side:'out',blank:0},'Многогранник (выступ)']]],['Пазы',['slot']],['Отверстия',['drill','tap','thread']]];
 /* пиктограммы циклов */
 const SB='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/>',SD='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 2.5" opacity=".5"/>';
 const FL='fill="currentColor" fill-opacity=".85"',PK='fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.8"';
@@ -256,6 +257,7 @@ const ICO={
  contourRect:SD+`<rect x="11" y="13.5" width="18" height="13" rx="1" ${FL}/>`,
  contourCircle:SD+`<circle cx="20" cy="20" r="7.5" ${FL}/>`,
  contourOval:SD+`<rect x="8.5" y="15" width="23" height="10" rx="5" ${FL}/>`,
+ polygonIn:SB+`<path d="M15 12.5h10l5 7.5-5 7.5H15l-5-7.5z" ${PK}/>`,
  polygon:SD+`<path d="M15 12.5h10l5 7.5-5 7.5H15l-5-7.5z" ${FL}/>`,
  slot:SB+'<path d="M11 20h18" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".5"/>',
  drill:SB+'<g fill="currentColor"><circle cx="11" cy="15" r="2.4"/><circle cx="20" cy="15" r="2.4"/><circle cx="29" cy="15" r="2.4"/><circle cx="11" cy="25" r="2.4"/><circle cx="20" cy="25" r="2.4"/><circle cx="29" cy="25" r="2.4"/></g>',
@@ -340,12 +342,12 @@ window.calcSF=()=>{const t=st.tools.find(x=>x.id==selTool);t.vc=num($('#vc').val
 /* ---------- операции UI ---------- */
 function renderOps(){renderCyc();renderOpList();renderOpEd();}
 function renderCyc(){
- let h=CYC.map(([g,ks])=>`<div class="grp">${g}</div><div class="cyc">${ks.map(k=>`<button onclick="addOp('${k}')">${svg(k)}<span>${OPS[k].s}</span></button>`).join('')}</div>`).join('');
+ let h=CYC.map(([g,ks])=>`<div class="grp">${g}</div><div class="cyc">${ks.map(k=>{const[t,pr,lb,ic]=Array.isArray(k)?k:[k];return`<button onclick='addOp("${t}",${JSON.stringify(pr||{})})'>${svg(ic||t)}<span>${lb||OPS[t].s}</span></button>`;}).join('')}</div>`).join('');
  h+=`<div class="grp">Мои пресеты</div>`+(PRE.length?`<div class="cyc">${PRE.map(p=>`<button onclick="addPreset('${p.id}')" title="${esc(OPS[p.type]?.n||'')}"><span class="x" onclick="event.stopPropagation();delPreset('${p.id}')">✕</span>${svg(p.type)}<span>${esc(p.name)}</span></button>`).join('')}</div>`:'<div style="color:var(--mut);font-size:12px">Настройте операцию и нажмите «★ В пресеты» — она появится здесь со всеми размерами.</div>');
  $('#cycG').innerHTML=h;}
 function opInfo(o){const t=st.tools.find(x=>x.id==o.tool);return (t?`T${t.num} Ø${t.d}`:'⚠ нет инструмента')+(o.depth!=null?` · глуб. ${o.depth}`:'');}
 function renderOpList(){
- $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n" title="${i+1}">${svg(o.type,'style="color:var(--acc)"')}</div><div class="m" title="${OPS[o.type].n}"><b>${i+1}. ${OPS[o.type].s}</b><small>${opInfo(o)}</small></div>
+ $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n" title="${i+1}">${svg(o.type=='polygon'&&o.side=='in'?'polygonIn':o.type,'style="color:var(--acc)"')}</div><div class="m" title="${OPS[o.type].n}"><b>${i+1}. ${o.type=='polygon'?(o.side=='in'?'Гнездо ':'Выступ ')+Math.round(o.n)+'-гр.':OPS[o.type].s}</b><small>${opInfo(o)}</small></div>
  <button class="ib" title="Вкл/выкл" onclick="event.stopPropagation();opAct('tog','${o.id}')">${o.on?'◉':'○'}</button><button class="ib" onclick="event.stopPropagation();opAct('up','${o.id}')">↑</button><button class="ib" onclick="event.stopPropagation();opAct('dn','${o.id}')">↓</button><button class="ib" onclick="event.stopPropagation();opAct('dup','${o.id}')">⧉</button><button class="ib" onclick="event.stopPropagation();opAct('del','${o.id}')">✕</button></div>`).join('')||'<div class="empty">Добавьте первый цикл ниже</div>';}
 let prevAll=false;
 function renderOpEd(){
@@ -360,13 +362,13 @@ function renderOpEd(){
   <div class="stats" id="prevStats"></div></div></div>`;
  bindForm($('#of'),()=>o,()=>{renderOpList();updPrev();},()=>renderOpEd());
  updPrev(0);}
-const HINT={face:'Зигзаг по всей площади, фреза выходит за край на радиус + 2 мм.',pocketRect:'Выборка от центра к краям, без коррекции G41 — смещение на радиус считается программой.',contourRect:'Снаружи — попутное фрезерование по часовой, внутри — против часовой. «Съём вокруг» — ширина материала вокруг цапфы, которую нужно убрать (проходы снаружи внутрь).',pocketCircle:'Концентрические окружности G03 от центра.',contourCircle:'Полная окружность G02/G03 с I. Снаружи — бобышка (цапфа), внутри — растачивание отверстия. «Съём вокруг» — ширина кольца материала вокруг цапфы.',
- pocketOval:'Овал = две полуокружности, соединённые прямыми (L — общая длина, W — ширина). Врезание наклонно вдоль оси паза, затем выборка концентрическими овалами G03.',contourOval:'Овальная цапфа или контур овального окна. L — общая длина, W — ширина, угол поворачивает овал вокруг центра.',
- polygon:'Многогранник под ключ (шестигранник, квадрат и т.д.). SW — размер между параллельными гранями. «Съём вокруг» — сколько материала снять вокруг граней.',
+const HINT={face:'Зигзаг по всей площади, фреза выходит за край на радиус + 2 мм.',pocketRect:'Выборка от центра к краям, без коррекции G41 — смещение на радиус считается программой.',contourRect:'Снаружи — попутное фрезерование по часовой, внутри — против часовой. «Съём вокруг» — ширина материала вокруг выступа, которую нужно убрать (проходы снаружи внутрь).',pocketCircle:'Концентрические окружности G03 от центра.',contourCircle:'Полная окружность G02/G03 с I. Снаружи — круглый выступ (бобышка), внутри — растачивание отверстия. «Съём вокруг» — ширина кольца материала вокруг выступа.',
+ pocketOval:'Овал = две полуокружности, соединённые прямыми (L — общая длина, W — ширина). Врезание наклонно вдоль оси паза, затем выборка концентрическими овалами G03.',contourOval:'Овальный выступ или контур овального окна. L — общая длина, W — ширина, угол поворачивает овал вокруг центра.',
+ polygon:'Многогранник под ключ (шестигранник, квадрат, восьмигранник…). SW — размер между параллельными гранями. Выступ — как головка болта: фреза идёт снаружи граней. Шестигранник на круглом прутке/болте: укажите «Ø круглой заготовки» — съём до граней посчитается сам (для 3D выберите в «Проекте» круглую заготовку того же Ø). Если Ø = 0, используется «Съём вокруг». Гнездо — карман под гайку/головку: выборка изнутри, углы гнезда получаются скруглёнными радиусом фрезы.',
  slot:'Врезание на каждом проходе, чередование концов паза.',drill:'Канонические циклы Fanuc G81/G82/G83/G73 с G98 (возврат в начальную плоскость).',tap:'Жёсткое нарезание: M29 S.. + G84, F = S × P из шага метчика.',thread:'Винтовая интерполяция снизу вверх (попутное). Диаметр траектории = D резьбы − D фрезы.'};
 window.selO=id=>{selOp=id;renderOpList();renderOpEd();};
 const narrow=()=>innerWidth<820;
-window.addOp=type=>{const o=newOp(type);st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+OPS[type].n);if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
+window.addOp=(type,pr)=>{const o=newOp(type);if(pr)Object.assign(o,pr);st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+OPS[type].n);if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
 window.opAct=(a,id)=>{const i=st.ops.findIndex(o=>o.id==id),o=st.ops[i];
  if(a=='tog')o.on=!o.on;
  if(a=='up'&&i>0)[st.ops[i-1],st.ops[i]]=[st.ops[i],st.ops[i-1]];
@@ -394,7 +396,7 @@ function pts(o){
  if(o.pat=='pcd'){const a=[];for(let i=0;i<Math.max(1,Math.round(o.cnt));i++){const g=(o.ang+360*i/o.cnt)*Math.PI/180;a.push([o.cx+o.pr*Math.cos(g),o.cy+o.pr*Math.sin(g)]);}return a;}
  if(o.pat=='grid'){const a=[];for(let j=0;j<o.ny;j++){const row=[];for(let i=0;i<o.nx;i++)row.push([o.gx+i*o.dx,o.gy+j*o.dy]);if(j%2)row.reverse();a.push(...row);}return a;}
  return String(o.list).split(/[;\n]/).map(s=>s.split(',').map(num)).filter(p=>p.length==2);}
-/* смещения проходов вокруг цапфы: от внешнего к чистовому */
+/* смещения проходов вокруг выступа: от внешнего к чистовому */
 const passes=(o,t)=>{if(o.side!='out'||!(+o.wall>0))return[0];const so=Math.max(0.1,t.d*(+o.over||45)/100),n=Math.max(0,Math.ceil((o.wall-t.d)/so)),a=[];for(let k=n;k>=0;k--)a.push(k*so);return a;};
 /* овал (две полуокружности + прямые): ccw — против часовой */
 function oval(R,a,q,ccw){const c=[],h=a>1e-4;
@@ -428,7 +430,9 @@ const G={
  contourOval(c){const{o,t,r,L}=c,R=rot(o),a=Math.max(0,(o.l-o.w)/2),E=passes(o,t),Q0=o.w/2+(o.side=='out'?r:-r);if(Q0<=0)throw Error('TOOL TOO BIG');if(o.l<o.w)throw Error('L < W');
   const ccw=o.side!='out';c.start(...oval(R,a,Q0+E[0],ccw).s);L.push('G0 Z1.');
   levels(o.depth,o.step).forEach(z=>{E.forEach((e,ei)=>{const ob=oval(R,a,Q0+e,ccw);L.push(`G1 ${XY(ob.s)} F${t.f}`);if(!ei)L.push(`G1 Z${F(z)} F${c.fp}`,`G1 ${XY(ob.s)} F${t.f}`);L.push(...ob.c);});});L.push(`G0 Z${F(c.safe)}`);},
- polygon(c){const{o,t,r,L}=c,N=Math.max(3,Math.round(o.n)),R=rot(o),E=passes({...o,side:'out'},t);if(!(o.sw>0))throw Error('SW = 0');
+ polygon(c){const{o,t,r,L}=c,N=Math.max(3,Math.round(o.n)),R=rot(o),E=passes({...o,side:'out',wall:+o.blank>0?Math.max(0,o.blank/2-o.sw/2):o.wall},t);if(!(o.sw>0))throw Error('SW = 0');
+  if(o.side=='in'){const Am=o.sw/2-r;if(Am<0)throw Error('TOOL TOO BIG');const so=Math.max(0.1,t.d*o.over/100),n=Math.max(1,Math.ceil(Am/so));c.start(o.cx,o.cy);L.push('G0 Z1.');
+   levels(o.depth,o.step).forEach(z=>{L.push(`G1 X${F(o.cx)} Y${F(o.cy)} F${t.f}`,`G1 Z${F(z)} F${c.fp}`);for(let i=1;i<=n;i++){const Rv=Am*i/n/Math.cos(Math.PI/N);for(let k=0;k<=N;k++){const th=(k+.5)*2*Math.PI/N;L.push(`G1 ${XY(R.p(Rv*Math.cos(th),Rv*Math.sin(th)))} F${t.f}`);}}L.push(`G1 X${F(o.cx)} Y${F(o.cy)}`);});L.push(`G0 Z${F(c.safe)}`);return;}
   const path=e=>{const A=o.sw/2+r+e,Rv=A/Math.cos(Math.PI/N),a=[];for(let k=N;k>=0;k--){const th=((k%N)+.5)*2*Math.PI/N;a.push(R.p(Rv*Math.cos(th),Rv*Math.sin(th)));}return a;};
   c.start(...path(E[0])[0]);L.push('G0 Z1.');
   levels(o.depth,o.step).forEach(z=>{E.forEach((e,ei)=>{const P=path(e);L.push(`G1 ${XY(P[0])} F${t.f}`);if(!ei)L.push(`G1 Z${F(z)} F${c.fp}`);P.slice(1).forEach((p,k)=>L.push(`G1 ${XY(p)}${k?'':' F'+t.f}`));});});L.push(`G0 Z${F(c.safe)}`);},
@@ -450,7 +454,7 @@ function mTool(c,cut=true){const{L,t,o}=c;if(cut)MV(L,20,t.d,'TOOL D');MV(L,21,M
 function mStart(c,X,Y,noSp){const{L,t}=c;L.push(`G0 G90 ${c.w} X${X} Y${Y}`);if(!noSp)L.push('S#21 M03');L.push(`G43 H${t.num} Z#24`,'M08');}
 const mAlarm=(c,cond,msg)=>{const n=c.n();c.L.push(`IF[${cond}]GOTO${n}`,`#3000=1 (${msg})`,`N${n}`);};
 const mLv=(c,d,s)=>c.L.push('#26=0 (Z)',`WHILE[[#26+#${d}]GT0.001]DO1`,`#26=#26-#${s}`,`IF[[#26+#${d}]LT0]THEN#26=0-#${d}`);
-/* наружные проходы цапфы: #pn = кол-во доп. проходов */
+/* наружные проходы вокруг выступа: #pn = кол-во доп. проходов */
 const mPass=(c,pn,side,wall,so)=>{const n=c.n();c.L.push(`#${pn}=0`);if(side)c.L.push(`IF[#${side}LT0]GOTO${n}`);c.L.push(`IF[#${wall}LE0]GOTO${n}`,`#${pn}=FUP[[#${wall}-#20]/#${so}]`,`IF[#${pn}LT0]THEN#${pn}=0`,`N${n}`);};
 /* точка овала с поворотом: (±A, ±Q) */
 const RP=(sa,sq,A,Q)=>`X[#1${sa}${A}*#30${sq=='+'?'-':'+'}${Q}*#31] Y[#2${sa}${A}*#31${sq}${Q}*#30]`;
@@ -494,8 +498,12 @@ const M={
   mStart(c,'[#1-#11*#30-#16*#31]','[#2-#11*#31+#16*#30]');L.push('G0 Z1.');mLv(c,7,8);
   L.push('#16=[#12+#14*#13]*#6',`G1 ${RP('-','+','#11','#16')} F#22`,'G1 Z#26 F#23','#15=#14','WHILE[#15GE0]DO2','#16=[#12+#15*#13]*#6',
    `G1 ${RP('-','+','#11','#16')} F#22`,`G1 ${RP('+','+','#11','#16')}`,`G#17 ${RP('+','-','#11','#16')} ${RIJ('-','#16')}`,`G1 ${RP('-','-','#11','#16')}`,`G#17 ${RP('-','+','#11','#16')} ${RIJ('+','#16')}`,'#15=#15-1','END2','END1','G0 Z#24');},
- polygon(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,Math.max(3,Math.round(o.n)),'NUMBER OF FACES');MV(L,4,o.sw,'ACROSS FLATS SW');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,+o.wall||0,'WALL AROUND');MV(L,9,+o.over||45,'STEPOVER PCT D');mTool(c);
-  mAlarm(c,'#4GT0','SW IS ZERO');L.push('#10=#20*#9/100 (STEPOVER)');mPass(c,11,0,8,10);L.push('#13=[#4/2+#25+#11*#10]/COS[180/#3]');
+ polygon(c){const{o,L}=c;if(o.side=='in'){MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,Math.max(3,Math.round(o.n)),'NUMBER OF FACES');MV(L,4,o.sw,'ACROSS FLATS SW');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,o.over,'STEPOVER PCT D');mTool(c);
+   L.push('#10=#4/2-#25 (PATH APOTHEM)');mAlarm(c,'#10GE0','TOOL TOO BIG');L.push('#11=#20*#8/100 (STEPOVER)','#12=FUP[#10/#11] (RINGS)','IF[#12LT1]THEN#12=1');
+   mStart(c,'#1','#2');L.push('G0 Z1.');mLv(c,6,7);
+   L.push('G1 X#1 Y#2 F#22','G1 Z#26 F#23','#13=1','WHILE[#13LE#12]DO2','#14=#10*#13/#12/COS[180/#3] (VERTEX R)','#15=0','WHILE[#15LE#3]DO3','#16=[#15+0.5]*360/#3+#5','G1 X[#1+#14*COS[#16]] Y[#2+#14*SIN[#16]] F#22','#15=#15+1','END3','#13=#13+1','END2','G1 X#1 Y#2','END1','G0 Z#24');return;}
+  MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,Math.max(3,Math.round(o.n)),'NUMBER OF FACES');MV(L,4,o.sw,'ACROSS FLATS SW');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,+o.wall||0,'WALL AROUND');MV(L,9,+o.over||45,'STEPOVER PCT D');MV(L,18,+o.blank||0,'BLANK DIAMETER');mTool(c);
+  mAlarm(c,'#4GT0','SW IS ZERO');L.push('IF[#18GT0]THEN#8=#18/2-#4/2','IF[#8LT0]THEN#8=0');L.push('#10=#20*#9/100 (STEPOVER)');mPass(c,11,0,8,10);L.push('#13=[#4/2+#25+#11*#10]/COS[180/#3]');
   mStart(c,'[#1+#13*COS[180/#3+#5]]','[#2+#13*SIN[180/#3+#5]]');L.push('G0 Z1.');mLv(c,6,7);
   L.push('#13=[#4/2+#25+#11*#10]/COS[180/#3]','G1 X[#1+#13*COS[180/#3+#5]] Y[#2+#13*SIN[180/#3+#5]] F#22','G1 Z#26 F#23','#12=#11','WHILE[#12GE0]DO2','#13=[#4/2+#25+#12*#10]/COS[180/#3] (VERTEX R)',
    'G1 X[#1+#13*COS[180/#3+#5]] Y[#2+#13*SIN[180/#3+#5]] F#22','#14=#3','WHILE[#14GT0]DO3','#14=#14-1','#15=[#14+0.5]*360/#3+#5','G1 X[#1+#13*COS[#15]] Y[#2+#13*SIN[#15]]','END3','#12=#12-1','END2','END1','G0 Z#24');},
@@ -555,6 +563,21 @@ function expand(code){const raw=code.split('\n');if(!/#|WHILE|GOTO/i.test(code))
   }catch(e){if(/LINE|ALARM/.test(e.message))throw e;throw Error(e.message+' (LINE '+(pc+1)+')');}}
  return out;}
 
+/* ---------- пояснения в скобках: транслит / кириллица / English ---------- */
+const CRU={'PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE Z':'ПАРАМЕТРЫ: #1.. РАЗМЕРЫ, #20 D ФРЕЗЫ, #21 ОБОРОТЫ, #22 ПОДАЧА, #23 ВРЕЗАНИЕ, #24 БЕЗОП. Z',
+ 'X FROM':'X ОТ','Y FROM':'Y ОТ','X TO':'X ДО','Y TO':'Y ДО','DEPTH':'ГЛУБИНА','STEP Z':'ШАГ ПО Z','STEPOVER PCT D':'ШАГ ВБОК % ОТ D','TOOL D':'ДИАМЕТР ФРЕЗЫ','SPINDLE S':'ОБОРОТЫ',
+ 'FEED F':'ПОДАЧА','PLUNGE F':'ПОДАЧА ВРЕЗАНИЯ','SAFE Z':'БЕЗОПАСНАЯ Z','TOOL R':'РАДИУС ФРЕЗЫ','X START':'X НАЧАЛА','X END':'X КОНЦА','STEPOVER':'ШАГ ВБОК','CENTER X':'ЦЕНТР X','CENTER Y':'ЦЕНТР Y',
+ 'LENGTH X':'ДЛИНА X','WIDTH Y':'ШИРИНА Y','RINGS':'КОЛ-ВО ПРОХОДОВ','DIAMETER':'ДИАМЕТР','PATH R':'РАДИУС ТРАЕКТОРИИ','SIDE 1=OUT -1=IN':'1=СНАРУЖИ -1=ВНУТРИ','WALL AROUND':'СЪЕМ ВОКРУГ',
+ 'G2 OUT G3 IN':'G2 СНАРУЖИ G3 ВНУТРИ','LENGTH L':'ДЛИНА L','WIDTH W':'ШИРИНА W','ANGLE':'УГОЛ','HALF STRAIGHT':'ПОЛОВИНА ПРЯМОЙ','PATH Q':'ПОЛУШИРИНА ТРАЕКТОРИИ','NUMBER OF FACES':'КОЛ-ВО ГРАНЕЙ',
+ 'ACROSS FLATS SW':'ПОД КЛЮЧ SW','VERTEX R':'РАДИУС ВЕРШИНЫ','PATH APOTHEM':'ПОЛУРАЗМЕР ТРАЕКТОРИИ','PCD CENTER X':'ЦЕНТР ОКРУЖНОСТИ X','PCD CENTER Y':'ЦЕНТР ОКРУЖНОСТИ Y','PCD RADIUS':'РАДИУС ОКРУЖНОСТИ',
+ 'HOLES':'КОЛ-ВО ОТВЕРСТИЙ','START ANGLE':'НАЧАЛЬНЫЙ УГОЛ','R PLANE':'ПЛОСКОСТЬ R','PECK Q':'ШАГ СВЕРЛЕНИЯ Q','DWELL P':'ВЫДЕРЖКА P','PITCH':'ШАГ РЕЗЬБЫ','FEED = S X P':'ПОДАЧА = S X P',
+ 'START X':'НАЧАЛО X','START Y':'НАЧАЛО Y','COUNT X':'КОЛ-ВО ПО X','COUNT Y':'КОЛ-ВО ПО Y','PITCH X':'ШАГ X','PITCH Y':'ШАГ Y','ROW':'РЯД','Z':'ТЕКУЩАЯ Z',
+ 'BLANK DIAMETER':'ДИАМЕТР ЗАГОТОВКИ 0=НЕТ','TOOL TOO BIG':'ФРЕЗА БОЛЬШЕ ЭЛЕМЕНТА','L LESS THAN W':'L МЕНЬШЕ W','SW IS ZERO':'SW = 0'};
+const CPH=[['STOCK','ЗАГОТОВКА'],['Z0 = TOP','Z0 = ВЕРХ'],['XY0 = LOWER LEFT','XY0 = ЛЕВЫЙ НИЖНИЙ УГОЛ'],['XY0 = CENTER','XY0 = ЦЕНТР'],['XY0 = PART','XY0 = ПО ДЕТАЛИ'],['CONTOUR','КОНТУР'],['POLY','МНОГОГРАННИК'],
+ ['ERROR','ОШИБКА'],['NO TOOL','НЕТ ИНСТРУМЕНТА'],...Object.values(TT).map(v=>[v.c,v.n.toUpperCase()]),...Object.values(OPS).map(v=>[v.c,v.n.toUpperCase()]),['OP','ОП']].sort((a,b)=>b[0].length-a[0].length);
+function trC(t,lang){if(lang=='en')return t;let r=CRU[t];if(r==null){r=t;for(const[a,b]of CPH)r=r.replace(new RegExp('(^|[^A-Z])'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[^A-Z]|$)','g'),(m,p)=>p+b);}
+ return lang=='cyr'?r.toUpperCase():lat(r);}
+const trLines=(L,lang)=>lang=='en'?L:L.map(l=>l.replace(/\(([^()]*)\)/g,(m,t)=>'('+trC(t,lang)+')'));
 const ERR={'TOOL TOO BIG':'Инструмент больше элемента','NO POINTS':'Нет точек','L < W':'Длина L меньше ширины W','W = 0':'Задайте ширину','SW = 0':'Задайте размер SW'};
 function gen(){
  const L=[],s=st,w=s.stock.wcs,macro=s.prog.fmt!='plain';let cur=null;
@@ -571,7 +594,7 @@ function gen(){
   L.push(`(OP${i+1} ${OPS[o.type].c})`);
   const n0=L.length;try{(macro&&M[o.type]?M:G)[o.type](ctx(L,t,o,w,1000+(i+1)*10))}catch(e){L.length=n0;L.push(`(OP${i+1} ERROR: ${e.message})`);}});
  L.push('M09','M05','G91 G28 Z0.','G28 Y0.','G90','M30','%');
- return L.join('\n');}
+ return trLines(L,s.prog.cmt||'lat').join('\n');}
 function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Нет инструмента');const L=[];G[o.type](ctx(L,t,o,st.stock.wcs));return{code:L.join('\n'),t};}
 
 /* ---------- парсер для симуляции ---------- */
@@ -601,6 +624,7 @@ function parse(code){
 function regen(force){if(force){manual=false;}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast('G-код пересоздан');}
 window.regen=regen;
 window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
+window.setCmt=v=>{st.prog.cmt=v;save();regen(true);if(v=='cyr')toast('Проверьте, что стойка показывает кириллицу');};
 const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+(r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'');
@@ -732,7 +756,7 @@ window.doUpdate=async()=>{try{if('caches' in window)for(const k of await caches.
 /* ---------- вкладки ---------- */
 function show(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
  visible=t=='sim';if(PV)PV.on=t=='ops';
- if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code'){$('#fmtSel').value=st.prog.fmt=='plain'?'plain':'macro';regen();}
+ if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code'){$('#fmtSel').value=st.prog.fmt=='plain'?'plain':'macro';$('#cmtSel').value=st.prog.cmt||'lat';regen();}
  if(t=='sim'){regen();if(!R3)init3d();resize();build();}}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
 function renderAll(){renderProj();renderTools();renderOps();codeDirty=true;}
