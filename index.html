@@ -141,7 +141,7 @@ details.cycd[open] summary:before{content:'－'}
 
  <section id="t-tools" class="tab">
   <div class="split">
-   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Магазин инструмента</h3><button class="btn p" onclick="addTool()">+ Добавить</button></div><div id="toolList"></div></div>
+   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Магазин инструмента</h3><div class="row"><button class="btn d s" onclick="delAllTools()">🗑 Удалить всё</button><button class="btn p" onclick="addTool()">+ Добавить</button></div></div><div id="toolList"></div></div>
    <div class="card" id="toolEd"></div>
   </div>
  </section>
@@ -200,7 +200,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.1.1';
+const APP_VERSION='1.1.2';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -215,8 +215,9 @@ const TT={
  endmill:{n:'Фреза концевая',c:'END MILL'},ball:{n:'Фреза сферическая',c:'BALL MILL'},face:{n:'Фреза торцевая',c:'FACE MILL'},
  drill:{n:'Сверло',c:'DRILL'},center:{n:'Центровка',c:'CENTER DRILL'},tap:{n:'Метчик',c:'TAP'},
  thread:{n:'Резьбофреза',c:'THREAD MILL'},chamfer:{n:'Фаскосним',c:'CHAMFER'},reamer:{n:'Развёртка',c:'REAMER'}};
+const FLUTED=['endmill','ball','face','thread','chamfer','reamer'],PERREV=['drill','center'];
 const TF=[['num','Номер T / H',1,'n'],['type','Тип','endmill',Object.entries(TT).map(([k,v])=>[k,v.n])],['name','Название','','text'],
- ['d','Диаметр D, мм',10,'n'],['len','Вылет L, мм',40,'n'],['fl','Кол-во зубьев',4,'n'],['s','Обороты S, об/мин',3000,'n'],
+ ['d','Диаметр D, мм',10,'n'],['fl','Кол-во зубьев',4,'n',{type:FLUTED}],['s','Обороты S, об/мин',3000,'n'],
  ['f','Подача F, мм/мин',500,'n'],['pitch','Шаг резьбы P, мм',1.25,'n',{type:['tap','thread']}]];
 
 /* ---------- операции ---------- */
@@ -264,7 +265,7 @@ const svg=(k,c='')=>`<svg viewBox="0 0 40 40" ${c}>${ICO[k]||''}</svg>`;
 
 /* ---------- состояние ---------- */
 function defaults(){
- const T=(num,type,d,s,f,o={})=>({id:uid(),num,type,name:'',d,len:40,fl:type=='drill'?2:4,s,f,pitch:1.25,...o});
+ const T=(num,type,d,s,f,o={})=>({id:uid(),num,type,name:'',d,fl:4,s,f,pitch:1.25,...o});
  const tools=[T(1,'face',50,1500,800,{fl:5}),T(2,'endmill',10,4000,600),T(3,'center',10,1500,150),T(4,'drill',6.8,1400,140),T(5,'tap',8,400,500,{pitch:1.25}),T(6,'thread',6,5000,300,{pitch:1.25})];
  const s={prog:{num:1000,name:'DETAL',note:''},stock:{x:120,y:80,z:30,origin:'center',wcs:'G54',mat:'Д16Т'},tools,ops:[]};
  const add=(type,tn,o={})=>{const op=newOp(type,s);op.tool=tools[tn].id;Object.assign(op,o);s.ops.push(op);};
@@ -302,18 +303,19 @@ window.resetProj=()=>{if(!confirm('Создать новый проект? Те�
 
 /* ---------- инструменты UI ---------- */
 function renderTools(){
- $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div><div class="m"><b>${esc(t.name||TT[t.type].n)}</b><small>Ø${t.d} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
+ $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div><div class="m"><b>${esc(t.name||TT[t.type].n)}</b><small>Ø${t.d} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}${FLUTED.includes(t.type)?' · z'+t.fl:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
  const t=st.tools.find(x=>x.id==selTool);
  if(!t){$('#toolEd').innerHTML='<div class="empty">Выберите инструмент</div>';return;}
  $('#toolEd').innerHTML=`<h3>T${t.num} — ${TT[t.type].n}</h3><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
- <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||150}"></label><label>fz, мм/зуб<input id="fz" inputmode="decimal" value="${t.fz||0.05}"></label><label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div>
- <div class="hint">S = 1000·Vc / (π·D), F = S·fz·z. Для метчика подача считается автоматически: F = S·P (жёсткое нарезание M29).</div>`;
+ <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||(PERREV.includes(t.type)?60:t.type=='tap'?10:150)}"></label>${t.type=='tap'?'':`<label>${PERREV.includes(t.type)?'f, мм/об':'fz, мм/зуб'}<input id="fz" inputmode="decimal" value="${t.fz||(PERREV.includes(t.type)?0.1:0.05)}"></label>`}<label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div>
+ <div class="hint">${t.type=='tap'?'Метчик: S = 1000·Vc / (π·D), подача F = S·P (жёсткое нарезание M29).':PERREV.includes(t.type)?'Сверло: S = 1000·Vc / (π·D), F = S·f (подача на оборот).':'Фреза: S = 1000·Vc / (π·D), F = S·fz·z.'} Вылет инструмента не задаётся — его меряет станок (корректор H).</div>`;
  bindForm($('#tf'),()=>t,()=>renderToolList(),()=>renderTools());}
 function renderToolList(){const sel=document.activeElement;const id=sel&&sel.dataset.k;renderTools();if(id){const e=$(`#tf [data-k="${id}"]`);if(e){e.focus();const L=e.value.length;try{e.setSelectionRange(L,L)}catch(_){}}}}
 window.selT=id=>{selTool=id;renderTools();};
-window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,len:40,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);selTool=t.id;save();renderTools();};
+window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);selTool=t.id;save();renderTools();};
+window.delAllTools=()=>{if(!st.tools.length)return;if(!confirm(`Удалить весь инструмент (${st.tools.length} шт.)? Операции останутся, но без инструмента.`))return;st.tools=[];selTool=null;save();renderTools();toast('Магазин очищен');};
 window.delTool=id=>{if(!confirm('Удалить инструмент?'))return;st.tools=st.tools.filter(t=>t.id!=id);save();renderTools();};
-window.calcSF=()=>{const t=st.tools.find(x=>x.id==selTool);t.vc=num($('#vc').value);t.fz=num($('#fz').value);t.s=Math.round(1000*t.vc/(Math.PI*t.d));t.f=t.type=='tap'?Math.round(t.s*t.pitch):Math.round(t.s*t.fz*t.fl);save();renderTools();toast(`S${t.s} F${t.f}`);};
+window.calcSF=()=>{const t=st.tools.find(x=>x.id==selTool);t.vc=num($('#vc').value);if($('#fz'))t.fz=num($('#fz').value);if(!(t.d>0))return toast('Задайте диаметр');t.s=Math.round(1000*t.vc/(Math.PI*t.d));t.f=t.type=='tap'?Math.round(t.s*t.pitch):PERREV.includes(t.type)?Math.round(t.s*t.fz):Math.round(t.s*t.fz*(t.fl||1));save();renderTools();toast(`S${t.s} F${t.f}`);};
 
 /* ---------- операции UI ---------- */
 function renderOps(){renderCyc();renderOpList();renderOpEd();}
@@ -657,7 +659,7 @@ function build(){
  sim={i:0,t:0,play:false};$('#playB').textContent='▶';
  const p0=data.segs[0]?.a||{x:0,y:0,z:50};setTool(p0,data.segs[0]?.tool);fitCam();hud(p0);}
 function setTool(p,n){
- if(n!==toolNum){if(toolObj){SC.remove(toolObj);disposeObj(toolObj);}toolNum=n;const t=st.tools.find(t=>t.num==n)||{d:10,len:40,type:'endmill'},r=t.d/2,L=Math.max(t.len||40,t.d*1.5);
+ if(n!==toolNum){if(toolObj){SC.remove(toolObj);disposeObj(toolObj);}toolNum=n;const t=st.tools.find(t=>t.num==n)||{d:10,len:40,type:'endmill'},r=t.d/2,L=Math.max(40,t.d*3);
   toolObj=new THREE.Group();const mat=new THREE.MeshStandardMaterial({color:0xffb000,metalness:.8,roughness:.25});
   let cut;if(['drill','center','chamfer'].includes(t.type)){cut=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L*.6,24),mat);cut.position.y=L*.3+r*.6;const tip=new THREE.Mesh(new THREE.ConeGeometry(r,r*1.2,24),mat);tip.rotation.x=Math.PI;tip.position.y=r*.6;toolObj.add(tip);}
   else if(t.type=='ball'){cut=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L*.6,24),mat);cut.position.y=L*.3+r;const b=new THREE.Mesh(new THREE.SphereGeometry(r,24,12),mat);b.position.y=r;toolObj.add(b);}
