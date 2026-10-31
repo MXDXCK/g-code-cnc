@@ -207,7 +207,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.7.0';
+const APP_VERSION='1.8.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -248,6 +248,10 @@ const OPS={
  polygon:{n:'Многогранник (шестигранник и др.)',s:'Многогранник',c:'POLYGON',k:['endmill'],f:[['side','Тип','out',[['out','Выступ — как головка болта'],['in','Гнездо — карман под гайку']]],['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['n','Кол-во граней',6,'n'],['sw','Под ключ SW',40,'n'],['ang','Угол°',0,'c'],['depth','Глубина',8,'n'],['step','Шаг по Z',1,'n'],['blank','Ø круглой заготовки',0,'n',{side:'out'}],['wall','Съём вокруг, мм',10,'n',{side:'out'}],['over','Шаг вбок, % D',45,'n']]},
  contour:{n:'Контур по элементам',s:'Контур по элементам',c:'ELEMENT CONTOUR',k:['endmill'],f:[['comp','Коррекция','41',[['41','G41 — фреза слева по ходу (попутное)'],['42','G42 — фреза справа по ходу']]],['closed','Контур','0',[['0','Открытый'],['1','Замкнутый']]],['mirror','Где обрабатывать','none',[['none','Как введено'],['R','Только справа'],['L','Только слева'],['x','Справа и слева'],['T','Только сверху'],['B','Только снизу'],['y','Сверху и снизу'],['xy','Все 4 стороны (X и Y)']]],['depth','Глубина',10,'n'],['step','Шаг по Z',2,'n'],['lead','Подход / отход, мм',5,'n'],['passes','Доп. проходов вбок',0,'n'],['over','Шаг вбок, % D',45,'n']]},
  arc:{n:'Дуга (часть окружности)',s:'Дуга',c:'ARC',k:['endmill'],f:[['part','Какая часть','right',[['right','Правая половина'],['left','Левая половина'],['top','Верхняя половина'],['bottom','Нижняя половина'],['custom','Свои углы']]],['a0','Угол от°',-90,'c',{part:'custom'}],['a1','Угол до°',90,'c',{part:'custom'}],['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',40,'n'],['side','Сторона','out',[['out','Снаружи — выпуклая (выступ)'],['in','Внутри — вогнутая (выемка)']]],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['lead','Подход / отход, мм',5,'n'],['passes','Доп. проходов вбок',0,'n'],['over','Шаг вбок, % D',45,'n']]},
+ helix:{n:'Винтовое фрезерование',s:'Винтовое',c:'HELICAL MILLING',k:['endmill'],f:[['side','Тип','in',[['in','Внутреннее — отверстие / окно'],['out','Наружное — выступ / бобышка']]],['shape','Форма','circle',[['circle','Окружность'],['rect','Прямоугольник / квадрат'],['poly','Многогранник']]],
+  ['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',30,'n',{shape:'circle'}],['w','Длина X',40,'n',{shape:'rect'}],['h','Ширина Y',40,'n',{shape:'rect'}],['rc','Радиус углов',0,'n',{shape:'rect'}],
+  ['n','Кол-во граней',6,'n',{shape:'poly'}],['sw','Под ключ SW',30,'n',{shape:'poly'}],['ang','Поворот°',0,'c',{shape:['rect','poly']}],
+  ['depth','Глубина',10,'n'],['pitch','Шаг винта (Z за виток)',1,'n'],['passes','Доп. проходов вбок',0,'n'],['over','Шаг вбок, % D',45,'n'],['lead','Подход / отход, мм',5,'n',{side:'out'}]]},
  slot:{n:'Паз',s:'Паз',c:'SLOT',k:['endmill'],f:[['x1','X1',-30,'c'],['y1','Y1',0,'c'],['x2','X2',30,'c'],['y2','Y2',0,'c'],['depth','Глубина',3,'n'],['step','Шаг по Z',0.5,'n']]},
  slotsRad:{n:'Пазы на окружности (радиальные)',s:'Пазы радиальные',c:'SLOTS ON CIRCLE',k:['endmill'],f:[['cnt','Кол-во пазов',4,'n'],['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['pr','Радиус до центра паза',25,'n'],['ang','Угол первого паза°',0,'c'],['orient','Направление','0',[['0','Вдоль радиуса'],['90','Поперёк (по касательной)']]],['l','Длина паза L',20,'n'],['w','Ширина паза W',10,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n']]},
  slotsArc:{n:'Пазы дуговые на окружности',s:'Пазы дуговые',c:'ARC SLOTS',k:['endmill'],f:[['cnt','Кол-во пазов',2,'n'],['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['pr','Радиус средней линии',30,'n'],['ang','Угол середины первого паза°',90,'c'],['sw','Угловая длина паза°',60,'n'],['w','Ширина паза W',10,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n']]},
@@ -256,7 +260,7 @@ const OPS={
  tap:{n:'Нарезание резьбы метчиком',s:'Метчик',c:'RIGID TAPPING',k:['tap'],f:[['depth','Глубина',12,'n'],['rp','Плоскость R',5,'n'],...PAT]},
  thread:{n:'Резьбофрезерование',s:'Резьбофреза',c:'THREAD MILLING',k:['thread'],f:[['dia','Номинал резьбы D',8,'n'],['pitch','Шаг P',1.25,'n'],['depth','Длина резьбы',12,'n'],['hand','Направление',"R",[['R','Правая'],['L','Левая']]],...PAT]}
 };
-const CYC=[['Плоскость',['face']],['Карманы',['pocketRect','pocketCircle','pocketOval',['polygon',{side:'in'},'Гнездо 6-гранное','polygonIn']]],['Выступы и контуры',['contourRect','contourCircle','contourOval',['polygon',{side:'out',n:6,blank:42,sw:36,depth:15,step:1.5},'Шестигранник на круглом'],['polygon',{side:'out',blank:0},'Многогранник (выступ)']]],['Контур с чертежа',['contour',['arc',{part:'right'},'Дуга справа','arcR'],['arc',{part:'left'},'Дуга слева','arcL'],['arc',{part:'top'},'Дуга сверху','arcT'],['arc',{part:'bottom'},'Дуга снизу','arcB'],['arc',{part:'custom'},'Дуга по углам','arcC']]],['Пазы',['slot','slotsRad','slotsArc',['slotsRad',{cnt:2},'2 паза радиальных','slotsRad2'],['slotsRad',{cnt:6},'6 пазов радиальных','slotsRad6']]],['Лыски',[['flats',{cnt:1},'Лыска одна','flats1'],['flats',{cnt:2},'Лыски 2 шт (под ключ)','flats'],['flats',{cnt:4,h:14},'Лыски 4 шт (квадрат)','flats4']]],['Отверстия',['drill','tap','thread']]];
+const CYC=[['Плоскость',['face']],['Карманы',['pocketRect','pocketCircle','pocketOval',['polygon',{side:'in'},'Гнездо 6-гранное','polygonIn']]],['Выступы и контуры',['contourRect','contourCircle','contourOval',['polygon',{side:'out',n:6,blank:42,sw:36,depth:15,step:1.5},'Шестигранник на круглом'],['polygon',{side:'out',blank:0},'Многогранник (выступ)']]],['Контур с чертежа',['contour',['arc',{part:'right'},'Дуга справа','arcR'],['arc',{part:'left'},'Дуга слева','arcL'],['arc',{part:'top'},'Дуга сверху','arcT'],['arc',{part:'bottom'},'Дуга снизу','arcB'],['arc',{part:'custom'},'Дуга по углам','arcC']]],['Винтовое фрезерование',[['helix',{side:'in',shape:'circle'},'Отверстие по винту','hxIn'],['helix',{side:'out',shape:'circle',d:40},'Бобышка по винту','hxOut'],['helix',{side:'in',shape:'rect'},'Окно квадратное по винту','hxSqIn'],['helix',{side:'out',shape:'rect'},'Квадрат снаружи по винту','hxSqOut'],['helix',{side:'out',shape:'poly'},'Многогранник по винту','hxPoly']]],['Пазы',['slot','slotsRad','slotsArc',['slotsRad',{cnt:2},'2 паза радиальных','slotsRad2'],['slotsRad',{cnt:6},'6 пазов радиальных','slotsRad6']]],['Лыски',[['flats',{cnt:1},'Лыска одна','flats1'],['flats',{cnt:2},'Лыски 2 шт (под ключ)','flats'],['flats',{cnt:4,h:14},'Лыски 4 шт (квадрат)','flats4']]],['Отверстия',['drill','tap','thread']]];
 /* пиктограммы циклов */
 const SB='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/>',SD='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 2.5" opacity=".5"/>';
 const FL='fill="currentColor" fill-opacity=".85"',PK='fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.8"';
@@ -282,6 +286,12 @@ const ICO={
  flats:'<circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 2.5" opacity=".55"/><path d="M11 8.2h18v23.6H11z" fill="none" stroke="currentColor" stroke-width="0"/><path d="M11 8.2a15 15 0 0 0 0 23.6zM29 8.2a15 15 0 0 1 0 23.6z" fill="currentColor" fill-opacity=".85"/>',
  flats1:'<circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 2.5" opacity=".55"/><path d="M29 8.2a15 15 0 0 1 0 23.6z" fill="currentColor" fill-opacity=".85"/>',
  flats4:'<circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 2.5" opacity=".55"/><rect x="10" y="10" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"/>',
+ hxIn:'<ellipse cx="20" cy="9" rx="12" ry="4.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 9v20M32 9v20" stroke="currentColor" stroke-width="1.2" opacity=".5"/><path d="M8 33c10 1 20 1 24-1M8 27c10 1 20 1 24-1M8 21c10 1 20 1 24-1" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".7"/>',
+ hxOut:'<ellipse cx="20" cy="9" rx="12" ry="4.5" fill="currentColor" fill-opacity=".85"/><path d="M8 9v20M32 9v20" stroke="currentColor" stroke-width="1.2" opacity=".5"/><path d="M8 33c10 1 20 1 24-1M8 27c10 1 20 1 24-1M8 21c10 1 20 1 24-1" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".7"/>',
+ hxSqIn:'<path d="M9 5h22l-4 8H5z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M5 13v18M27 13v18" stroke="currentColor" stroke-width="1.2" opacity=".5"/><path d="M8 33c10 1 20 1 24-1M8 27c10 1 20 1 24-1M8 21c10 1 20 1 24-1" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".7"/>',
+ hxSqOut:'<path d="M9 5h22l-4 8H5z" fill="currentColor" fill-opacity=".85"/><path d="M5 13v18M27 13v18" stroke="currentColor" stroke-width="1.2" opacity=".5"/><path d="M8 33c10 1 20 1 24-1M8 27c10 1 20 1 24-1M8 21c10 1 20 1 24-1" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".7"/>',
+ hxPoly:'<path d="M12 4h16l5 5-5 5H12l-5-5z" fill="currentColor" fill-opacity=".85"/><path d="M7 9v20M33 9v20" stroke="currentColor" stroke-width="1.2" opacity=".5"/><path d="M8 33c10 1 20 1 24-1M8 27c10 1 20 1 24-1M8 21c10 1 20 1 24-1" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".7"/>',
+ helix:'<ellipse cx="20" cy="9" rx="12" ry="4.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 33c10 1 20 1 24-1M8 27c10 1 20 1 24-1M8 21c10 1 20 1 24-1" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".7"/>',
  polygonIn:SB+`<path d="M15 12.5h10l5 7.5-5 7.5H15l-5-7.5z" ${PK}/>`,
  polygon:SD+`<path d="M15 12.5h10l5 7.5-5 7.5H15l-5-7.5z" ${FL}/>`,
  slot:SB+'<path d="M11 20h18" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".5"/>',
@@ -393,7 +403,7 @@ function renderOpEd(){
  bindForm($('#of'),()=>o,()=>{renderOpList();if(o.type=='contour')ctrDraw(o);updPrev();},()=>renderOpEd());
  if(o.type=='contour'){ctrBind(o);ctrDraw(o);renderDxf();}
  updPrev(0);}
-const HINT={slotsRad:'Пазы с полукруглыми концами, равномерно по окружности (2, 4, 6… — меняйте «Кол-во пазов»). L — полная длина паза, W — ширина. «Вдоль радиуса» — паз смотрит от центра наружу, «Поперёк» — лежит по касательной. Каждый паз выбирается полностью, затем следующий.',
+const HINT={helix:'Фреза идёт по контуру и плавно опускается по винту: «Шаг винта» — сколько мм вниз за один виток (на дне — один чистовой виток без опускания). Внутреннее — отверстие или окно любого размера больше фрезы (вместо сверла нужного Ø), наружное — бобышка, квадрат, многогранник. Если отверстие больше двух диаметров фрезы и нужен сквозной проход без «пробки» — добавьте проходы вбок. Попутное фрезерование, коррекция G41 D(номер инструмента): в корректор D — радиус фрезы, размер подгоняется износом D. Нужна винтовая интерполяция (G2/G3 с Z) — на 0i-MF Plus она есть.',slotsRad:'Пазы с полукруглыми концами, равномерно по окружности (2, 4, 6… — меняйте «Кол-во пазов»). L — полная длина паза, W — ширина. «Вдоль радиуса» — паз смотрит от центра наружу, «Поперёк» — лежит по касательной. Каждый паз выбирается полностью, затем следующий.',
  slotsArc:'Дуговые пазы по окружности (как SLOT2 у Siemens): средняя линия паза — дуга радиуса R, «Угловая длина» — между центрами закруглений концов. Пазы равномерно по кругу, начиная с угла середины первого (90° — сверху). Врезание наклонно вдоль дуги, выборка — попутно.',
  flats:'Лыски на круглой или квадратной заготовке (деталь стоит вертикально). «От центра до лыски» — расстояние от оси до плоскости лыски (две лыски под ключ S: h = S/2). Угол 0° — лыска справа (по +X), 90° — сверху. Несколько лысок — равномерно по кругу или с заданным шагом угла. Материал снимается проходами снаружи к лыске, попутно; каждая лыска делается полностью, затем следующая.',
  arc:'Обработка только части окружности: правая/левая/верхняя/нижняя половина или свои углы (от → до, против часовой, 0° — вправо по +X). Снаружи — выпуклая дуга (как край бобышки), внутри — вогнутая (часть отверстия, выемка). Фреза идёт попутно, с коррекцией G41 D(номер инструмента) — в корректор D занесите радиус фрезы. Подход и отход по касательной за пределами дуги.',contour:'Вводите контур с чертежа по порядку: старт → прямая / дуга до точки X,Y. Дуга: R — радиус (минус, если дуга больше 180°), ↻ G2 — по часовой, ↺ G3 — против. Направление обхода и G41/G42 задают, с какой стороны идёт фреза: G41 — слева по ходу (попутное). В программе — контур по чертежу, коррекция G41/G42 D(номер инструмента): в корректор D на стойке занесите РАДИУС фрезы, размер подгоняйте износом D. Подход/отход по касательной. «Где обрабатывать»: вводите контур с одной стороны детали, а здесь выберите — только справа, только слева или с обеих сторон. С обеих сторон обработка идёт по очереди: сначала одна сторона на всю глубину, затем другая (G41 сам меняется на G42). Можно загрузить DXF из КОМПАС/AutoCAD (линии, дуги, полилинии) и удалить лишние элементы ✕.',face:'Зигзаг по всей площади, фреза выходит за край на радиус + 2 мм.',pocketRect:'Выборка от центра к краям, без коррекции G41 — смещение на радиус считается программой.',contourRect:'Снаружи — попутное фрезерование по часовой, внутри — против часовой. «Съём вокруг» — ширина материала вокруг выступа, которую нужно убрать (проходы снаружи внутрь).',pocketCircle:'Концентрические окружности G03 от центра.',contourCircle:'Полная окружность G02/G03 с I. Снаружи — круглый выступ (бобышка), внутри — растачивание отверстия. «Съём вокруг» — ширина кольца материала вокруг выступа.',
@@ -464,6 +474,26 @@ function arcCtr(o){const A={right:[-90,90],left:[90,270],top:[0,180],bottom:[180
  const R=(+o.d||0)/2;if(!(R>0))throw Error('Задайте диаметр');const P=a=>[+o.cx+R*Math.cos(a*Math.PI/180),+o.cy+R*Math.sin(a*Math.PI/180)],r4=v=>Math.round(v*1e4)/1e4,rs=sw>180?-R:R;
  const [s0,s1]=o.side=='out'?[P(A[1]),P(A[0])]:[P(A[0]),P(A[1])];
  return{...o,sx:r4(s0[0]),sy:r4(s0[1]),els:[{t:o.side=='out'?'CW':'CCW',x:r4(s1[0]),y:r4(s1[1]),r:rs}],closed:'0',mirror:'none',comp:'41'};}
+/* ---------- винтовое фрезерование ---------- */
+function hxShape(o){const R=rot({cx:+o.cx||0,cy:+o.cy||0,ang:o.shape=='circle'?0:+o.ang||0}),E=[];let ext;
+ const ln=(a,b)=>{if(V2.dist(a,b)>1e-9)E.push({k:'L',a,b});},ar=(a,b,c)=>{if(V2.dist(a,b)>1e-9)E.push({k:'A',a,b,c,cw:false});};
+ if(o.shape=='rect'){const hx=o.w/2,hy=o.h/2;if(!(hx>0&&hy>0))throw Error('Задайте размеры');const rc=Math.max(0,Math.min(+o.rc||0,hx,hy));ext=hx;
+  ln([hx,0],[hx,hy-rc]);ar([hx,hy-rc],[hx-rc,hy],[hx-rc,hy-rc]);ln([hx-rc,hy],[-hx+rc,hy]);ar([-hx+rc,hy],[-hx,hy-rc],[-hx+rc,hy-rc]);ln([-hx,hy-rc],[-hx,-hy+rc]);ar([-hx,-hy+rc],[-hx+rc,-hy],[-hx+rc,-hy+rc]);ln([-hx+rc,-hy],[hx-rc,-hy]);ar([hx-rc,-hy],[hx,-hy+rc],[hx-rc,-hy+rc]);ln([hx,-hy+rc],[hx,0]);}
+ else if(o.shape=='poly'){const N=Math.max(3,Math.round(o.n)),A=o.sw/2;if(!(A>0))throw Error('Задайте размер SW');const Rv=A/Math.cos(Math.PI/N),V=[...Array(N)].map((_,k)=>{const t=(k+.5)*2*Math.PI/N;return[Rv*Math.cos(t),Rv*Math.sin(t)];});ext=A;
+  let p=[A,0];V.forEach(v=>{ln(p,v);p=v;});ln(p,[A,0]);}
+ else{const q=+o.d/2;if(!(q>0))throw Error('Задайте диаметр');ext=q;ar([q,0],[-q,0],[0,0]);ar([-q,0],[q,0],[0,0]);}
+ const T=e=>({...e,a:R.p(...e.a),b:R.p(...e.b),c:e.c?R.p(...e.c):undefined});let G=E.map(T);
+ if(o.side=='out')G=G.slice().reverse().map(e=>({...e,a:e.b,b:e.a,cw:e.k=='A'?!e.cw:e.cw}));
+ return{E:G,ext,C:[+o.cx||0,+o.cy||0]};}
+const elLen=e=>{if(e.k=='L')return V2.dist(e.a,e.b);const r=V2.dist(e.a,e.c);let a0=Math.atan2(e.a[1]-e.c[1],e.a[0]-e.c[0]),a1=Math.atan2(e.b[1]-e.c[1],e.b[0]-e.c[0]),sw=e.cw?a0-a1:a1-a0;while(sw<=1e-9)sw+=2*Math.PI;return r*sw;};
+function hxRings(o,t){const r=t.d/2,{E,ext,C}=hxShape(o),so=Math.max(0.1,t.d*(+o.over||45)/100),np=Math.max(0,Math.round(+o.passes||0)),out=[];
+ if(o.shape=='rect'&&+o.rc>0&&+o.rc<r&&o.side=='in')throw Error('Радиус углов меньше радиуса фрезы');
+ for(let k=np;k>=0;k--){const e=k*so;if(o.side=='in'&&ext-e-r<=0.01)throw Error(k?'Слишком много проходов вбок':'TOOL TOO BIG');
+  const P=offChain(E,e,1,true);offChain(P,r,1,true);const P0=P[0].a,dc=V2.dist(P0,C),u=o.side=='in'?nrm(V2.sub(C,P0)):nrm(V2.sub(P0,C));
+  const Ls=o.side=='in'?Math.min(dc,Math.max(+o.lead||0,r+1)):Math.max(+o.lead||0,r+1);
+  const L=P.map(elLen),tot=L.reduce((a,b)=>a+b,0);let cu=0;out.push({P,P0,app:V2.add(P0,V2.mul(u,Ls)),fr:L.map(l=>(cu+=l)/tot)});}
+ return out;}
+const fr6=v=>String(Math.round(v*1e6)/1e6);
 const elG=e=>e.k=='L'?`G1 ${XY(e.b)}`:`G${e.cw?2:3} ${XY(e.b)} ${IJ(V2.sub(e.c,e.a))}`;
 function ctrChains(o,t){const r=t.d/2,M=ctrMir(o);
  const so=Math.max(0.1,t.d*(+o.over||45)/100),np=Math.max(0,Math.round(+o.passes||0)),Ld=Math.max(+o.lead||0,r+1),out=[];
@@ -614,6 +644,12 @@ const G={
   c.start(P[0][0],P[0][1]);P.forEach(([x,y])=>{L.push(`G0 X${F(x)} Y${F(y)}`,'G0 Z1.',`G1 Z${F(-Math.abs(o.depth))} F${c.fp}`,`G1 X${F(x+R)} F${Math.round(t.f/2)}`);
    let z=-Math.abs(o.depth);while(z<-1e-6){z+=p;L.push(`${g} X${F(x+R)} Y${F(y)} Z${F(z)} I${F(-R)} J0. F${t.f}`);}L.push(`G1 X${F(x)} Y${F(y)}`,`G0 Z${F(c.safe)}`);});},
  arc(c){return G.contour({...c,o:arcCtr(c.o)});},
+ helix(c){const{o,t,L}=c,RG=hxRings(o,t),D=Math.abs(+o.depth),nl=Math.max(1,Math.ceil((D+0.5)/Math.max(0.05,+o.pitch||1)-1e-9)),dz=(D+0.5)/nl;
+  c.start(...RG[0].app);L.push(`(D${t.num} - TOOL RADIUS IN OFFSET)`);
+  RG.forEach(g=>{L.push(`G0 ${XY(g.app)}`,'G0 Z1.',`G1 Z0.5 F${c.fp}`,`G41 D${t.num} G1 ${XY(g.P0)} F${t.f}`);
+   for(let j=0;j<nl;j++){const zs=0.5-j*dz;g.P.forEach((e,i)=>L.push(`${elG(e)} Z${F(zs-dz*g.fr[i])}`));}
+   g.P.forEach(e=>L.push(`${elG(e)} Z${F(-D)}`));L.push(`G40 G1 ${XY(g.app)}`,'G0 Z1.');});
+  L.push(`G0 Z${F(c.safe)}`);},
  contour(c){const{o,t,L}=c,CH=ctrChains(o,t);c.start(...CH[0].app);L.push(`(D${t.num} - TOOL RADIUS IN OFFSET)`,'G0 Z1.');
   ctrGrp(CH).forEach((GR,gi)=>{if(CH.length>1)L.push(`(SIDE ${gi+1})`);levels(o.depth,o.step).forEach(z=>GR.forEach(ch=>L.push(`G0 ${XY(ch.app)}`,`G1 Z${F(z)} F${c.fp}`,`G${ch.g} D${t.num} G1 ${XY(ch.E[0].a)} F${t.f}`,...ch.E.map(elG),`G40 G1 ${XY(ch.out)}`,'G0 Z1.')));});L.push(`G0 Z${F(c.safe)}`);}
 };
@@ -704,6 +740,12 @@ const M={
  drill(c){const{o,L}=c;if(o.pat=='list')return G.drill(c);mHoles(c,`G98 ${o.cycle} X#11 Y#12 Z[0-#7] R#8${o.cycle=='G83'||o.cycle=='G73'?' Q#9':''}${o.cycle=='G82'?' P#10':''} F#22`,()=>{MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.rp,'R PLANE');if(o.cycle=='G83'||o.cycle=='G73')MV(L,9,o.q,'PECK Q');if(o.cycle=='G82')MV(L,10,Math.round(o.dwell),'DWELL P');mTool(c,false);});},
  tap(c){const{o,t,L}=c;if(o.pat=='list')return G.tap(c);mHoles(c,'G98 G84 X#11 Y#12 Z[0-#7] R#8 F#22',()=>{MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.rp,'R PLANE');MV(L,21,Math.round(t.s),'SPINDLE S');MV(L,19,t.pitch,'PITCH');L.push('#22=#21*#19 (FEED = S X P)');MV(L,24,+o.safe,'SAFE Z');},true);},
  arc(c){return M.contour({...c,o:arcCtr(c.o)});},
+ helix(c){const{o,t,L}=c,RG=hxRings(o,t);MV(L,1,Math.abs(+o.depth),'DEPTH');MV(L,2,Math.max(0.05,+o.pitch||1),'HELIX PITCH');mTool(c,false);MV(L,23,c.fp,'PLUNGE F');
+  L.push(`(D${t.num} - TOOL RADIUS IN OFFSET)`,'#3=FUP[[#1+0.5]/#2] (LAPS)','#4=[#1+0.5]/#3 (Z PER LAP)');mStart(c,F(RG[0].app[0]),F(RG[0].app[1]));
+  RG.forEach(g=>{L.push(`G0 ${XY(g.app)}`,'G0 Z1.','G1 Z0.5 F#23',`G41 D${t.num} G1 ${XY(g.P0)} F#22`,'#5=0.5 (Z LAP START)','#6=1','WHILE[#6LE#3]DO1');
+   g.P.forEach((e,i)=>L.push(`${elG(e)} Z[#5-#4*${fr6(g.fr[i])}]`));L.push('#5=#5-#4','#6=#6+1','END1');
+   g.P.forEach(e=>L.push(`${elG(e)} Z[0-#1]`));L.push(`G40 G1 ${XY(g.app)}`,'G0 Z1.');});
+  L.push('G0 Z#24');},
  contour(c){const{o,t,L}=c,CH=ctrChains(o,t);MV(L,1,Math.abs(o.depth),'DEPTH');MV(L,2,o.step,'STEP Z');mTool(c,false);MV(L,23,c.fp,'PLUNGE F');L.push(`(D${t.num} - TOOL RADIUS IN OFFSET)`);
   mStart(c,F(CH[0].app[0]),F(CH[0].app[1]));L.push('G0 Z1.');ctrGrp(CH).forEach((GR,gi)=>{if(CH.length>1)L.push(`(SIDE ${gi+1})`);mLv(c,1,2);GR.forEach(ch=>L.push(`G0 ${XY(ch.app)}`,'G1 Z#26 F#23',`G${ch.g} D${t.num} G1 ${XY(ch.E[0].a)} F#22`,...ch.E.map(elG),`G40 G1 ${XY(ch.out)}`,'G0 Z1.'));L.push('END1');});L.push('G0 Z#24');}
 };
@@ -771,7 +813,7 @@ const CRU={'PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE
  'SLOT NUMBER':'НОМЕР ПАЗА','CENTERLINE RADIUS':'РАДИУС СРЕДНЕЙ ЛИНИИ','FIRST SLOT MID ANGLE':'УГОЛ СЕРЕДИНЫ ПАЗА','SLOT ANGLE LENGTH':'УГЛОВАЯ ДЛИНА ПАЗА','START ANGLE':'НАЧАЛЬНЫЙ УГОЛ','END ANGLE':'КОНЕЧНЫЙ УГОЛ','SLOT TOO WIDE':'ПАЗ ШИРЕ РАДИУСА',
  'BLANK 1=ROUND 2=SQUARE':'ЗАГОТОВКА 1=КРУГ 2=КВАДРАТ','BLANK SIZE':'ДИАМЕТР-СТОРОНА ЗАГОТОВКИ','NUMBER OF FLATS':'КОЛ-ВО ЛЫСОК','CENTER TO FLAT':'ОТ ЦЕНТРА ДО ЛЫСКИ','FIRST FLAT ANGLE':'УГОЛ ПЕРВОЙ ЛЫСКИ','ANGLE STEP 0=EVEN':'ШАГ УГЛА 0=ПОРОВНУ',
  'FLAT NUMBER':'НОМЕР ЛЫСКИ','HALF LENGTH':'ПОЛОВИНА ДЛИНЫ','PASSES':'ПРОХОДЫ','TOOL CENTER OFFSET':'СМЕЩЕНИЕ ЦЕНТРА ФРЕЗЫ','BLANK SIZE ZERO':'НЕТ РАЗМЕРА ЗАГОТОВКИ',
- 'TOOL TOO BIG':'ФРЕЗА БОЛЬШЕ ЭЛЕМЕНТА','L LESS THAN W':'L МЕНЬШЕ W','SW IS ZERO':'SW = 0'};
+ 'HELIX PITCH':'ШАГ ВИНТА','LAPS':'КОЛ-ВО ВИТКОВ','Z PER LAP':'Z ЗА ВИТОК','Z LAP START':'Z НАЧАЛА ВИТКА','TOOL TOO BIG':'ФРЕЗА БОЛЬШЕ ЭЛЕМЕНТА','L LESS THAN W':'L МЕНЬШЕ W','SW IS ZERO':'SW = 0'};
 const CPH=[['STOCK','ЗАГОТОВКА'],['Z0 = TOP','Z0 = ВЕРХ'],['XY0 = LOWER LEFT','XY0 = ЛЕВЫЙ НИЖНИЙ УГОЛ'],['XY0 = CENTER','XY0 = ЦЕНТР'],['XY0 = PART','XY0 = ПО ДЕТАЛИ'],['CONTOUR','КОНТУР'],['POLY','МНОГОГРАННИК'],
  ['TOOL RADIUS IN OFFSET','РАДИУС ФРЕЗЫ В КОРРЕКТОРЕ'],['SIDE','СТОРОНА'],['ERROR','ОШИБКА'],['NO TOOL','НЕТ ИНСТРУМЕНТА'],...Object.values(TT).map(v=>[v.c,v.n.toUpperCase()]),...Object.values(OPS).map(v=>[v.c,v.n.toUpperCase()]),['OP','ОП']].sort((a,b)=>b[0].length-a[0].length);
 function trC(t,lang){if(lang=='en')return t;let r=CRU[t];if(r==null){r=t;for(const[a,b]of CPH)r=r.replace(new RegExp('(^|[^A-Z])'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[^A-Z]|$)','g'),(m,p)=>p+b);}
