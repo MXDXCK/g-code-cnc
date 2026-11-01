@@ -25,7 +25,7 @@ class MainForm : Form
 
     public MainForm()
     {
-        Text = "G-код ЧПУ";
+        Text = "Fresa — G-код для ЧПУ";
         BackColor = Color.FromArgb(15, 17, 21);
         Width = 1400; Height = 900;
         StartPosition = FormStartPosition.CenterScreen;
@@ -60,13 +60,13 @@ class MainForm : Form
         catch (WebView2RuntimeNotFoundException)
         {
             if (MessageBox.Show("Нужен компонент Microsoft Edge WebView2 Runtime (в Windows 10/11 обычно уже есть).\n\nОткрыть страницу загрузки?",
-                    "G-код ЧПУ", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                    "Fresa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 OpenExternal("https://developer.microsoft.com/microsoft-edge/webview2/#download-section");
             Close();
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не удалось запустить: " + ex.Message, "G-код ЧПУ", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show("Не удалось запустить: " + ex.Message, "Fresa", MessageBoxButtons.OK, MessageBoxIcon.Error);
             Close();
         }
     }

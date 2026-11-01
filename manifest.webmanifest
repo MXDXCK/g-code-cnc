@@ -1,7 +1,7 @@
 {
-  "name": "G-код ЧПУ",
-  "short_name": "G-код ЧПУ",
-  "description": "Генератор G-кода для Fanuc 0i-MF Plus: циклы, 3D-симуляция, параметрические программы",
+  "name": "Fresa — G-код для ЧПУ",
+  "short_name": "Fresa",
+  "description": "Программы для фрезерных станков с ЧПУ (стойки Fanuc 0i и совместимые): циклы, 3D-проверка, параметрия, 4-я ось",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,7 +9,21 @@
   "theme_color": "#0f1115",
   "lang": "ru",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

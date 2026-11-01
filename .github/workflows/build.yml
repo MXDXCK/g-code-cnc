@@ -9,6 +9,8 @@ on:
       - 'android/**'
       - 'windows/**'
       - 'icons/**'
+      - 'privacy.html'
+      - 'terms.html'
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
@@ -32,10 +34,19 @@ jobs:
       - name: Страница + three.js локально (без интернета)
         run: |
           mkdir -p dist/lib
-          cp index.html version.json dist/
+          cp index.html version.json manifest.webmanifest privacy.html terms.html dist/
           cp -r icons dist/icons
           curl -fsSL https://unpkg.com/three@0.160.0/build/three.module.js -o dist/lib/three.module.js
           curl -fsSL https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js -o dist/lib/OrbitControls.js
+          # распознавание фото (Tesseract.js) — тоже внутрь приложения, чтобы работало без интернета
+          T=dist/lib/tesseract; mkdir -p $T
+          curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js -o $T/tesseract.min.js
+          curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js -o $T/worker.min.js
+          for f in tesseract-core-lstm.wasm.js tesseract-core-lstm.wasm tesseract-core-simd-lstm.wasm.js tesseract-core-simd-lstm.wasm; do
+            curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/$f -o $T/$f
+          done
+          curl -fsSL https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int/eng.traineddata.gz -o $T/eng.traineddata.gz
+          ls -la $T
           python3 - <<'PY'
           import re
           p = 'dist/index.html'
@@ -44,6 +55,8 @@ jobs:
                          '<script type="importmap">{"imports":{"three":"./lib/three.module.js","three/addons/controls/OrbitControls.js":"./lib/OrbitControls.js"}}</script>',
                          s, flags=re.S)
           assert n == 1, 'importmap not found'
+          s, n = re.subn(r'const OCR_LOCAL=false;', 'const OCR_LOCAL=true;', s)
+          assert n == 1, 'OCR_LOCAL not found'
           open(p, 'w', encoding='utf-8').write(s)
           PY
       - uses: actions/upload-artifact@v4
@@ -68,16 +81,31 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
-      - name: Сборка
-        run: gradle -p android assembleRelease --no-daemon
+      - name: Ключ подписи из секретов
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "Подпись: ключ из секретов"
+          else
+            echo "::warning::Секрет ANDROID_KEYSTORE не задан — APK подписан тестовым ключом (не для магазина)"
+          fi
+      - name: Сборка APK и AAB
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: gradle -p android assembleRelease bundleRelease --no-daemon
       - name: Имя файла
         run: |
           mkdir -p out
-          cp android/app/build/outputs/apk/release/app-release.apk "out/GcodeCNC-${{ needs.web.outputs.version }}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "out/Fresa-${{ needs.web.outputs.version }}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "out/Fresa-${{ needs.web.outputs.version }}.aab"
       - uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: out/*.apk
+          path: out/*
 
   windows:
     name: Windows EXE
@@ -99,7 +127,7 @@ jobs:
             -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
             -p:DebugType=none -o out
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item out/GcodeCNC.exe "dist/GcodeCNC-${{ needs.web.outputs.version }}.exe"
+          Copy-Item out/Fresa.exe "dist/Fresa-${{ needs.web.outputs.version }}.exe"
       - uses: actions/upload-artifact@v4
         with:
           name: exe
@@ -122,7 +150,7 @@ jobs:
           import json
           j = json.load(open('version.json', encoding='utf-8'))
           lines = ['## Что нового', ''] + ['- ' + n for n in j.get('notes', [])] + ['',
-            '**Android** — скачайте `.apk` и установите (поверх старой версии, настройки сохраняются).',
+            '**Android** — скачайте `.apk` и установите. `.aab` — файл для магазинов (RuStore, Google Play).',
             '**Windows 10/11** — скачайте `.exe` и запустите, установка не нужна. F11 — полный экран.',
             '**iPhone** — https://mxdxck.github.io/g-code-cnc/ в Safari → «Поделиться» → «На экран „Домой“».']
           open('notes.md', 'w', encoding='utf-8').write('\n'.join(lines))
@@ -130,7 +158,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           tag: v${{ needs.web.outputs.version }}
-          name: G-код ЧПУ ${{ needs.web.outputs.version }}
+          name: Fresa ${{ needs.web.outputs.version }}
           bodyFile: notes.md
           artifacts: files/*
           allowUpdates: true

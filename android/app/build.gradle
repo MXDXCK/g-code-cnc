@@ -8,18 +8,28 @@ android {
     namespace 'ru.mxdxck.gcodecnc'
     compileSdk 34
     defaultConfig {
-        applicationId 'ru.mxdxck.gcodecnc'
+        applicationId 'app.fresa.cnc'
         minSdk 24
         targetSdk 34
         versionCode code
         versionName ver
     }
+    // Ключ подписи для магазинов берётся из секретов GitHub (ANDROID_KEYSTORE …).
+    // Пока секретов нет — тестовая подпись старым ключом из репозитория (только для проверки, не для RuStore).
+    def ksFile = System.getenv('ANDROID_KEYSTORE_FILE')
     signingConfigs {
         release {
-            storeFile file('../release.keystore')
-            storePassword 'gcodecnc'
-            keyAlias 'gcnc'
-            keyPassword 'gcodecnc'
+            if (ksFile) {
+                storeFile file(ksFile)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS') ?: 'fresa'
+                keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            } else {
+                storeFile file('../release.keystore')
+                storePassword 'gcodecnc'
+                keyAlias 'gcnc'
+                keyPassword 'gcodecnc'
+            }
         }
     }
     buildTypes {

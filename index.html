@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="G-код ЧПУ">
+<meta name="apple-mobile-web-app-title" content="Fresa">
 <meta name="theme-color" content="#0f1115">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<title>G-код ЧПУ — Fanuc 0i-MF Plus</title>
+<title>Fresa — G-код для ЧПУ</title>
 <style>
 :root{--bg:#0f1115;--pan:#171a21;--pan2:#1f232c;--line:#2a2f3a;--tx:#e6e8ec;--mut:#8b93a3;--acc:#ffc400;--acc2:#ff8a00;--ok:#2ecc71;--bad:#ff5c5c}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -23,8 +23,8 @@ body{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 @media (display-mode: standalone){html{overflow:auto;height:min(100lvh,calc(100% + env(safe-area-inset-top,0px)))}}
 header{position:relative;display:flex;align-items:center;gap:16px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(180deg,#151821,#111318);border-bottom:1px solid var(--line)}
 .logo{display:flex;gap:10px;align-items:center}
-.lg{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#111;font-weight:900;display:grid;place-items:center;font-size:20px;box-shadow:0 4px 14px #ffb30033}
-.logo b{letter-spacing:1px}.logo small{display:block;color:var(--mut);font-size:11px}
+.lg{width:38px;height:38px;border-radius:11px;overflow:hidden;box-shadow:0 4px 14px #ffb30033;flex:none}.lg img{width:100%;height:100%;display:block}
+.logo b{letter-spacing:2px}.logo small{display:block;color:var(--mut);font-size:11px}
 nav{display:flex;gap:4px;margin-left:auto}
 nav button{background:none;border:0;color:var(--mut);padding:8px 14px;border-radius:10px;font:inherit;cursor:pointer;display:flex;gap:6px;align-items:center;transition:.15s}
 nav button:hover{color:var(--tx)}
@@ -86,6 +86,7 @@ input[type=range]{padding:0;accent-color:var(--acc);border:0;background:none}
 .kf{grid-column:1/-1}.kch{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.kch button{min-width:38px;padding:7px 0;border:1px solid var(--line);border-radius:9px;background:var(--pan2);color:var(--tx);font:600 14px/1 inherit;cursor:pointer}.kch button.on{background:var(--acc);border-color:var(--acc);color:#111}
 .ctabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ctabs::-webkit-scrollbar{display:none}.ctabs button{flex:none;border:1px solid var(--line);border-radius:20px;background:var(--pan2);color:var(--tx);padding:7px 13px;font:600 13px/1 inherit;cursor:pointer}.ctabs button.on{background:var(--acc);border-color:var(--acc);color:#111}
 .cyc button small{color:var(--mut);font-size:10px;line-height:1.2}
+#welcome{position:fixed;inset:0;z-index:100;background:#0008;display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}#welcome .wb{background:var(--pan);border:1px solid var(--line);border-radius:20px;padding:22px 18px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px #000a}#welcome img{width:72px;height:72px;border-radius:18px}#welcome h2{margin:10px 0 6px;font-size:20px}#welcome p{margin:8px 0}#welcome a{color:var(--acc)}
 .zd{margin:10px 0 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--pan2)}.zd summary{cursor:pointer;color:var(--mut);font-size:13px}.zd summary b{color:var(--acc)}.zd .grid{margin-top:10px}
 .nw{display:flex;gap:6px}.nw input{flex:1;min-width:0}.pm{flex:none;width:42px;border:1px solid var(--line);border-radius:10px;background:var(--pan2);color:var(--acc);font:700 18px/1 inherit;cursor:pointer}
 .burger{background:var(--pan2);border:1px solid var(--line);color:var(--tx);width:42px;height:42px;border-radius:12px;font-size:20px;cursor:pointer;flex:none}
@@ -165,7 +166,7 @@ details.cycd[open] summary:before{content:'－'}
 </head>
 <body>
 <header>
- <div class="logo"><div class="lg">G</div><div><b>G-КОД ЧПУ</b><small>Fanuc 0i-MF Plus · v<span id="ver"></span></small></div></div>
+ <div class="logo"><div class="lg"><img src="icons/icon-192.png" alt=""></div><div><b>FRESA</b><small>G-код для ЧПУ · v<span id="ver"></span></small></div></div>
  <nav id="tabs">
   <button data-t="proj" class="on"><i>📐</i>Проект</button>
   <button data-t="tools"><i>🔧</i>Инструмент</button>
@@ -265,7 +266,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.30.0';
+const APP_VERSION='2.0.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -328,7 +329,7 @@ const OPS={
  pocketIsl:{n:'Карман с островами',s:'Карман с остр.',c:'POCKET ISLANDS',k:['endmill','bull','ball'],f:[['src','Контур кармана','rect',[['rect','Прямоугольник'],['circle','Окружность'],['op','Из операции «Контур по элементам»']]],
   ['cx','Центр X',0,'c',{src:['rect','circle']}],['cy','Центр Y',0,'c',{src:['rect','circle']}],['w','Длина X',100,'n',{src:'rect'}],['h','Ширина Y',60,'n',{src:'rect'}],['rc','Радиус углов',8,'n',{src:'rect'}],['ang','Поворот°',0,'c',{src:'rect'}],['d','Диаметр',80,'n',{src:'circle'}],
   ['opn','№ операции с замкнутым контуром',1,'n',{src:'op'}],['isl','Острова: О X Y Ø; П X Y длина ширина [R] [угол]','О -20 0 16; П 22 0 14 24 3','text'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D (до 50)',45,'n']]},
- engrave:{n:'Гравировка текста',s:'Гравировка',c:'ENGRAVING',k:['chamfer','center','ball','endmill'],f:[['txt','Текст (новая строка — через |)','G-КОД ЧПУ','text'],['th','Высота букв, мм',5,'n'],['sp','Интервал между буквами, мм',1,'n'],
+ engrave:{n:'Гравировка текста',s:'Гравировка',c:'ENGRAVING',k:['chamfer','center','ball','endmill'],f:[['txt','Текст (новая строка — через |)','FRESA','text'],['th','Высота букв, мм',5,'n'],['sp','Интервал между буквами, мм',1,'n'],
   ['lay','Расположение','line',[['line','По прямой'],['arc','По дуге']]],['cx','X привязки (центр дуги)',0,'c'],['cy','Y привязки (центр дуги)',0,'c'],['al','Выравнивание','c',[['l','От точки вправо'],['c','По центру'],['r','До точки (влево)']]],
   ['ang','Поворот°',0,'c',{lay:'line'}],['ar','Радиус дуги (низ букв)',30,'n',{lay:'arc'}],['aa','Угол середины текста°',90,'c',{lay:'arc'}],['adir','Буквы','out',[['out','Наружу (текст сверху)'],['in','К центру (текст снизу)']],{lay:'arc'}],
   ['depth','Глубина',0.2,'n'],['step','Шаг по Z',0.2,'n']]},
@@ -1399,10 +1400,12 @@ window.convMacro=(force)=>{const c=$('#code').value,r=force&&convPend?convPend:t
  convPend=null;convOrig=c;$('#code').value=r.code;manual=true;updCodeInfo();if(b)b.innerHTML=convHTML(r)+`<div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convUndo()">↩ Вернуть исходный</button></div>`;toast(same?'Переведено в параметрию':'⚠ Перевод показан, но траектория отличается от исходной');};
 window.convUndo=()=>{if(convOrig==null)return;$('#code').value=convOrig;convOrig=null;manual=true;updCodeInfo();$('#convBox').innerHTML='';toast('Возвращён исходный файл');};
 /* ---------- программа с фото: распознавание (Tesseract.js) → чистка → G-код ---------- */
-const OCR_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',OCR_WL='0123456789.,-+#[]()=<>%/;:*ABCDEFGHIJKLMNOPQRSTUVWXYZ_ ';
+/* OCR_LOCAL=true ставит сборка APK/EXE: библиотека и словарь лежат внутри приложения в lib/tesseract */
+const OCR_LOCAL=false;
+const OCR_LIB=()=>new URL('lib/tesseract/',location.href).href,OCR_SRC=OCR_LOCAL?'lib/tesseract/tesseract.min.js':'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',OCR_WL='0123456789.,-+#[]()=<>%/;:*ABCDEFGHIJKLMNOPQRSTUVWXYZ_ ';
 let ocrW=null,ocrLog=null,ocrText='';
 async function ocrLoad(){if(!window.Tesseract)await new Promise((ok,no)=>{const s=document.createElement('script');s.src=OCR_SRC;s.onload=ok;s.onerror=()=>no(Error('Не удалось загрузить распознавание — нужен интернет при первом запуске'));document.head.appendChild(s);});
- if(!ocrW){ocrW=await Tesseract.createWorker('eng',1,{logger:m=>ocrLog&&ocrLog(m)});await ocrW.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1',tessedit_char_whitelist:OCR_WL});}return ocrW;}
+ if(!ocrW){ocrW=await Tesseract.createWorker('eng',1,Object.assign({logger:m=>ocrLog&&ocrLog(m)},OCR_LOCAL?{workerPath:OCR_LIB()+'worker.min.js',corePath:OCR_LIB(),langPath:OCR_LIB().replace(/\/$/,''),workerBlobURL:false}:{}));await ocrW.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1',tessedit_char_whitelist:OCR_WL});}return ocrW;}
 /* подготовка снимка: серый, светлый текст на тёмном экране → инвертировать, растянуть контраст, локальный порог */
 async function ocrPrep(file){const bm=await createImageBitmap(file),k=Math.min(2.5,Math.max(1,2000/Math.max(bm.width,bm.height)*1.2)),W=Math.round(bm.width*k),H=Math.round(bm.height*k);
  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(bm,0,0,W,H);const im=g.getImageData(0,0,W,H),d=im.data,N=W*H,Y=new Float32Array(N);
@@ -1434,7 +1437,7 @@ function ocrView(){return `<div class="row" style="margin-bottom:10px"><button c
  <div id="ocrP" class="stats"></div><div id="ocrB"></div>
  <textarea id="ocrT" spellcheck="false" style="min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:13px" placeholder="Здесь появится распознанная программа — её можно поправить перед открытием">${esc(ocrText)}</textarea>
  <div class="row" style="margin-top:10px"><button class="btn p" onclick="ocrOpen(true)">✓ Открыть и перевести в параметрию</button><button class="btn" onclick="ocrOpen(false)">Открыть как есть</button></div>
- <div class="hint">Фото экрана стойки или распечатки: держите телефон ровно, чтобы текст был резким и занимал весь кадр; длинную программу снимайте по частям — фото добавляются по порядку. Распознавание работает на телефоне; при первом запуске загружается из интернета (~10 МБ), дальше — из кэша. <b>Обязательно сверьте цифры с оригиналом</b>: распознавание может спутать 0/8, 1/7, 5/6.</div>`;}
+ <div class="hint">Фото экрана стойки или распечатки: держите телефон ровно, чтобы текст был резким и занимал весь кадр; длинную программу снимайте по частям — фото добавляются по порядку. Распознавание работает на телефоне${OCR_LOCAL?' и без интернета':'; при первом запуске загружается из интернета (~10 МБ), дальше — из кэша'}. <b>Обязательно сверьте цифры с оригиналом</b>: распознавание может спутать 0/8, 1/7, 5/6.</div>`;}
 window.ocrRun=async inp=>{const files=[...inp.files];inp.value='';if(!files.length)return;const P=$('#ocrP'),B=$('#ocrB');let bads=[];
  try{for(let i=0;i<files.length;i++){const pre=`Фото ${i+1}/${files.length}: `;ocrLog=m=>{if(P)P.innerHTML=`<span>${pre}${m.status=='recognizing text'?'распознавание':m.status=='loading language traineddata'?'загрузка словаря':'загрузка'} ${Math.round((m.progress||0)*100)}%</span>`;};
    if(P)P.innerHTML=`<span>${pre}подготовка снимка…</span>`;const cv=await ocrPrep(files[i]),w=await ocrLoad(),r=await w.recognize(cv),c=ocrClean(r.data.text);
@@ -1704,7 +1707,7 @@ window.gotoLine=n=>{closeMenu();show('code');const ta=$('#code'),L=ta.value.spli
 /* ---------- меню ☰ ---------- */
 const MENU=[['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['ocr','📷','Программа с фото','Сфотографировать программу — распознать и перевести в параметрию'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
  ['check','✅','Проверка программы','Столкновения G0, шпиндель, корректоры, режимы'],['calc','🧮','Калькулятор режимов','По материалу и инструменту, утончение стружки'],
- ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14']];
+ ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14'],['about','ℹ️','О программе','Версия, соглашение, политика конфиденциальности, связь']];
 const MENUX={thrw:['thrw','🔩','Отверстие под резьбу',''],ocr:['ocr','📷','Программа с фото','']};
 window.openMenu=v=>{$('#sheet').classList.add('on');const T=MENU.find(m=>m[0]==v)||MENUX[v];$('#shTitle').textContent=T?T[2]:'Меню';$('#shBack').style.visibility=T?'visible':'hidden';
  const B=$('#shBody');if(!T){B.innerHTML=MENU.map(([k,i,t,d])=>`<button class="mi" onclick="openMenu('${k}')"><i>${i}</i><span><b>${t}</b><small>${d}</small></span></button>`).join('');return;}
@@ -1752,6 +1755,10 @@ const VIEWS={
  ocr:()=>ocrView(),
  ref:()=>`<input id="refQ" placeholder="Поиск: G83, PS0010, резьба…" oninput="refFilter()" style="margin-bottom:10px"><div id="refL">${refRows()}</div><div class="hint">Коды тревог — краткие пояснения для серии 0i-F/0i-F Plus. Точное описание — в руководстве оператора; M-коды выше M30 зависят от станка.</div>`,
  thr:()=>`<table class="t"><tr><th>Резьба</th><th>Шаг</th><th>Сверло</th><th>Мин. Ø отв.</th></tr>${THR.map(([n,p,d])=>`<tr><td><b>${n}</b></td><td>${p}</td><td>${d}</td><td>${(parseFloat(n.slice(1))-1.0825*p).toFixed(2)}</td></tr>`).join('')}</table><div class="hint">Сверло под резьбу ≈ D − P. «Мин. Ø» — внутренний диаметр гайки D1 = D − 1.0825·P. Для резьбофрезы диаметр фрезы должен быть меньше D1.</div>`,
+ about:()=>`<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px"><img src="icons/icon-192.png" alt="" style="width:64px;height:64px;border-radius:16px"><div><b style="font-size:20px;letter-spacing:2px">FRESA</b><div style="color:var(--mut)">G-код для фрезерных станков с ЧПУ · версия ${APP_VERSION}</div></div></div>
+  <div class="hint" style="border-left-color:var(--bad)"><b>Перед запуском на станке</b> проверяйте каждую программу: в графике стойки, «по воздуху», на пониженной подаче. 3D-проверка упрощённая — не учитывает зажимы, оснастку и держатель.</div>
+  <div class="row" style="margin:12px 0"><a class="btn" style="text-decoration:none" href="terms.html">📄 Пользовательское соглашение</a><a class="btn" style="text-decoration:none" href="privacy.html">🔒 Политика конфиденциальности</a><a class="btn" style="text-decoration:none" href="https://github.com/MXDXCK/g-code-cnc/issues" target="_blank">✉ Связь и предложения</a></div>
+  <div class="hint">Данные не собираются и никуда не передаются: проекты и фото обрабатываются только на этом устройстве. Совместимость — стойки Fanuc 0i и аналоги (Fanuc — товарный знак правообладателя). Компоненты: three.js (MIT), Tesseract.js (Apache 2.0).</div>`,
  tol:()=>`<div class="grid"><label>Размер, мм<input id="tlD" inputmode="decimal" value="25" oninput="tolCalc()"></label><label>Поле<select id="tlF" onchange="tolCalc()">${['H','h','js'].flatMap(f=>[6,7,8,9,10,11,12,14].map(q=>`<option ${f+q=='H7'?'selected':''}>${f}${q}</option>`)).join('')}</select></label></div><div id="tlR" style="margin:12px 0"></div>
   <table class="t"><tr><th>Размер, мм</th>${[6,7,8,9,10,11,12,14].map(q=>`<th>IT${q}</th>`).join('')}</tr>${ITR.map((r,i)=>`<tr><td>${i?ITR[i-1][0]:0}–${r[0]}</td>${r.slice(1).map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</table><div class="hint">Значения в микрометрах (мкм). H — отверстие (0…+IT), h — вал (−IT…0), js — симметрично ±IT/2.</div>`};
 VIEW_AFTER.calc=()=>{['ccM','ccT','ccD','ccZ','ccA','ccP'].forEach(i=>{$('#'+i).oninput=calcView;$('#'+i).onchange=calcView;});calcView();};
@@ -1832,7 +1839,7 @@ function sheetHTML(){regen();const code=$('#code').value,P=parse(code),g=stockSi
   <text x="${FS(sz*1)}" y="${FS(sz*2.4)}" font-size="${FS(sz*1.4)}">XY0</text></svg>`;
  const shp={rod:`пруток Ø${FS(s.d)} × ${FS(s.rl)} на оси A`,rect:`прямоугольник ${FS(s.x)}×${FS(s.y)}`,round:`круг Ø${FS(s.d)}`,poly:`${Math.round(s.n)}-гранник SW${FS(s.sw)}`,custom:`контур ${FS(stockGeo().w)}×${FS(stockGeo().h)}`}[s.shape||'rect'];
  const now=new Date().toLocaleString('ru');
- return `<div class="ss"><h2>Лист наладки — O${String(Math.round(st.prog.num)).padStart(4,'0')} ${esc(st.prog.name||'')}</h2><div class="sub">${esc(st.prog.note||'')} · сформирован ${now} · G-код ЧПУ v${APP_VERSION}</div>
+ return `<div class="ss"><h2>Лист наладки — O${String(Math.round(st.prog.num)).padStart(4,'0')} ${esc(st.prog.name||'')}</h2><div class="sub">${esc(st.prog.note||'')} · сформирован ${now} · Fresa v${APP_VERSION}</div>
   <div class="kv"><div>Станок <b>Fanuc 0i-MF Plus</b></div><div>Материал <b>${esc(s.mat||'—')}</b></div><div>Заготовка <b>${shp} × ${FS(s.z)}</b></div><div>Система координат <b>${mpGet().mode=='wcs'?PT.map(q=>q.w).join(', '):s.wcs}</b></div>${PT.length>1?`<div>Деталей на столе <b>${PT.length}${mpGet().mode=='g52'?` (G52, шаг X${FS(mpGet().dx)} Y${FS(mpGet().dy)})`:''}</b></div>`:''}
    <div>Ноль XY <b>${s.shape=='custom'?'по детали':s.origin=='center'?'центр заготовки':'левый нижний угол'}</b></div><div>Ноль Z <b>верх заготовки</b></div>
    <div>Операций <b>${ops.length}</b></div><div>Время цикла ≈ <b>${tfmt(P.time)}</b></div><div>Формат G-кода <b>${st.prog.fmt=='plain'?'обычный':'параметрический (макро B)'}</b></div><div>Строк программы <b>${code.split('\n').length}</b></div></div>
@@ -1860,6 +1867,14 @@ st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.f
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
 if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderAll();
+/* первый запуск: короткое предупреждение и согласие с соглашением */
+(()=>{let ok=false;try{ok=!!localStorage.getItem('fcam_terms1');}catch(e){ok=true;}if(ok||navigator.webdriver)return;
+ const d=document.createElement('div');d.id='welcome';d.innerHTML=`<div class="wb"><img src="icons/icon-192.png" alt=""><h2>Fresa — G-код для ЧПУ</h2>
+ <p>Программы для фрезерных станков с ЧПУ: циклы, 3D-проверка, параметрия, 4-я ось, программа с фото.</p>
+ <div class="hint" style="border-left-color:var(--bad);text-align:left"><b>Важно.</b> Каждую программу перед запуском проверяйте на станке — в графике стойки, «по воздуху», на пониженной подаче. Ответственность за запуск программы — на пользователе.</div>
+ <p style="font-size:13px;color:var(--mut)">Данные не собираются: проекты и фото остаются на этом устройстве.<br><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика конфиденциальности</a></p>
+ <button class="btn p" id="wOk" style="width:100%;padding:13px">Понятно, принимаю</button></div>`;document.body.appendChild(d);
+ $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms1',String(Date.now()));}catch(e){}d.remove();};})();
 window.__fcam={ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
