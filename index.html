@@ -203,7 +203,8 @@ details.cycd[open] summary:before{content:'－'}
  <section id="t-code" class="tab">
   <div class="card">
    <div class="row">
-    <button class="btn" onclick="document.getElementById('ncF').click()">📂 Открыть файл</button><input type="file" id="ncF" hidden onchange="openCode(this)">
+    <button class="btn" onclick="document.getElementById('ncF').click()">📂 Открыть файл</button>
+    <button class="btn" onclick="openMenu('ocr')">📷 С фото</button><input type="file" id="ncF" hidden onchange="openCode(this)">
     <button class="btn p" onclick="downloadCode('nc')">⬇ Скачать .NC</button>
     <button class="btn" onclick="downloadCode('txt')">⬇ .TXT</button>
     <button class="btn" onclick="shareCode()">↗ Поделиться</button>
@@ -251,7 +252,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.18.0';
+const APP_VERSION='1.19.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -1245,12 +1246,57 @@ function convHTML(r){if(r.err)return`<div class="hint">${esc(r.err)}</div>`;
 window.convMacro=()=>{const c=$('#code').value,r=toMacro(c);const b=$('#convBox');if(r.err){if(b)b.innerHTML=convHTML(r);return toast(r.err);}
  convOrig=c;$('#code').value=r.code;manual=true;updCodeInfo();if(b)b.innerHTML=convHTML(r)+`<div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convUndo()">↩ Вернуть исходный</button></div>`;toast('Переведено в параметрию');};
 window.convUndo=()=>{if(convOrig==null)return;$('#code').value=convOrig;convOrig=null;manual=true;updCodeInfo();$('#convBox').innerHTML='';toast('Возвращён исходный файл');};
+/* ---------- программа с фото: распознавание (Tesseract.js) → чистка → G-код ---------- */
+const OCR_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',OCR_WL='0123456789.,-+#[]()=<>%/;:*ABCDEFGHIJKLMNOPQRSTUVWXYZ_ ';
+let ocrW=null,ocrLog=null,ocrText='';
+async function ocrLoad(){if(!window.Tesseract)await new Promise((ok,no)=>{const s=document.createElement('script');s.src=OCR_SRC;s.onload=ok;s.onerror=()=>no(Error('Не удалось загрузить распознавание — нужен интернет при первом запуске'));document.head.appendChild(s);});
+ if(!ocrW){ocrW=await Tesseract.createWorker('eng',1,{logger:m=>ocrLog&&ocrLog(m)});await ocrW.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1',tessedit_char_whitelist:OCR_WL});}return ocrW;}
+/* подготовка снимка: серый, светлый текст на тёмном экране → инвертировать, растянуть контраст, локальный порог */
+async function ocrPrep(file){const bm=await createImageBitmap(file),k=Math.min(2.5,Math.max(1,2000/Math.max(bm.width,bm.height)*1.2)),W=Math.round(bm.width*k),H=Math.round(bm.height*k);
+ const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(bm,0,0,W,H);const im=g.getImageData(0,0,W,H),d=im.data,N=W*H,Y=new Float32Array(N);
+ let sum=0;for(let i=0;i<N;i++){Y[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];sum+=Y[i];}if(sum/N<120)for(let i=0;i<N;i++)Y[i]=255-Y[i];
+ const hs=new Uint32Array(256);for(let i=0;i<N;i++)hs[Math.max(0,Math.min(255,Y[i]|0))]++;let lo=0,hi=255,acc=0;for(;lo<255&&(acc+=hs[lo])<N*.02;lo++);acc=0;for(;hi>0&&(acc+=hs[hi])<N*.02;hi--);const sc=255/Math.max(1,hi-lo);
+ for(let i=0;i<N;i++){const v=Math.max(0,Math.min(255,(Y[i]-lo)*sc)),p=i*4;d[p]=d[p+1]=d[p+2]=v;d[p+3]=255;}
+ g.putImageData(im,0,0);return cv;}
+/* чистка распознанного текста под G-код Fanuc */
+const OCR_G=new Set([0,1,2,3,4,5.1,9,10,11,15,16,17,18,19,20,21,28,30,31,40,41,42,43,44,49,50,51,52,53,54,54.1,55,56,57,58,59,61,64,65,66,67,68,69,73,74,76,80,81,82,83,84,85,86,87,88,89,90,91,92,94,95,96,97,98,99]);
+function ocrClean(txt){const out=[],bad=[];
+ String(txt).replace(/\r/g,'').split('\n').forEach(l0=>{let l=l0.replace(/[‘’`´]/g,"'").trim();if(!l)return;if(/^<[^>]+>$/.test(l)){out.push(l.toUpperCase());return;}
+  const cms=[];l=l.replace(/\(([^)]*)\)?/g,(m,c)=>{cms.push('('+c.trim().toUpperCase()+')');return ' ';});
+  let c=l.toUpperCase().replace(/;+\s*$/,'').replace(/[|!]/g,'1').replace(/,/g,'.').replace(/\s+/g,'');
+  if(/^%$/.test(c)){out.push('%');return;}
+  const macro=/[#\[]|WHILE|GOTO|IF|END\d|THEN/.test(c);
+  if(!macro){c=c.replace(/(?!^)O/g,'0').replace(/^O(?=[^\d])/,'0').replace(/\.{2,}/g,'.').replace(/-{2,}/g,'-')
+   .replace(/([A-PR-Z])Q/g,'$10').replace(/Q(?![-+.\d])/g,'0').replace(/([GM]\d*)Q/g,'$10').replace(/([A-PR-Z])Q/g,'$10')
+   .replace(/G(0?[0-3])2(-?\d+\.?\d*)(?![\d])/g,(m,a,b)=>OCR_G.has(+(a+'2'+b))?m:`G${a}Z${b}`);}
+  const T=[];let ok=0,all=0;
+  if(macro){T.push(c);ok=all=1;}
+  else{const re=/([A-Z])([-+]?\d*\.?\d*)/g;let m,last=0,junk='';while((m=re.exec(c))){if(m.index>last)junk+=c.slice(last,m.index);last=re.lastIndex;all++;const[,k,v]=m;
+    const num=/^[-+]?(\d+\.?\d*|\.\d+)$/.test(v);if(!num){T.push(k+v);continue;}
+    if(k=='G'&&!OCR_G.has(+v)){T.push(k+v);continue;}if('EUW'.includes(k)){T.push(k+v);continue;}ok++;T.push(k+v);if(re.lastIndex===m.index)re.lastIndex++;}
+   if(last<c.length)junk+=c.slice(last);if(junk.replace(/[%]/g,''))all+=2;}
+  if(!T.length&&!cms.length)return;if(all&&ok/all<0.5&&!cms.length){bad.push({t:l0,why:'не похоже на кадр — пропущено'});return;}
+  const line=[...T,...cms].join(' ').trim();if(all&&ok<all)bad.push({t:line,why:'проверьте: непонятные символы или неизвестный G-код',n:out.length});out.push(line);});
+ return{text:out.join('\n'),bad};}
+function ocrView(){return `<div class="row" style="margin-bottom:10px"><button class="btn p" onclick="document.getElementById('ocrF').click()">📷 Сфотографировать / выбрать фото</button><input type="file" id="ocrF" accept="image/*" multiple hidden onchange="ocrRun(this)"></div>
+ <div id="ocrP" class="stats"></div><div id="ocrB"></div>
+ <textarea id="ocrT" spellcheck="false" style="min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:13px" placeholder="Здесь появится распознанная программа — её можно поправить перед открытием">${esc(ocrText)}</textarea>
+ <div class="row" style="margin-top:10px"><button class="btn p" onclick="ocrOpen(true)">✓ Открыть и перевести в параметрию</button><button class="btn" onclick="ocrOpen(false)">Открыть как есть</button></div>
+ <div class="hint">Фото экрана стойки или распечатки: держите телефон ровно, чтобы текст был резким и занимал весь кадр; длинную программу снимайте по частям — фото добавляются по порядку. Распознавание работает на телефоне; при первом запуске загружается из интернета (~10 МБ), дальше — из кэша. <b>Обязательно сверьте цифры с оригиналом</b>: распознавание может спутать 0/8, 1/7, 5/6.</div>`;}
+window.ocrRun=async inp=>{const files=[...inp.files];inp.value='';if(!files.length)return;const P=$('#ocrP'),B=$('#ocrB');let bads=[];
+ try{for(let i=0;i<files.length;i++){const pre=`Фото ${i+1}/${files.length}: `;ocrLog=m=>{if(P)P.innerHTML=`<span>${pre}${m.status=='recognizing text'?'распознавание':m.status=='loading language traineddata'?'загрузка словаря':'загрузка'} ${Math.round((m.progress||0)*100)}%</span>`;};
+   if(P)P.innerHTML=`<span>${pre}подготовка снимка…</span>`;const cv=await ocrPrep(files[i]),w=await ocrLoad(),r=await w.recognize(cv),c=ocrClean(r.data.text);
+   ocrText=(ocrText&&i==0&&!confirm('Добавить к уже распознанному тексту? «Отмена» — заменить')?'':ocrText?ocrText+'\n':'')+c.text;bads.push(...c.bad);}
+  if(P)P.innerHTML=`<span>Готово: строк <b>${ocrText.split('\n').length}</b></span>`+(bads.length?`<span style="color:var(--acc)">⚠ сомнительных: ${bads.length}</span>`:'');
+  if(B)B.innerHTML=bads.length?`<details class="hint" open><summary>Проверьте строки</summary>${bads.slice(0,30).map(b=>`<div><code>${esc(b.t)}</code> — ${b.why}</div>`).join('')}</details>`:'';
+  $('#ocrT').value=ocrText;}catch(e){if(P)P.innerHTML=`<span style="color:var(--bad)">⚠ ${esc(e.message||String(e))}</span>`;}finally{ocrLog=null;}};
+window.ocrOpen=conv=>{const t=($('#ocrT')||{}).value||ocrText;if(!/[GM]\s*\d/i.test(t))return toast('Нет текста программы');ocrText=t;closeMenu();openCodeText(t,'фото',conv);};
 /* открыть чужую программу (.nc, .txt, .tap, без расширения) — для просмотра, проверки и 3D */
-function openCodeText(txt,name){txt=String(txt).replace(/\r\n?/g,'\n');if(!/[GM]\s*\d/i.test(txt))return toast('В файле не найден G-код');
+function openCodeText(txt,name,conv){txt=String(txt).replace(/\r\n?/g,'\n');if(!/[GM]\s*\d/i.test(txt))return toast('В файле не найден G-код');
  let rodMsg='';{const P=parse(txt);if(P.hasA&&st.stock.shape!='rod'){const F_=P.segs.filter(s=>!s.rapid);let x0=1e9,x1=-1e9;F_.forEach(s=>{x0=Math.min(x0,s.a.x,s.b.x);x1=Math.max(x1,s.a.x,s.b.x);});if(!(x1>x0)){x0=0;x1=50;}
   const md=/DIAM?[^0-9]{0,3}(\d+(?:[.,]\d+)?)|Ø\s*(\d+(?:[.,]\d+)?)|ПРУТ[^0-9]{0,6}(\d+(?:[.,]\d+)?)/i.exec(txt),D=md?+(md[1]||md[2]||md[3]).replace(',','.'):Math.max(10,Math.ceil(2*Math.max(...F_.map(s=>Math.hypot(s.a.y,s.a.z)).filter(v=>v<200),5)));
   st.stock.shape='rod';st.stock.d=D;st.stock.rx=+(x0-2).toFixed(1);st.stock.rl=+(x1-x0+8).toFixed(1);save(true);rodMsg=` Заготовка: пруток Ø${D} × ${st.stock.rl} на оси A (поправьте на вкладке «Проект»).`;}}
- $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);if(st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
+ $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
 window.openCodeText=openCodeText;
 window.openCode=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>openCodeText(r.result,f.name);r.readAsText(f);inp.value='';};
 window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
@@ -1478,15 +1524,16 @@ window.gotoLine=n=>{closeMenu();show('code');const ta=$('#code'),L=ta.value.spli
  const lh=parseFloat(getComputedStyle(ta).lineHeight)||20;ta.scrollTop=Math.max(0,n*lh-ta.clientHeight/3);};
 
 /* ---------- меню ☰ ---------- */
-const MENU=[['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
+const MENU=[['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['ocr','📷','Программа с фото','Сфотографировать программу — распознать и перевести в параметрию'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
  ['check','✅','Проверка программы','Столкновения G0, шпиндель, корректоры, режимы'],['calc','🧮','Калькулятор режимов','По материалу и инструменту, утончение стружки'],
  ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14']];
-const MENUX={thrw:['thrw','🔩','Отверстие под резьбу','']};
+const MENUX={thrw:['thrw','🔩','Отверстие под резьбу',''],ocr:['ocr','📷','Программа с фото','']};
 window.openMenu=v=>{$('#sheet').classList.add('on');const T=MENU.find(m=>m[0]==v)||MENUX[v];$('#shTitle').textContent=T?T[2]:'Меню';$('#shBack').style.visibility=T?'visible':'hidden';
  const B=$('#shBody');if(!T){B.innerHTML=MENU.map(([k,i,t,d])=>`<button class="mi" onclick="openMenu('${k}')"><i>${i}</i><span><b>${t}</b><small>${d}</small></span></button>`).join('');return;}
  B.innerHTML=VIEWS[v]();if(VIEW_AFTER[v])VIEW_AFTER[v]();B.scrollTop=0;};
 window.closeMenu=()=>$('#sheet').classList.remove('on');
 const VIEW_AFTER={};
+VIEW_AFTER.ocr=()=>{const ta=$('#ocrT');if(ta)ta.oninput=()=>{ocrText=ta.value;};};
 /* мастер: отверстие под резьбу → центровка (+фаска), сверление, метчик или резьбофреза */
 const WZ={thr:'M8',depth:12,thru:'0',how:'tap',ch:'1',pat:'pcd'};PAT.forEach(f=>{if(WZ[f[0]]==null)WZ[f[0]]=f[2];});WZ.pat='pcd';
 const wzFields=()=>[['thr','Резьба','M8',THR.map(x=>[x[0],`${x[0]}×${x[1]} · сверло ${x[2]}`])],['depth','Глубина резьбы, мм',12,'n'],['thru','Отверстие','0',[['0','Глухое'],['1','Сквозное (на всю заготовку)']]],
@@ -1524,6 +1571,7 @@ const VIEWS={
    <div class="row" style="margin-top:12px"><button class="btn p" onclick="matAllFrom()">Применить материал ко всем инструментам</button></div>
    <div class="hint">Значения — ориентир для твёрдосплавных фрез и свёрл HSS-Co (для твердосплавных свёрл Vc можно поднять в 2–3 раза). Утончение стружки: при шаге вбок меньше половины диаметра толщина стружки меньше fz, поэтому подачу можно увеличить в k раз.</div>`;},
  thrw:()=>wzView(),
+ ocr:()=>ocrView(),
  ref:()=>`<input id="refQ" placeholder="Поиск: G83, PS0010, резьба…" oninput="refFilter()" style="margin-bottom:10px"><div id="refL">${refRows()}</div><div class="hint">Коды тревог — краткие пояснения для серии 0i-F/0i-F Plus. Точное описание — в руководстве оператора; M-коды выше M30 зависят от станка.</div>`,
  thr:()=>`<table class="t"><tr><th>Резьба</th><th>Шаг</th><th>Сверло</th><th>Мин. Ø отв.</th></tr>${THR.map(([n,p,d])=>`<tr><td><b>${n}</b></td><td>${p}</td><td>${d}</td><td>${(parseFloat(n.slice(1))-1.0825*p).toFixed(2)}</td></tr>`).join('')}</table><div class="hint">Сверло под резьбу ≈ D − P. «Мин. Ø» — внутренний диаметр гайки D1 = D − 1.0825·P. Для резьбофрезы диаметр фрезы должен быть меньше D1.</div>`,
  tol:()=>`<div class="grid"><label>Размер, мм<input id="tlD" inputmode="decimal" value="25" oninput="tolCalc()"></label><label>Поле<select id="tlF" onchange="tolCalc()">${['H','h','js'].flatMap(f=>[6,7,8,9,10,11,12,14].map(q=>`<option ${f+q=='H7'?'selected':''}>${f}${q}</option>`)).join('')}</select></label></div><div id="tlR" style="margin:12px 0"></div>
@@ -1633,7 +1681,7 @@ st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.f
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
 if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderAll();
-window.__fcam={st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
+window.__fcam={ocrClean,ocrPrep,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
 </html>
