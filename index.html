@@ -215,6 +215,7 @@ details.cycd[open] summary:before{content:'－'}
     <button class="btn" onclick="copyCode()">⧉ Копировать</button>
     <button class="btn" onclick="regen(true)">↻ Пересоздать</button>
     <button class="btn" onclick="convMacro()" title="Повторяющиеся проходы по Z — в цикл WHILE с переменными">🔁 В параметрию</button>
+    <button class="btn" id="srcB" hidden onclick="srcBack()">↩ Исходный код</button>
     <select id="fmtSel" style="width:auto" onchange="setFmt(this.value)"><option value="macro">Параметрический (макро)</option><option value="plain">Обычный</option></select>
     <select id="cmtSel" style="width:auto" onchange="setCmt(this.value)"><option value="lat">Пояснения: русские латиницей</option><option value="cyr">Пояснения: кириллица</option><option value="en">Пояснения: English</option></select>
     <span id="editFlag"></span>
@@ -256,7 +257,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.20.0';
+const APP_VERSION='1.20.1';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -1243,12 +1244,20 @@ function toMacro(code){const raw=String(code).replace(/\r\n?/g,'\n').split('\n')
  if(!P1.err&&P0.segs.length==P1.segs.length){dev=0;for(let k=0;k<P0.segs.length;k++)dev=Math.max(dev,Math.hypot(P0.segs[k].b.x-P1.segs[k].b.x,P0.segs[k].b.y-P1.segs[k].b.y,P0.segs[k].b.z-P1.segs[k].b.z));}
  return{code:res,loops,dev,err1:P1.err,lines0:raw.length,lines1:out.length,t0:P0.time,t1:P1.time};}
 let convOrig=null;
-function convHTML(r){if(r.err)return`<div class="hint">${esc(r.err)}</div>`;
+function convHTML(r){if(r.err)return`<div class="hint">${esc(r.err)}</div>`;r.code;
  return `<div class="hint" style="border-left-color:var(--ok)"><b>Переведено в параметрию:</b> циклов ${r.loops.length}, строк ${r.lines0} → ${r.lines1}. ${r.dev!=null&&r.dev<0.002?'✓ Траектория совпадает с исходной.':`Время ${tfmt(r.t0)} → ${tfmt(r.t1)}.`}${r.err1?' ⚠ '+esc(r.err1):''}
   <ul style="margin:6px 0 0 18px;padding:0">${r.loops.map(l=>`<li>${esc(l.title||'Проходы')}: Z ${F(l.z0)} → ${F(l.zf)}, шаг ${F(l.step)}, проходов ${l.K}${l.exact?'':` (с шагом до Z ${F(l.zl)} — это #3, затем финальный проход Z ${F(l.zf)} — это #8)`}${l.notes.length?' · '+esc(l.notes.join('; ')):''}</li>`).join('')}</ul>
   Перед каждым циклом меняйте: <b>#1</b> — Z первого прохода, <b>#2</b> — шаг, <b>#3</b> — конечная Z (#8 — финальный проход, если есть), <b>#5</b> — подача.</div>`;}
-window.convMacro=()=>{const c=$('#code').value,r=toMacro(c);const b=$('#convBox');if(r.err){if(b)b.innerHTML=convHTML(r);return toast(r.err);}
- convOrig=c;$('#code').value=r.code;manual=true;updCodeInfo();if(b)b.innerHTML=convHTML(r)+`<div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convUndo()">↩ Вернуть исходный</button></div>`;toast('Переведено в параметрию');};
+/* исходный код открытого файла хранится всегда — кнопка «↩ Исходный код» возвращает его в любой момент */
+let SRC=null;try{SRC=JSON.parse(localStorage.getItem('fcam_src')||'null');}catch(e){}
+function srcSet(t,n){SRC=t==null?null:{t,n:n||'файл',d:Date.now()};try{SRC?localStorage.setItem('fcam_src',JSON.stringify(SRC)):localStorage.removeItem('fcam_src');}catch(e){}srcUI();}
+function srcUI(){const b=$('#srcB');if(b){b.hidden=!SRC;b.title=SRC?'Вернуть файл «'+SRC.n+'» в том виде, как он был открыт':'';}}
+window.srcBack=()=>{if(!SRC)return toast('Нет открытого файла');$('#code').value=SRC.t;convOrig=null;manual=true;codeDirty=false;const b=$('#convBox');if(b)b.innerHTML='';updCodeInfo();show('code');toast('Возвращён исходный код «'+SRC.n+'»');};
+let convPend=null;
+window.convMacro=(force)=>{const c=$('#code').value,r=force&&convPend?convPend:toMacro(c);const b=$('#convBox');if(r.err){if(b)b.innerHTML=convHTML(r);return toast(r.err);}
+ const same=r.dev!=null&&r.dev<0.002&&!r.err1;
+ if(!same&&!force){convPend=r;if(b)b.innerHTML=`<div class="hint" style="border-left-color:var(--bad)"><b>Перевод не применён:</b> траектория после перевода отличается от исходной${r.err1?' ('+esc(r.err1)+')':r.dev!=null?` (до ${F(r.dev)} мм)`:' (другое число ходов)'}. Код оставлен без изменений.</div><div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convMacro(true)">Всё равно показать перевод</button></div>`;return toast('Перевод меняет траекторию — оставлен исходный код');}
+ convPend=null;convOrig=c;$('#code').value=r.code;manual=true;updCodeInfo();if(b)b.innerHTML=convHTML(r)+`<div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convUndo()">↩ Вернуть исходный</button></div>`;toast(same?'Переведено в параметрию':'⚠ Перевод показан, но траектория отличается от исходной');};
 window.convUndo=()=>{if(convOrig==null)return;$('#code').value=convOrig;convOrig=null;manual=true;updCodeInfo();$('#convBox').innerHTML='';toast('Возвращён исходный файл');};
 /* ---------- программа с фото: распознавание (Tesseract.js) → чистка → G-код ---------- */
 const OCR_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',OCR_WL='0123456789.,-+#[]()=<>%/;:*ABCDEFGHIJKLMNOPQRSTUVWXYZ_ ';
@@ -1300,7 +1309,7 @@ function openCodeText(txt,name,conv){txt=String(txt).replace(/\r\n?/g,'\n');if(!
  let rodMsg='';{const P=parse(txt);if(P.hasA&&st.stock.shape!='rod'){const F_=P.segs.filter(s=>!s.rapid);let x0=1e9,x1=-1e9;F_.forEach(s=>{x0=Math.min(x0,s.a.x,s.b.x);x1=Math.max(x1,s.a.x,s.b.x);});if(!(x1>x0)){x0=0;x1=50;}
   const md=/DIAM?[^0-9]{0,3}(\d+(?:[.,]\d+)?)|Ø\s*(\d+(?:[.,]\d+)?)|ПРУТ[^0-9]{0,6}(\d+(?:[.,]\d+)?)/i.exec(txt),D=md?+(md[1]||md[2]||md[3]).replace(',','.'):Math.max(10,Math.ceil(2*Math.max(...F_.map(s=>Math.hypot(s.a.y,s.a.z)).filter(v=>v<200),5)));
   st.stock.shape='rod';st.stock.d=D;st.stock.rx=+(x0-2).toFixed(1);st.stock.rl=+(x1-x0+8).toFixed(1);save(true);rodMsg=` Заготовка: пруток Ø${D} × ${st.stock.rl} на оси A (поправьте на вкладке «Проект»).`;}}
- $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
+ $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;srcSet(txt,name);toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
 window.openCodeText=openCodeText;
 window.openCode=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>openCodeText(r.result,f.name);r.readAsText(f);inp.value='';};
 window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
