@@ -257,7 +257,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.20.1';
+const APP_VERSION='1.20.2';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -1141,10 +1141,15 @@ function gen(){
 function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Нет инструмента');const L=[];G[o.type](ctx(L,t,o,st.stock.wcs));return{code:L.join('\n'),t};}
 
 /* ---------- парсер для симуляции ---------- */
+/* диаметр инструмента из комментариев исходного текста: «T06 M06 (FREZA D6)» или комментарий в 4 строках выше («(OTVERST M3 SVERLO 2.5)») */
+function toolDiaFromText(code){const td={},DR=/(?:^|[^A-ZА-Я])(?:D|Ø|DIA|ДИАМ|SVERLO|СВЕРЛО|FREZA|ФРЕЗА|DRILL|MILL)\s*=?\s*(\d+(?:[.,]\d+)?)/i;let lastC=null;
+ String(code).split('\n').forEach((raw,ln)=>{const body=raw.replace(/\(.*?\)/g,'').replace(/<[^>]*>/g,'').toUpperCase(),cm=/\(([^)]*)\)/.exec(raw),mt=/T\s*(\d+)/.exec(body);
+  if(mt&&!/#/.test(body)&&td[+mt[1]]==null){const md=(cm&&DR.exec(cm[1]))||(lastC&&ln-lastC.ln<=4&&DR.exec(lastC.t));if(md)td[+mt[1]]=+md[1].replace(',','.');}
+  else if(cm)lastC={t:cm[1],ln};});return td;}
 function parse(code){
  let X;try{X=expand(code)}catch(e){return{segs:[],time:0,len:{f:0,r:0},err:e.message};}
  const WO={};if(mpGet().mode=='wcs')parts().forEach(q=>WO[q.w]={x:q.x,y:q.y});let wo={x:0,y:0},loc={x:0,y:0};
- const tdia={},TD=n=>tdia[n]||(st.tools.find(t=>t.num==n)||{}).d||0;let dreg=null,g99=false,axA=false,lastC=null,inc=false,aC=0,aFrom=0;const uns=new Set();
+ const tdia=toolDiaFromText(code),TD=n=>tdia[n]||(st.tools.find(t=>t.num==n)||{}).d||0;let dreg=null,g99=false,axA=false,lastC=null,inc=false,aC=0,aFrom=0;const uns=new Set();
  const segs=[];let p={x:0,y:0,z:50},cur={...p},mode=0,cyc=null,cz=0,cr=0,init=50,tool=0,feed=100,time=0,len={f:0,r:0},comp=0,cR=0,buf=[],err='';
  const push=(a,b,rapid,ln,f=feed)=>{const l=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);if(l<1e-6)return;segs.push({a,b,rapid,tool,len:l,ln,v:rapid?20000:Math.max(1,f),a0:aFrom,a1:aC});if(rapid){len.r+=l;time+=l/20000}else{len.f+=l;time+=l/Math.max(1,f)}};
  const arcPts=(a,b,c,cw,za,zb,full)=>{const r=Math.hypot(a[0]-c[0],a[1]-c[1]),a0=Math.atan2(a[1]-c[1],a[0]-c[0]),a1=Math.atan2(b[1]-c[1],b[0]-c[0]);let da=a1-a0;
@@ -1156,9 +1161,7 @@ function parse(code){
  const emit=O=>O.forEach(e=>{const A={x:e.a[0],y:e.a[1],z:e.za};if(e.k=='L')push(A,{x:e.b[0],y:e.b[1],z:e.zb},e.rapid,e.ln,e.f);else{let q=A;arcPts(e.a,e.b,e.c,e.cw,e.za,e.zb,e.full).forEach(m=>{push(q,m,false,e.ln,e.f);q=m;});}});
  const flush=()=>{if(!buf.length)return;let O;try{O=offChain(buf,cR,comp==41?1:-1,false);O[0]={...O[0],a:[cur.x,cur.y]};}catch(e){err=ERR[e.message]||e.message;O=buf;}
   emit(O);const l=O[O.length-1];cur={x:l.b[0],y:l.b[1],z:l.zb};buf=[];};
- X.forEach(({t:raw,ln})=>{{const c0=/\(([^)]*)\)/.exec(raw);if(c0&&!/T\s*\d/i.test(raw.replace(/\(.*?\)/g,'')))lastC={t:c0[1],ln};}const l=raw.replace(/\(.*?\)/g,'').replace(/<[^>]*>/g,'').toUpperCase().trim();if(!l||l[0]=='%'||l[0]=='O')return;
-  {const mt=/T\s*(\d+)/.exec(l),cm=/\(([^)]*)\)/.exec(raw),DR=/(?:^|[^A-ZА-Я])(?:D|Ø|DIA|ДИАМ|SVERLO|СВЕРЛО|FREZA|ФРЕЗА|DRILL|MILL)\s*=?\s*(\d+(?:[.,]\d+)?)/i;
-   if(mt&&tdia[+mt[1]]==null){const md=(cm&&DR.exec(cm[1]))||(lastC&&ln-lastC.ln<=4&&DR.exec(lastC.t));if(md)tdia[+mt[1]]=+md[1].replace(',','.');}}
+ X.forEach(({t:raw,ln})=>{const l=raw.replace(/\(.*?\)/g,'').replace(/<[^>]*>/g,'').toUpperCase().trim();if(!l||l[0]=='%'||l[0]=='O')return;
   const w={},gs=[];l.replace(/([A-Z])\s*(-?[\d.]+)/g,(m,k,v)=>{if(k=='G')gs.push(+v);else w[k]=+v;});
   if(gs.includes(90))inc=false;if(gs.includes(91))inc=true;
   {const U=[[/M\s*0*98(?!\d)/,'подпрограммы M98'],[/G\s*68(?![.\d])/,'поворот G68'],[/G\s*51(?![.\d])/,'масштаб G51'],[/G\s*65(?![.\d])/,'вызов макро G65'],[/G\s*92(?![.\d])/,'G92'],[/(?:^|[^A-Z])B\s*-?[\d.]/,'ось B']];U.forEach(([re,t])=>{if(re.test(l))uns.add(t);});}
