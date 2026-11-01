@@ -262,7 +262,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.26.0';
+const APP_VERSION='1.26.1';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -336,6 +336,10 @@ const OPS={
 /* ноль операции: по умолчанию у всех один (ноль детали); можно сдвинуть для отдельной операции — выводится как G52 */
 const ZF=[['aA','Поворот A, ° — несколько через ; (0; 180) — пусто: нет','','text',()=>st.stock.shape=='rod'],['ox','Ноль операции: сдвиг X',0,'c'],['oy','Ноль операции: сдвиг Y',0,'c'],['zt','Ноль операции: сдвиг Z',0,'c']];
 /* 4-я ось: поворот A и сдвиг Z0 операции (G52 Z) */
+/* глубина: съёмом от Z0 операции или сразу конечной Z от ноля детали */
+Object.values(OPS).forEach(d=>{const i=d.f.findIndex(f=>f[0]=='depth');if(i<0||d.rodNo)return;const f=d.f[i],c0=f[4];
+ d.f[i]=[f[0],f[1],f[2],f[3],o=>o.dmode!='z'&&(!c0||shown(o,[0,0,0,0,c0]))];d.f.splice(i,0,['dmode','Глубина задаётся','rem',[['rem','Съёмом от Z0 операции'],['z','Конечной Z (от ноля детали)']]]);d.f.splice(i+2,0,['zend','Конечная Z (от ноля детали)',0,'c',o=>o.dmode=='z']);});
+function effOp(o){if(o.dmode!='z'||o.depth==null)return o;const d=num(o.zt)-num(o.zend);if(!(d>0))throw Error(`Конечная Z ${F(num(o.zend))} не ниже ноля операции Z${F(num(o.zt))}`);return{...o,depth:+d.toFixed(4)};}
 const aList=v=>String(v??'').replace(/[−–]/g,'-').split(/[;\s/]+/).map(x=>x.trim()).filter(x=>x!=='').map(num);
 function rodWrap(o){const g=stockGeo(),d=OPS[o.type],ox=d.rodNo?0:num(o.ox),oy=d.rodNo?0:num(o.oy),zt=d.rodNo?0:num(o.zt);
  const as=!g.rod?[]:d.rodNo?[+o.a0||0]:aList(o.aA),a=as.length?as[0]:null;return{a,as:d.rodNo?[]:as,ox,oy,zt,g};}
@@ -1195,11 +1199,11 @@ function gen(){
   L.push(`(OP${i+1} ${OPS[o.type].c})`);let bad=false;const RW=rodWrap(o);
   if(RW.a!=null){if(!fresh)L.push(`G0 Z${F((RW.g.az||0)+RW.g.R+Math.max(5,+o.safe||10))}`);L.push(`G0 A${F(RW.a)}`);}
   PT.forEach((q,k)=>{if(bad)return;const gx=(mpm=='g52'?q.x:0)+RW.ox,gy=(mpm=='g52'?q.y:0)+RW.oy,gz=RW.zt?` Z${F(RW.zt)}`:'',g52=!!(gx||gy||RW.zt);if(PT.length>1)L.push(`(PART ${k+1}${mpm=='wcs'?' '+q.w:''})`);if(g52)L.push(`G52 X${F(gx)} Y${F(gy)}${gz}`);
-   const n0=L.length;try{const T=[];(macro&&M[o.type]?M:G)[o.type](ctx(T,t,o,mpm=='wcs'?q.w:w,nbc));L.push(...multiA(T,RW,o,macro&&!!M[o.type],8000+nbc));}catch(e){L.length=n0-(g52?1:0)-(PT.length>1?1:0);L.push(`(OP${i+1} ERROR: ${e.message})`);bad=true;return;}nbc+=10;
+   const n0=L.length;try{const T=[];(macro&&M[o.type]?M:G)[o.type](ctx(T,t,effOp(o),mpm=='wcs'?q.w:w,nbc));L.push(...multiA(T,RW,o,macro&&!!M[o.type],8000+nbc));}catch(e){L.length=n0-(g52?1:0)-(PT.length>1?1:0);L.push(`(OP${i+1} ERROR: ${e.message})`);bad=true;return;}nbc+=10;
    if(g52)L.push('G52 X0. Y0.'+(RW.zt?' Z0.':''));});});
  L.push('M09','M05','G91 G28 Z0.','G28 Y0.','G90','M30','%');
  return trLines(L,s.prog.cmt||'lat').join('\n');}
-function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Нет инструмента');const L=[],RW=rodWrap(o),sh=RW.ox||RW.oy||RW.zt;if(RW.a!=null)L.push(`G0 A${F(RW.a)}`);if(sh)L.push(`G52 X${F(RW.ox)} Y${F(RW.oy)} Z${F(RW.zt)}`);{const T=[];G[o.type](ctx(T,t,o,st.stock.wcs));L.push(...multiA(T,RW,o,false,0));}if(sh)L.push('G52 X0. Y0. Z0.');return{code:L.join('\n'),t};}
+function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Нет инструмента');const L=[],RW=rodWrap(o),sh=RW.ox||RW.oy||RW.zt;if(RW.a!=null)L.push(`G0 A${F(RW.a)}`);if(sh)L.push(`G52 X${F(RW.ox)} Y${F(RW.oy)} Z${F(RW.zt)}`);{const T=[];G[o.type](ctx(T,t,effOp(o),st.stock.wcs));L.push(...multiA(T,RW,o,false,0));}if(sh)L.push('G52 X0. Y0. Z0.');return{code:L.join('\n'),t};}
 
 /* ---------- парсер для симуляции ---------- */
 /* диаметр инструмента из комментариев исходного текста: «T06 M06 (FREZA D6)» или комментарий в 4 строках выше («(OTVERST M3 SVERLO 2.5)») */
