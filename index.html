@@ -262,7 +262,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.25.0';
+const APP_VERSION='1.26.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -334,10 +334,16 @@ const OPS={
   ['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',60,'n'],['strat','Как идти','one',[['one','Прямыми: проход → подъём → возврат'],['zz','Зигзагом']]],['fdir','Направление проходов','x',[['x','Вдоль прутка (по X)'],['y','Поперёк прутка (по Y)']]],['aend','После операции повернуть A на, °','','text']]}
 };
 /* ноль операции: по умолчанию у всех один (ноль детали); можно сдвинуть для отдельной операции — выводится как G52 */
-const ZF=[['aA','Поворот A перед операцией, ° (пусто — нет)','','text',()=>st.stock.shape=='rod'],['ox','Ноль операции: сдвиг X',0,'c'],['oy','Ноль операции: сдвиг Y',0,'c'],['zt','Ноль операции: сдвиг Z',0,'c']];
+const ZF=[['aA','Поворот A, ° — несколько через ; (0; 180) — пусто: нет','','text',()=>st.stock.shape=='rod'],['ox','Ноль операции: сдвиг X',0,'c'],['oy','Ноль операции: сдвиг Y',0,'c'],['zt','Ноль операции: сдвиг Z',0,'c']];
 /* 4-я ось: поворот A и сдвиг Z0 операции (G52 Z) */
+const aList=v=>String(v??'').replace(/[−–]/g,'-').split(/[;\s/]+/).map(x=>x.trim()).filter(x=>x!=='').map(num);
 function rodWrap(o){const g=stockGeo(),d=OPS[o.type],ox=d.rodNo?0:num(o.ox),oy=d.rodNo?0:num(o.oy),zt=d.rodNo?0:num(o.zt);
- const a=!g.rod?null:d.rodNo?+o.a0||0:String(o.aA??'').trim()===''?null:num(o.aA);return{a,ox,oy,zt,g};}
+ const as=!g.rod?[]:d.rodNo?[+o.a0||0]:aList(o.aA),a=as.length?as[0]:null;return{a,as:d.rodNo?[]:as,ox,oy,zt,g};}
+/* одна операция на несколько поворотов A: параметры один раз, обработка повторяется для каждого угла (цикл по углам через GOTO — не занимает DO1…DO3) */
+function multiA(T,RW,o,macro,lbl){if(!RW.as||RW.as.length<2)return T;const k=T.findIndex(l=>/^G0 G90 G5[4-9]/.test(l));if(k<0)return T;
+ const P=T.slice(0,k),Mo=T.slice(k),zs=F((RW.g.az||0)+RW.g.R+Math.max(5,+o.safe||10)-RW.zt),n=RW.as.length;
+ if(!macro){const out=[...P];RW.as.forEach((a,i)=>{if(i)out.push(`G0 Z${zs}`,`G0 A${F(a)}`);out.push(`(A${F(a)})`,...Mo);});return out;}
+ return[...P,...RW.as.map((a,i)=>`#${110+i}=${F(a)} (A ${i+1})`),'#109=0 (A NO)',`N${lbl}`,`IF[#109EQ0]GOTO${lbl+1}`,`G0 Z${zs}`,`G0 A#[110+#109]`,`N${lbl+1}`,...Mo,'#109=#109+1',`IF[#109LT${n}]GOTO${lbl}`];}
 const CYC=[['Плоскость',['face',['face',{strat:'one'},'Торцовка в одну сторону','faceOne']]],['Карманы',['pocketRect','pocketCircle','pocketOval',['polygon',{side:'in'},'Гнездо 6-гранное','polygonIn'],['pocketIsl',{},'Карман с островами','pocketIsl'],['pocketIsl',{src:'op',isl:''},'Карман по контуру','pocketCtr']]],['Канавки по профилю',[['groove',{prof:'u',w:25,h:8,rf:6},'U-канавка с R у дна','grvU'],['groove',{prof:'round',rf:6,h:6},'Полукруглая канавка','grvR'],['groove',{prof:'v',w:12,h:6},'V-канавка','grvV']]],['Выступы и контуры',['contourRect','contourCircle','contourOval',['polygon',{side:'out',n:6,blank:42,sw:36,depth:15,step:1.5},'Шестигранник на круглом'],['polygon',{side:'out',blank:0},'Многогранник (выступ)']]],['Контур с чертежа',['contour',['arc',{part:'right'},'Дуга справа','arcR'],['arc',{part:'left'},'Дуга слева','arcL'],['arc',{part:'top'},'Дуга сверху','arcT'],['arc',{part:'bottom'},'Дуга снизу','arcB'],['arc',{part:'custom'},'Дуга по углам','arcC']]],['Винтовое фрезерование',[['helix',{side:'in',shape:'circle'},'Отверстие по винту','hxIn'],['helix',{side:'out',shape:'circle',d:40},'Бобышка по винту','hxOut'],['helix',{side:'in',shape:'rect'},'Окно квадратное по винту','hxSqIn'],['helix',{side:'out',shape:'rect'},'Квадрат снаружи по винту','hxSqOut'],['helix',{side:'out',shape:'poly'},'Многогранник по винту','hxPoly']]],['Пазы',['slot','slotsRad','slotsArc',['slotsRad',{cnt:2},'2 паза радиальных','slotsRad2'],['slotsRad',{cnt:6},'6 пазов радиальных','slotsRad6']]],['Пруток (4 ось)',[['rodFlats',{cnt:'2'},'Лыски A0 + A180 (ушко)','rodFlats'],['rodFlats',{cnt:'4'},'Квадрат на прутке','rodSq'],['rodFlats',{cnt:'6'},'Шестигранник на прутке','rodHex']]],['Лыски',[['flats',{cnt:1},'Лыска одна','flats1'],['flats',{cnt:2},'Лыски 2 шт (под ключ)','flats'],['flats',{cnt:4,h:14},'Лыски 4 шт (квадрат)','flats4']]],['Отверстия',[['@thrw',{},'Отверстие под резьбу','tapHole'],'drill','tap','thread']],['Гравировка',[['engrave',{},'Текст по прямой','engrave'],['engrave',{lay:'arc',txt:'G-КОД ЧПУ'},'Текст по дуге','engArc']]],['Фаски',[['chamf',{src:'rect'},'Фаска прямоугольная','chRect'],['chamf',{src:'circle',side:'in',d:20},'Фаска отверстия','chCirc'],['chamf',{src:'op'},'Фаска по контуру','chOp']]]];
 /* пиктограммы циклов */
 const SB='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/>',SD='<rect x="3" y="8" width="34" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 2.5" opacity=".5"/>';
@@ -526,7 +532,7 @@ function renderOpList(){
  $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n" title="${i+1}">${svg(o.type=='polygon'&&o.side=='in'?'polygonIn':o.type,'style="color:var(--acc)"')}</div><div class="m" title="${OPS[o.type].n}"><b>${i+1}. ${o.type=='polygon'?(o.side=='in'?'Гнездо ':'Выступ ')+Math.round(o.n)+'-гр.':OPS[o.type].s}</b><small><select class="tsel" onclick="event.stopPropagation()" onchange="setOpTool('${o.id}',this.value)">${st.tools.find(t=>t.id==o.tool)?'':'<option selected>⚠ нет инструмента</option>'}${st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<option value="${t.id}" ${t.id==o.tool?'selected':''}>T${t.num} ${TSH[t.type]||''} Ø${t.d}</option>`).join('')}</select>${o.depth!=null?` глуб. ${o.depth}`:''}</small></div>
  <button class="ib" title="Вкл/выкл" onclick="event.stopPropagation();opAct('tog','${o.id}')">${o.on?'◉':'○'}</button><button class="ib" onclick="event.stopPropagation();opAct('up','${o.id}')">↑</button><button class="ib" onclick="event.stopPropagation();opAct('dn','${o.id}')">↓</button><button class="ib" onclick="event.stopPropagation();opAct('dup','${o.id}')">⧉</button><button class="ib" onclick="event.stopPropagation();opAct('del','${o.id}')">✕</button></div>`).join('')||'<div class="empty">Добавьте первый цикл ниже</div>';}
 let prevAll=false;
-const zSum=o=>{const a=String(o.aA??'').trim(),x=num(o.ox),y=num(o.oy),z=num(o.zt);return (x||y||z?`X${F(x)} Y${F(y)} Z${F(z)}`:'как у детали')+(a!==''&&st.stock.shape=='rod'?` · A${F(num(a))}`:'');};
+const zSum=o=>{const as=aList(o.aA),x=num(o.ox),y=num(o.oy),z=num(o.zt);return (x||y||z?`X${F(x)} Y${F(y)} Z${F(z)}`:'как у детали')+(as.length&&st.stock.shape=='rod'?` · A${as.map(F).join(' → A')}`:'');};
 function renderOpEd(){
  const o=st.ops.find(x=>x.id==selOp);
  if(!o){$('#opEd').innerHTML='<div class="empty">Выберите операцию или добавьте цикл</div>';return;}
@@ -1189,11 +1195,11 @@ function gen(){
   L.push(`(OP${i+1} ${OPS[o.type].c})`);let bad=false;const RW=rodWrap(o);
   if(RW.a!=null){if(!fresh)L.push(`G0 Z${F((RW.g.az||0)+RW.g.R+Math.max(5,+o.safe||10))}`);L.push(`G0 A${F(RW.a)}`);}
   PT.forEach((q,k)=>{if(bad)return;const gx=(mpm=='g52'?q.x:0)+RW.ox,gy=(mpm=='g52'?q.y:0)+RW.oy,gz=RW.zt?` Z${F(RW.zt)}`:'',g52=!!(gx||gy||RW.zt);if(PT.length>1)L.push(`(PART ${k+1}${mpm=='wcs'?' '+q.w:''})`);if(g52)L.push(`G52 X${F(gx)} Y${F(gy)}${gz}`);
-   const n0=L.length;try{(macro&&M[o.type]?M:G)[o.type](ctx(L,t,o,mpm=='wcs'?q.w:w,nbc));}catch(e){L.length=n0-(g52?1:0)-(PT.length>1?1:0);L.push(`(OP${i+1} ERROR: ${e.message})`);bad=true;return;}nbc+=10;
+   const n0=L.length;try{const T=[];(macro&&M[o.type]?M:G)[o.type](ctx(T,t,o,mpm=='wcs'?q.w:w,nbc));L.push(...multiA(T,RW,o,macro&&!!M[o.type],8000+nbc));}catch(e){L.length=n0-(g52?1:0)-(PT.length>1?1:0);L.push(`(OP${i+1} ERROR: ${e.message})`);bad=true;return;}nbc+=10;
    if(g52)L.push('G52 X0. Y0.'+(RW.zt?' Z0.':''));});});
  L.push('M09','M05','G91 G28 Z0.','G28 Y0.','G90','M30','%');
  return trLines(L,s.prog.cmt||'lat').join('\n');}
-function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Нет инструмента');const L=[],RW=rodWrap(o),sh=RW.ox||RW.oy||RW.zt;if(RW.a!=null)L.push(`G0 A${F(RW.a)}`);if(sh)L.push(`G52 X${F(RW.ox)} Y${F(RW.oy)} Z${F(RW.zt)}`);G[o.type](ctx(L,t,o,st.stock.wcs));if(sh)L.push('G52 X0. Y0. Z0.');return{code:L.join('\n'),t};}
+function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Нет инструмента');const L=[],RW=rodWrap(o),sh=RW.ox||RW.oy||RW.zt;if(RW.a!=null)L.push(`G0 A${F(RW.a)}`);if(sh)L.push(`G52 X${F(RW.ox)} Y${F(RW.oy)} Z${F(RW.zt)}`);{const T=[];G[o.type](ctx(T,t,o,st.stock.wcs));L.push(...multiA(T,RW,o,false,0));}if(sh)L.push('G52 X0. Y0. Z0.');return{code:L.join('\n'),t};}
 
 /* ---------- парсер для симуляции ---------- */
 /* диаметр инструмента из комментариев исходного текста: «T06 M06 (FREZA D6)» или комментарий в 4 строках выше («(OTVERST M3 SVERLO 2.5)») */
