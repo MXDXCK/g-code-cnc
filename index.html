@@ -182,12 +182,14 @@ details.cycd[open] summary:before{content:'－'}
   <div class="card"><h3>Несколько деталей на столе</h3><div class="grid" id="mpF"></div><div class="stats" id="mpInfo"></div>
    <div class="hint"><b>G52</b> — детали стоят ровно с шагом: ноль ставится только на первую (G54), остальные — сдвигом G52 X Y. <b>G54…G59</b> — каждую деталь привязываете отдельно (тиски стоят как придётся); сдвиги в списке нужны только для 3D. Каждая операция выполняется на всех деталях подряд, потом смена инструмента — так меньше смен.</div></div>
   <div class="card"><h3>Проект</h3><div class="row">
-   <button class="btn" onclick="exportProj()">💾 Экспорт проекта</button>
-   <button class="btn" onclick="document.getElementById('impF').click()">📂 Импорт</button>
+   <button class="btn p" onclick="libSave()">💾 Сохранить в программе</button>
+   <button class="btn" onclick="openMenu('lib')">📁 Мои проекты</button>
+   <button class="btn" onclick="exportProj()">⬇ Экспорт файлом .nc</button>
+   <button class="btn" onclick="document.getElementById('impF').click()">📂 Открыть файл проекта</button>
    <button class="btn d" onclick="resetProj()">🗑 Новый проект</button>
    <input type="file" id="impF" hidden onchange="importProj(this)"></div>
    <div class="stats" id="projStats"></div>
-   <div class="hint">В файл экспорта сохраняются и ваши пресеты циклов — так их можно перенести на другое устройство.</div></div>
+   <div class="hint">«Сохранить в программе» — проект хранится в приложении на этом телефоне (список — «Мои проекты»). «Экспорт файлом .nc» — обычная программа для станка, а после последнего % дописаны данные проекта (станок их не читает): этот файл можно открыть обратно, переслать на другое устройство или отправить для разбора. Старые файлы .json тоже открываются.</div></div>
  </section>
 
  <section id="t-tools" class="tab">
@@ -260,7 +262,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.24.0';
+const APP_VERSION='1.25.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -476,8 +478,19 @@ function renderProj(){{const h=$('#stockHint');if(h&&!h.dataset.t)h.dataset.t=h.
 const NATIVE=window.AndroidApp?'android':(window.chrome&&window.chrome.webview?'windows':'');
 const RELEASES='https://github.com/MXDXCK/g-code-cnc/releases/latest',PAGES='https://mxdxck.github.io/g-code-cnc/';
 const saveNative=(name,text)=>{if(NATIVE!='android')return false;toast(window.AndroidApp.saveFile(name,text));return true;};
-window.exportProj=()=>{if(saveNative(`project_O${st.prog.num}.json`,JSON.stringify({...st,presets:PRE},null,1)))return;const b=new Blob([JSON.stringify({...st,presets:PRE},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`project_O${st.prog.num}.json`;a.click();};
-window.importProj=inp=>{const r=new FileReader(),fn=inp.files[0]?.name||'';r.onload=()=>{let j;try{j=JSON.parse(r.result);}catch(e){if(/[GM]\s*\d/i.test(r.result))return openCodeText(r.result,fn);return toast('Это не проект и не G-код');}try{if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;normStock();st.ops=st.ops.filter(o=>OPS[o.type]);manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
+/* экспорт проекта в .nc: сама программа (станок её читает) + после последнего % данные проекта (станок их не читает), чтобы открыть проект обратно */
+const PROJ_MARK='(GCODE-CNC PROJECT - DANNYE PROEKTA DLYA PROGRAMMY G-KOD CHPU, STANOK IH NE CHITAET)';
+const projFile=()=>`${String(st.prog.name||'project').trim().replace(/[^\wА-Яа-яЁё.-]+/g,'_')||'project'}_O${String(Math.round(st.prog.num)).padStart(4,'0')}.nc`;
+window.exportProj=()=>{regen();let code=$('#code').value.replace(/\s+$/,'');if(!code.trim().endsWith('%'))code+='\n%';
+ const data={...st,presets:PRE,_code:manual?$('#code').value:null,_src:SRC||null,_app:APP_VERSION},txt=(code+'\n'+PROJ_MARK+'\n'+JSON.stringify(data)+'\n').replace(/\n/g,'\r\n'),fn=projFile();
+ if(saveNative(fn,txt))return;const b=new Blob([txt],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;document.body.appendChild(a);a.click();a.remove();toast('Проект сохранён в файл '+fn);};
+function loadProj(j,name){if(!j||!j.tools||!j.ops)throw Error('Нет данных проекта');if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}
+ const code=j._code,src=j._src;delete j.presets;delete j._code;delete j._src;delete j._app;st=j;normStock();st.ops=st.ops.filter(o=>OPS[o.type]);manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();
+ if(src&&src.t)srcSet(src.t,src.n);renderAll();if(code){$('#code').value=code;manual=true;codeDirty=false;updCodeInfo();}toast('Проект загружен'+(name?': '+name:''));}
+window.importProj=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader(),fn=f.name||'';r.onload=()=>{const t=String(r.result);
+  try{const k=t.indexOf('(GCODE-CNC PROJECT');if(k>=0){const js=t.slice(t.indexOf('\n',k)+1).trim();return loadProj(JSON.parse(js),fn);}
+   let j=null;try{j=JSON.parse(t);}catch(e){}if(j)return loadProj(j,fn);
+   if(/[GM]\s*\d/i.test(t))return openCodeText(t,fn);toast('Это не проект и не G-код');}catch(e){toast('Ошибка файла: '+e.message);}};r.readAsText(f);inp.value='';};
 window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();normStock();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
 
 /* ---------- инструменты UI ---------- */
@@ -1644,7 +1657,7 @@ window.wzAdd=()=>{const c=wzCalc();if(!c.n)return toast('Нет точек от�
  st.ops.push(...add);selOp=add[0].id;save();closeMenu();show('ops');toast(`Добавлено переходов: ${add.length}`+(newT.length?' · в магазин: '+newT.join(', '):''));};
 const VIEWS={
  sheet:()=>`<div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="printSheet()">🖨 Печать / PDF</button><button class="btn" onclick="saveSheet()">⬇ Сохранить HTML</button></div><div id="ssWrap">${sheetHTML()}</div>`,
- lib:()=>{const L=libGet();return `<div class="row" style="margin-bottom:10px"><button class="btn p" onclick="libSave()">💾 Сохранить текущую деталь</button></div>`+
+ lib:()=>{const L=libGet();return `<div class="row" style="margin-bottom:10px"><button class="btn p" onclick="libSave()">💾 Сохранить текущий проект</button><button class="btn" onclick="exportProj()">⬇ Экспорт .nc</button></div>`+
   (L.length?L.map(p=>`<div class="it"><div class="m" onclick="libOpen('${p.id}')"><b>${esc(p.name)}</b><small>${new Date(p.date).toLocaleString('ru')} · операций: ${(p.data.ops||[]).length}</small></div><button class="ib" title="Открыть" onclick="libOpen('${p.id}')">📂</button><button class="ib" title="Удалить" onclick="libDel('${p.id}')">✕</button></div>`).join(''):'<div class="empty">Пока нет сохранённых деталей</div>')+
   '<div class="hint">Детали хранятся на этом устройстве. Чтобы перенести на другое — «Экспорт проекта» на вкладке «Проект».</div>';},
  check:()=>{regen();return chkHTML(checkProgram($('#code').value))+'<div class="hint">Проверяется по 3D-модели заготовки: ускоренные ходы ниже верха детали, работа без шпинделя, H не равен T, обработка ниже дна, шаг по Z больше диаметра фрезы, нулевые режимы. Проверка не заменяет прогон в графике стойки.</div>';},
@@ -1704,10 +1717,11 @@ window.refFilter=()=>{$('#refL').innerHTML=refRows($('#refQ').value);};
 const libGet=()=>{try{return JSON.parse(localStorage.getItem('fcam_lib'))||[]}catch(e){return[]}};
 const libPut=L=>{try{localStorage.setItem('fcam_lib',JSON.stringify(L));return true}catch(e){toast('Нет места для сохранения');return false}};
 window.libSave=()=>{const def=`${st.prog.name||'Деталь'} O${st.prog.num}`,name=prompt('Название детали',def);if(!name)return;const L=libGet(),ex=L.find(p=>p.name==name.trim());
- if(ex&&!confirm(`«${name}» уже есть. Заменить?`))return;const item={id:ex?ex.id:uid(),name:name.trim(),date:Date.now(),data:JSON.parse(JSON.stringify(st))};
+ if(ex&&!confirm(`«${name}» уже есть. Заменить?`))return;const item={id:ex?ex.id:uid(),name:name.trim(),date:Date.now(),data:JSON.parse(JSON.stringify(st)),code:manual?$('#code').value:null,src:SRC||null};
  const L2=ex?L.map(p=>p.id==ex.id?item:p):[item,...L];if(libPut(L2)){toast('Деталь сохранена');openMenu('lib');}};
 window.libOpen=id=>{const p=libGet().find(x=>x.id==id);if(!p)return;if(!confirm(`Открыть «${p.name}»? Текущий проект будет заменён (сохраните его, если нужно).`))return;
- st=JSON.parse(JSON.stringify(p.data));normStock();st.ops=st.ops.filter(o=>OPS[o.type]);selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;manual=false;save();renderAll();closeMenu();show('ops');toast('Открыта: '+p.name);};
+ st=JSON.parse(JSON.stringify(p.data));normStock();st.ops=st.ops.filter(o=>OPS[o.type]);selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;manual=false;save();if(p.src&&p.src.t)srcSet(p.src.t,p.src.n);renderAll();closeMenu();
+ if(p.code){$('#code').value=p.code;manual=true;codeDirty=false;updCodeInfo();show('code');}else show('ops');toast('Открыт: '+p.name);};
 window.libDel=id=>{const L=libGet(),p=L.find(x=>x.id==id);if(!p||!confirm(`Удалить «${p.name}»?`))return;libPut(L.filter(x=>x.id!=id));openMenu('lib');};
 
 /* ---------- лист наладки ---------- */
