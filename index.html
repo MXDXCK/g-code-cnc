@@ -70,6 +70,7 @@ input[type=range]{padding:0;accent-color:var(--acc);border:0;background:none}
 .simbar{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:var(--pan);border-top:1px solid var(--line)}
 .simbar .sbr{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.simbar .btn{padding:8px 11px}
 .simbar .tg{border:1px solid var(--line);border-radius:9px;padding:7px 9px;cursor:pointer;font-size:13px}.simbar .tg input{display:none}.simbar .tg:has(input:checked){color:var(--acc);border-color:#ffc40088;background:#ffc40014}
+.simop{flex:1 1 100%;padding:8px 10px;font-size:14px}
 .spd{display:flex;gap:4px;overflow-x:auto;flex:1 1 280px;min-width:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}.spd::-webkit-scrollbar{display:none}
 .spd button{flex:none;background:var(--pan2);border:1px solid var(--line);color:var(--tx);border-radius:9px;padding:7px 10px;font:600 13px/1 inherit;cursor:pointer}
 .spd button.on{background:var(--acc);border-color:var(--acc);color:#111}
@@ -230,7 +231,7 @@ details.cycd[open] summary:before{content:'－'}
 
  <section id="t-sim" class="tab">
   <div id="view"><div class="hud" id="hud">—</div></div>
-  <div class="simbar"><div class="sbr">
+  <div class="simbar"><select id="simOp" class="simop" onchange="simJump(+this.value)"><option value="0">▶ Смотреть с начала программы</option></select><div class="sbr">
    <button class="btn p" id="playB" onclick="simPlay()">▶</button>
    <button class="btn" onclick="simReset()">⏮</button>
    <button class="btn" onclick="simFinish()" title="Сразу показать результат">⏭ Итог</button>
@@ -259,7 +260,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.23.0';
+const APP_VERSION='1.24.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -1476,7 +1477,16 @@ function build(){
  {const zm=zeroMark(Math.max(sg.w,sg.h,sg.z)*.18);zm.name='zero';SC.add(zm);}
  pathObj=pathLines(data.segs,showStock?.55:1);pathObj.visible=$('#showPath').checked||!showStock;SC.add(pathObj);
  sim={i:0,t:0,play:false,tm:0};$('#playB').textContent='▶';
- const p0=data.segs[0]?.a||{x:0,y:0,z:50};setTool(p0,data.segs[0]?.tool);fitCam();hud(p0);}
+ const p0=data.segs[0]?.a||{x:0,y:0,z:50};setTool(p0,data.segs[0]?.tool);fitCam();hud(p0);
+ data.marks=simMarks($('#code').value,data.segs);const so=$('#simOp');if(so){const m0=data.marks.filter(m=>m.i==0).map(m=>m.label).join(' · ');so.innerHTML=`<option value="0">▶ С начала${m0?' · '+esc(m0):''}</option>`+data.marks.filter(m=>m.i>0).map(m=>`<option value="${m.i}">${esc(m.label)}</option>`).join('');}}
+/* где начинается каждая операция: (OP3 …) в своих программах, смена инструмента и заголовки-комментарии — в чужих */
+function simMarks(code,segs){const L=code.split('\n'),M=[];
+ L.forEach((l,ln)=>{const m=/^\s*\((?:OP|ОП)\s*(\d+)\s+([^)]*)\)/i.exec(l);if(m){const o=st.ops[+m[1]-1];M.push({ln,label:`Операция ${m[1]}: ${o&&OPS[o.type]?OPS[o.type].s:m[2]}`});}});
+ if(!M.length)L.forEach((l,ln)=>{const b=l.replace(/\(.*?\)/g,'').replace(/^N\d+/i,'').trim(),c=/\(([^)]*)\)/.exec(l),t=/T\s*(\d+)\s*M0?6/i.exec(b);
+  if(t)M.push({ln,label:`T${+t[1]}`+(c?' · '+c[1].trim():'')});else if(!b&&c&&c[1].trim().length>2)M.push({ln,label:c[1].trim()});else if(/^G0*0?\s.*A\s*-?[\d.]/i.test(b)||/^A\s*-?[\d.]/i.test(b)){const a=/A\s*(-?[\d.]+)/i.exec(b);M.push({ln,label:`Поворот A${a[1]}`});}});
+ const out=[];M.forEach(m=>{const i=segs.findIndex(s=>s.ln>=m.ln);if(i<0)return;const prev=out[out.length-1];if(prev&&prev.i==i){prev.label+=' · '+m.label;return;}out.push({...m,i});});
+ return out.map(m=>({...m,label:m.label.length>70?m.label.slice(0,68)+'…':m.label}));}
+window.simJump=i=>{build();const so=$('#simOp');if(so)so.value=String(i);if(!i)return;let g=0;while(sim.i<i&&g++<200)step(1e12,i);sim.play=true;$('#playB').textContent='⏸';toast('Предыдущие операции уже отрисованы');};
 function setTool(p,n){
  if(n!==toolNum){if(toolObj){SC.remove(toolObj);disposeObj(toolObj);}toolNum=n;const t=(data.tdia&&data.tdia[n]?{d:data.tdia[n],type:'endmill'}:null)||st.tools.find(t=>t.num==n)||{d:10,len:40,type:'endmill'},r=t.d/2,L=Math.max(40,t.d*3);
   toolObj=new THREE.Group();const mat=new THREE.MeshStandardMaterial({color:0xffb000,metalness:.8,roughness:.25});
@@ -1488,8 +1498,8 @@ function setTool(p,n){
   toolObj.userData={r,cr:toolCR(t),cn:t.id?toolCone(t):null};SC.add(toolObj);}
  toolObj.position.copy(V(p.x,p.y,p.z));}
 /* budget — минуты станочного времени (1× = реальная подача из программы) */
-function step(budget){const S=data.segs;let p=null,it=0;
- while(budget>0&&sim.i<S.length&&it++<400000){const s=S[sim.i];const sl=Math.min(hm.res*.5,(1-sim.t)*s.len,budget*s.v);sim.t+=sl/s.len;budget-=sl/s.v;sim.tm+=sl/s.v;
+function step(budget,stopAt){const S=data.segs,lim=Math.min(S.length,stopAt??S.length);let p=null,it=0;
+ while(budget>0&&sim.i<lim&&it++<400000){const s=S[sim.i];const sl=Math.min(hm.res*.5,(1-sim.t)*s.len,budget*s.v);sim.t+=sl/s.len;budget-=sl/s.v;sim.tm+=sl/s.v;
   if(s.tool!==toolNum)setTool(s.a,s.tool);const t=Math.min(1,sim.t);if(hm.rod&&s.a0!=null)hm.setA(s.a0+(s.a1-s.a0)*t);p={x:s.a.x+(s.b.x-s.a.x)*t,y:s.a.y+(s.b.y-s.a.y)*t,z:s.a.z+(s.b.z-s.a.z)*t};
   if(!s.rapid)cutAt(hm,p.x,p.y,p.z,toolObj.userData.r,toolObj.userData.cr,toolObj.userData.cn);if(sim.t>=1-1e-9){sim.i++;sim.t=0;}}
  if(p){setTool(p,toolNum);hud(p);}flushHM(hm);
