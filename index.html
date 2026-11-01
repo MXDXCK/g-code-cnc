@@ -292,26 +292,45 @@ nav button svg{width:22px;height:22px;display:block}
 
 /* ===== чертёж 2D ===== */
 #t-draw.on{display:flex;flex-direction:column;height:100%;max-width:none;padding:0}
-.dtop{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--pan);flex:none}
-.dtop b{font-size:16px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dtop{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--pan);flex:none}
+.dtop b{font-size:15px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dtop .ub{width:40px;height:40px}
 .dw{display:grid;grid-template-columns:minmax(0,1fr) 380px;flex:1;min-height:0}
-.dcv{position:relative;background:#0a0c10;overflow:hidden;touch-action:none;min-height:280px;user-select:none;-webkit-user-select:none}
+.dcv{position:relative;background:#0a0c10;overflow:hidden;touch-action:none;min-height:240px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .dcv svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.dchip{position:absolute;left:8px;top:8px;background:#0f1115d9;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:12px ui-monospace,Menlo,monospace;color:var(--tx);pointer-events:none}
+.dchip{position:absolute;left:8px;top:8px;right:60px;background:#0f1115d9;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:12px ui-monospace,Menlo,monospace;color:var(--tx);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:max-content;max-width:calc(100% - 70px)}
+.dhint{position:absolute;left:8px;bottom:8px;right:60px;background:#24405fe6;color:#e6f2ff;border-radius:10px;padding:6px 10px;font-size:13px;pointer-events:none;width:max-content;max-width:calc(100% - 70px)}
+.dhint:empty{display:none}
 .dzm{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
-.dzm button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#0f1115d9;color:var(--tx);font-size:18px;cursor:pointer;padding:0}
+.dzm button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:#0f1115e6;color:var(--tx);font-size:18px;cursor:pointer;padding:0;font-family:inherit;font-weight:700}
+.dzm button.on{background:var(--acc);color:#141414;border-color:var(--acc)}
+.dzm small{font-size:10px;display:block;font-weight:700}
 .dside{display:flex;flex-direction:column;border-left:1px solid var(--line);background:var(--pan);min-height:0}
-.dtools{display:flex;gap:6px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line);flex:none;scrollbar-width:thin}
-.dtools button{flex:none;min-width:60px;height:56px;border-radius:12px;border:1px solid var(--line);background:var(--pan2);color:var(--tx);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;padding:0 6px}
+.dgrp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:6px 8px 0;flex:none}
+.dgrp button{min-height:34px;border-radius:9px;border:0;background:transparent;color:var(--mut);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}.dgrp button.on{background:var(--pan2);color:var(--acc)}
+.dtools{display:flex;gap:6px;padding:6px 8px 8px;overflow-x:auto;border-bottom:1px solid var(--line);flex:none;scrollbar-width:thin}
+.dtools button{flex:1 0 auto;min-width:56px;height:56px;border-radius:12px;border:1px solid var(--line);background:var(--pan2);color:var(--tx);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;padding:0 6px}
 .dtools button.on{background:var(--acc);color:#141414;border-color:var(--acc)}
+.dsh{display:flex;flex-direction:column;min-height:0;flex:1}
+.dhandle{display:none}
 .dpan{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
 .dpan>b{font-size:14px}
-.dcl{background:var(--pan2);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}.dcl.on{border-color:var(--acc)}.dcl small{color:var(--mut)}
+.dcl{background:var(--pan2);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}.dcl small{color:var(--mut)}
 .dpromo{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,#1d2a3f,#171a21);border:1px solid #2f4a70;border-radius:16px;padding:14px;color:var(--tx);font-family:inherit;cursor:pointer}
 .dpromo .pi{width:44px;height:44px;border-radius:12px;background:#24405f;display:grid;place-items:center;flex:none;color:#7fc0ff}
 .dpromo b{display:block;font-size:15px}.dpromo small{color:#aab4c4;font-size:12px}.dpromo em{font-style:normal;margin-left:auto;background:#4da3ff;color:#0a0c10;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:800;flex:none}
-@media(max-width:820px){#t-draw.on{display:block;height:auto}.dw{display:block}.dcv{height:52vh}.dside{border-left:0}.dpan{overflow:visible}}
-</style>
+@media(max-width:820px){
+ body.drawing header,body.drawing nav,body.drawing #updBar{display:none!important}
+ body.drawing main{padding-bottom:0}
+ #t-draw.on{height:100%}
+ .dw{display:flex;flex-direction:column}
+ .dcv{flex:1;min-height:200px}
+ .dside{border-left:0;border-top:1px solid var(--line);flex:none;max-height:58%}
+ .dside.min .dsh .dpan{display:none}
+ .dhandle{display:flex;align-items:center;justify-content:center;gap:8px;height:30px;border:0;background:var(--pan);color:var(--mut);font-family:inherit;font-size:12px;cursor:pointer;flex:none;border-bottom:1px solid var(--line)}
+ .dhandle i{width:36px;height:4px;border-radius:2px;background:#3a4252}
+ .dpan{max-height:30vh;padding:10px 12px calc(10px + var(--sab))}
+}</style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
@@ -422,13 +441,14 @@ nav button svg{width:22px;height:22px;display:block}
  </section>
 
  <section id="t-draw" class="tab">
-  <div class="dtop"><button class="btn s" onclick="show('home')">← Назад</button><b>✏ Чертёж 2D</b>
-   <button class="ub" style="width:40px;height:40px" onclick="undo();renderDraw()" aria-label="Отменить"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-   <button class="ub" style="width:40px;height:40px" onclick="redo();renderDraw()" aria-label="Повторить"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
+  <div class="dtop"><button class="btn s" onclick="show('home')">← Выйти</button><b>✏ Чертёж 2D</b>
+   <button class="ub" onclick="undo();renderDraw()" aria-label="Отменить"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+   <button class="ub" onclick="redo();renderDraw()" aria-label="Повторить"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+   <button class="btn s p" onclick="skTool('work')">В работу →</button></div>
   <div class="dw">
-   <div class="dcv" id="dcv"><svg id="dsv" aria-label="Поле чертежа"></svg><div class="dchip" id="dXY"></div>
-    <div class="dzm"><button onclick="skZoom(1.3)" aria-label="Крупнее">＋</button><button onclick="skZoom(1/1.3)" aria-label="Мельче">－</button><button onclick="skFit()" aria-label="Показать всё" style="font-size:15px">⌖</button></div></div>
-   <div class="dside"><div class="dtools" id="dTools"></div><div class="dpan" id="dPan"></div></div>
+   <div class="dcv" id="dcv"><svg id="dsv" aria-label="Поле чертежа"></svg><div class="dchip" id="dXY"></div><div class="dhint" id="dHint"></div>
+    <div class="dzm"><button id="dSnap" class="on" onclick="skTog('snap')" aria-label="Привязки">🧲</button><button id="dOrt" onclick="skTog('ortho')" aria-label="Орто"><small>ОРТО</small></button><button onclick="skZoom(1.3)" aria-label="Крупнее">＋</button><button onclick="skZoom(1/1.3)" aria-label="Мельче">－</button><button onclick="skFit()" aria-label="Показать всё">⌖</button></div></div>
+   <div class="dside" id="dSide"><div class="dgrp" id="dGrp"></div><div class="dtools" id="dTools"></div><div class="dsh"><button class="dhandle" onclick="skSheet()"><i></i>параметры</button><div class="dpan" id="dPan"></div></div></div>
   </div>
   <input type="file" id="dImg" accept="image/*" hidden onchange="skImgLoad(this)"><input type="file" id="dDxf" accept=".dxf,.DXF" hidden onchange="skDxfIn(this)">
  </section>
@@ -452,7 +472,7 @@ nav button svg{width:22px;height:22px;display:block}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.5.0';
+const APP_VERSION='2.6.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -2506,239 +2526,303 @@ window.scPick=i=>{const o=SCT;if(!o||!SCD)return;SCD.i=i;const c=SCD.ch[i],b=SCD
  o.sx=r.sx;o.sy=r.sy;o.els=r.els;o.cin='els';o._elsUser=1;
  if(!SCD.cl[i])toast('Этот контур не замкнут — он будет замкнут прямой');scChanged(true);};
 
-/* ===================== Чертёж 2D: свой «КОМПАС» в кармане ===================== */
-const SK={dep:5,tool:'sel',sel:null,act:null,seg:'L',R:10,V:{cx:0,cy:0,s:2},tmp:null,cal:null,hov:null,dim:true,snap:true,img:null,fitted:false};
-const skD=()=>{if(!st.sketch||!Array.isArray(st.sketch.cs))st.sketch={cs:[],grid:1};return st.sketch;};
-const r3=v=>Math.round(v*1000)/1000;
+/* ===================== Чертёж 2D: примитивы, привязки, усечение — как в КОМПАС ===================== */
+const SK={tool:'line',grp:'draw',sel:new Set(),pts:[],hov:null,hk:'',V:{cx:0,cy:0,s:2},cal:null,dim:true,snap:true,ortho:false,img:null,fitted:false,dep:5,sheet:true,R:5,C:1,off:5,rr:0,drag:null,aim:false,offP:null};
+const D2R=Math.PI/180,r3=v=>Math.round(v*1000)/1000,angN=a=>((a%360)+360)%360;
+const arcPt=(p,a)=>[p.cx+p.r*Math.cos(a*D2R),p.cy+p.r*Math.sin(a*D2R)],arcSw=p=>{const s=angN(p.a2-p.a1);return s<1e-9?360:s;},inArc=(p,a)=>angN(a-p.a1)<=arcSw(p)+1e-6,angOf=(c,P)=>angN(Math.atan2(P[1]-c[1],P[0]-c[0])/D2R);
+function e2p(e){if(e.k=='L')return{t:'L',x1:r3(e.a[0]),y1:r3(e.a[1]),x2:r3(e.b[0]),y2:r3(e.b[1])};const c=e.c,r=r3(V2.dist(e.a,c)),A=angOf(c,e.a),B=angOf(c,e.b);return e.cw?{t:'A',cx:r3(c[0]),cy:r3(c[1]),r,a1:r3(B),a2:r3(A)}:{t:'A',cx:r3(c[0]),cy:r3(c[1]),r,a1:r3(A),a2:r3(B)};}
+const skD=()=>{let S=st.sketch;if(!S||typeof S!='object')S=st.sketch={ps:[],grid:1};
+ if(!Array.isArray(S.ps)){S.ps=[];(S.cs||[]).forEach(c=>{try{const cr=skCircle(c);if(cr){S.ps.push({t:'C',cx:cr.cx,cy:cr.cy,r:r3(cr.d/2)});return;}ctrEls(c).E.forEach(e=>S.ps.push(e2p(e)));}catch(_){}});delete S.cs;}return S;};
+function pE(p,pi){if(p.t=='L')return[{k:'L',a:[p.x1,p.y1],b:[p.x2,p.y2],pi}];if(p.t=='A')return[{k:'A',a:arcPt(p,p.a1),b:arcPt(p,p.a2),c:[p.cx,p.cy],cw:false,pi}];
+ return[{k:'A',a:[p.cx+p.r,p.cy],b:[p.cx-p.r,p.cy],c:[p.cx,p.cy],cw:false,pi},{k:'A',a:[p.cx-p.r,p.cy],b:[p.cx+p.r,p.cy],c:[p.cx,p.cy],cw:false,pi}];}
 const skVerts=c=>[[+c.sx||0,+c.sy||0],...(c.els||[]).map(q=>[+q.x||0,+q.y||0])];
 function skE(c){try{return{E:ctrEls(c).E,err:''};}catch(e){return{E:[],err:e.message};}}
-const skCircle=c=>c.closed=='1'&&c.els.length==2&&c.els.every(q=>q.t!='L')&&Math.abs(Math.abs(+c.els[0].r)-Math.abs(+c.els[1].r))<1e-6?(()=>{const a=skVerts(c);return{cx:r3((a[0][0]+a[1][0])/2),cy:r3((a[0][1]+a[1][1])/2),d:r3(2*Math.abs(+c.els[0].r))};})():null;
+const skCircle=c=>c.closed=='1'&&c.els.length==2&&c.els.every(q=>q.t!='L')&&Math.abs(Math.abs(+c.els[0].r)-Math.abs(+c.els[1].r))<1e-3?(()=>{const a=skVerts(c);return{cx:r3((a[0][0]+a[1][0])/2),cy:r3((a[0][1]+a[1][1])/2),d:r3(2*Math.abs(+c.els[0].r))};})():null;
 function skPoly(c){const{E}=skE(c);return E.length?elPoly(E,0.05):[];}
+/* контуры получаются сами: стыкуем примитивы по концам */
+function skCont(){const D=skD(),E=[];D.ps.forEach((p,i)=>E.push(...pE(p,i)));return chainPrims(E,0.02).map(ch=>{const c=chainEls(ch,[0,0]);c.pis=[...new Set(ch.map(e=>e.pi))];return c;});}
+/* ---------- геометрия: расстояния и пересечения ---------- */
+function pDist(p,w){if(p.t=='L')return elDist({k:'L',a:[p.x1,p.y1],b:[p.x2,p.y2]},w);const d=Math.abs(V2.dist([p.cx,p.cy],w)-p.r);if(p.t=='C'||inArc(p,angOf([p.cx,p.cy],w)))return d;return Math.min(V2.dist(arcPt(p,p.a1),w),V2.dist(arcPt(p,p.a2),w));}
+function ixLL(p,q,inf){const d1=[p.x2-p.x1,p.y2-p.y1],d2=[q.x2-q.x1,q.y2-q.y1],den=d1[0]*d2[1]-d1[1]*d2[0];if(Math.abs(den)<1e-12)return[];const w=[q.x1-p.x1,q.y1-p.y1],t=(w[0]*d2[1]-w[1]*d2[0])/den,u=(w[0]*d1[1]-w[1]*d1[0])/den;
+ if(!inf&&(t<-1e-9||t>1+1e-9)||u<-1e-9||u>1+1e-9)return[];return[[p.x1+d1[0]*t,p.y1+d1[1]*t]];}
+function ixLC(p,c,inf){const d=[p.x2-p.x1,p.y2-p.y1],f=[p.x1-c.cx,p.y1-c.cy],A=d[0]*d[0]+d[1]*d[1],B=2*(f[0]*d[0]+f[1]*d[1]),C=f[0]*f[0]+f[1]*f[1]-c.r*c.r,disc=B*B-4*A*C;if(disc<-1e-9||A<1e-12)return[];
+ const s=Math.sqrt(Math.max(0,disc)),out=[];[(-B-s)/(2*A),(-B+s)/(2*A)].forEach((t,i)=>{if(i&&s<1e-9)return;if(inf||(t>=-1e-9&&t<=1+1e-9)){const P=[p.x1+d[0]*t,p.y1+d[1]*t];if(c.t!='A'||inArc(c,angOf([c.cx,c.cy],P)))out.push(P);}});return out;}
+function ixCC(a,b){const dx=b.cx-a.cx,dy=b.cy-a.cy,d=Math.hypot(dx,dy);if(d<1e-9||d>a.r+b.r+1e-9||d<Math.abs(a.r-b.r)-1e-9)return[];const l=(a.r*a.r-b.r*b.r+d*d)/(2*d),h=Math.sqrt(Math.max(0,a.r*a.r-l*l)),mx=a.cx+dx*l/d,my=a.cy+dy*l/d,P=[[mx+h*dy/d,my-h*dx/d]];if(h>1e-9)P.push([mx-h*dy/d,my+h*dx/d]);
+ return P.filter(P=>[a,b].every(c=>c.t!='A'||inArc(c,angOf([c.cx,c.cy],P))));}
+function ix(p,q){if(p.t=='L'&&q.t=='L')return ixLL(p,q);if(p.t=='L')return ixLC(p,q);if(q.t=='L')return ixLC(q,p);return ixCC(p,q);}
+/* ---------- характерные точки и привязки ---------- */
+function skKeyPts(){const D=skD(),K=[];D.ps.forEach((p,i)=>{if(p.t=='L'){K.push({p:[p.x1,p.y1],k:'end'},{p:[p.x2,p.y2],k:'end'},{p:[(p.x1+p.x2)/2,(p.y1+p.y2)/2],k:'mid'});}else{K.push({p:[p.cx,p.cy],k:'cen'});if(p.t=='A')K.push({p:arcPt(p,p.a1),k:'end'},{p:arcPt(p,p.a2),k:'end'});else[0,90,180,270].forEach(a=>K.push({p:arcPt(p,a),k:'qua'}));}});
+ if(D.ps.length<=160)for(let i=0;i<D.ps.length;i++)for(let j=i+1;j<D.ps.length;j++)ix(D.ps[i],D.ps[j]).forEach(P=>K.push({p:P,k:'int'}));return K;}
+function skSnap(w,o={}){const V=SK.V,tol=(o.tol||16)/V.s;let best=null,bd=tol,K=o.keys||skKeyPts();const pri={end:0,int:0,cen:1,qua:2,mid:2};
+ K.forEach(q=>{if(o.skip&&o.skip(q))return;const d=V2.dist(q.p,w)-(pri[q.k]||0)*0.01/V.s;if(d<bd){bd=d;best=q;}});
+ let p,k='';if(best&&SK.snap!==false){p=[r3(best.p[0]),r3(best.p[1])];k=best.k;}else if(SK.snap){const g=+skD().grid||1;p=[r3(Math.round(w[0]/g)*g),r3(Math.round(w[1]/g)*g)];k='grid';}else p=[r3(w[0]),r3(w[1])];
+ const A=o.anchor;if(SK.ortho&&A&&k!='end'&&k!='int'){if(Math.abs(p[0]-A[0])>Math.abs(p[1]-A[1]))p=[p[0],A[1]];else p=[A[0],p[1]];k='orto';}
+ return{p,k};}
+const SNK={end:'конец',mid:'середина',cen:'центр',int:'пересечение',qua:'квадрант',grid:'сетка',orto:'орто'};
+/* ---------- вид ---------- */
 function skBox(){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;const ex=(x,y)=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);};
- skD().cs.forEach(c=>{const P=skPoly(c);(P.length?P:skVerts(c)).forEach(p=>ex(p[0],p[1]));});const m=skD().img;if(m&&m.show!==false&&SK.img){ex(m.x,m.y);ex(m.x+m.w,m.y-m.w*m.ar);}
- return x0>x1?null:[x0,y0,x1,y1];}
+ skD().ps.forEach(p=>{if(p.t=='L'){ex(p.x1,p.y1);ex(p.x2,p.y2);}else{ex(p.cx-p.r,p.cy-p.r);ex(p.cx+p.r,p.cy+p.r);}});const m=skD().img;if(m&&m.show!==false&&SK.img){ex(m.x,m.y);ex(m.x+m.w,m.y-m.w*m.ar);}return x0>x1?null:[x0,y0,x1,y1];}
 window.skFit=()=>{const b=skBox()||[-60,-40,60,40],box=$('#dcv');if(!box)return;const W=box.clientWidth||600,H=box.clientHeight||400;
- SK.V.cx=(b[0]+b[2])/2;SK.V.cy=(b[1]+b[3])/2;SK.V.s=Math.max(0.05,Math.min(80,Math.min((W-60)/Math.max(1,b[2]-b[0]),(H-60)/Math.max(1,b[3]-b[1]))));renderSk();};
-window.skZoom=k=>{SK.V.s=Math.max(0.05,Math.min(200,SK.V.s*k));renderSk();};
-/* ---------- рисование ---------- */
+ SK.V.cx=(b[0]+b[2])/2;SK.V.cy=(b[1]+b[3])/2;SK.V.s=Math.max(0.05,Math.min(80,Math.min((W-70)/Math.max(1,b[2]-b[0]),(H-70)/Math.max(1,b[3]-b[1]))));renderSk();};
+window.skZoom=k=>{SK.V.s=Math.max(0.05,Math.min(300,SK.V.s*k));renderSk();};
+/* ---------- рисование поля ---------- */
+const PCOL={sel:'#ffffff',base:'#ffc400',open:'#ff8a00'};
 function renderSk(){const sv=$('#dsv'),box=$('#dcv');if(!sv||!box||!box.clientWidth)return;const W=box.clientWidth,H=box.clientHeight,V=SK.V,D=skD();
- const X=x=>W/2+(x-V.cx)*V.s,Y=y=>H/2-(y-V.cy)*V.s,f=v=>v.toFixed(1);let h='';
- // сетка
- const steps=[0.1,0.5,1,2,5,10,20,50,100,200,500];let g=steps.find(q=>q*V.s>=14)||500;const gx0=Math.floor((V.cx-W/2/V.s)/g)*g,gy0=Math.floor((V.cy-H/2/V.s)/g)*g;
- let gp='',gm='';for(let x=gx0;x<=V.cx+W/2/V.s;x+=g){const big=Math.abs(Math.round(x/g)%5)==0;(big?(gm+=`M${f(X(x))} 0V${H}`):(gp+=`M${f(X(x))} 0V${H}`));}
- for(let y=gy0;y<=V.cy+H/2/V.s;y+=g){const big=Math.abs(Math.round(y/g)%5)==0;(big?(gm+=`M0 ${f(Y(y))}H${W}`):(gp+=`M0 ${f(Y(y))}H${W}`));}
- h+=`<path d="${gp}" stroke="#151922" stroke-width="1"/><path d="${gm}" stroke="#1d2330" stroke-width="1"/>`;
- // фото
+ const X=x=>W/2+(x-V.cx)*V.s,Y=y=>H/2-(y-V.cy)*V.s,f=v=>v.toFixed(1),pth=P=>'M'+P.map(p=>f(X(p[0]))+' '+f(Y(p[1]))).join('L');let h='';
+ const steps=[0.1,0.5,1,2,5,10,20,50,100,200,500],g=steps.find(q=>q*V.s>=14)||500,gx0=Math.floor((V.cx-W/2/V.s)/g)*g,gy0=Math.floor((V.cy-H/2/V.s)/g)*g;let gp='',gm='';
+ for(let x=gx0;x<=V.cx+W/2/V.s;x+=g){(Math.abs(Math.round(x/g))%5==0?(gm+=`M${f(X(x))} 0V${H}`):(gp+=`M${f(X(x))} 0V${H}`));}
+ for(let y=gy0;y<=V.cy+H/2/V.s;y+=g){(Math.abs(Math.round(y/g))%5==0?(gm+=`M0 ${f(Y(y))}H${W}`):(gp+=`M0 ${f(Y(y))}H${W}`));}
+ h+=`<path d="${gp}" stroke="#151922"/><path d="${gm}" stroke="#1e2532"/>`;
  const m=D.img;if(m&&SK.img&&m.show!==false)h+=`<image href="${SK.img}" x="${f(X(m.x))}" y="${f(Y(m.y))}" width="${f(m.w*V.s)}" height="${f(m.w*m.ar*V.s)}" opacity="${m.op??0.5}" transform="rotate(${f(-(m.rot||0))} ${f(X(m.x))} ${f(Y(m.y))})" preserveAspectRatio="none"/>`;
- // оси
- h+=`<path d="M0 ${f(Y(0))}H${W}" stroke="#ff5c5c" stroke-opacity=".45" stroke-width="1"/><path d="M${f(X(0))} 0V${H}" stroke="#2ecc71" stroke-opacity=".45" stroke-width="1"/>`;
- // контуры
- D.cs.forEach((c,ci)=>{const{E,err}=skE(c),sel=SK.sel&&SK.sel.c==ci,col=err?'#ff5c5c':c.closed=='1'?'#ffc400':'#ff8a00';
-  if(err){h+=`<path d="M${skVerts(c).map(p=>f(X(p[0]))+' '+f(Y(p[1]))).join('L')}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="6 4"/>`;}
-  else{if(c.closed=='1'){const P=elPoly(E,0.05/Math.max(0.2,V.s/4));h+=`<path d="M${P.map(p=>f(X(p[0]))+' '+f(Y(p[1]))).join('L')}Z" fill="${col}" fill-opacity="${sel?0.12:0.06}" stroke="none"/>`;}
-   E.forEach((e,ei)=>{const P=e.k=='L'?[e.a,e.b]:[...elPoly([e],0.02/Math.max(0.2,V.s/4)),e.b],se=sel&&SK.sel.e==ei;
-    h+=`<path d="M${P.map(p=>f(X(p[0]))+' '+f(Y(p[1]))).join('L')}" fill="none" stroke="${se?'#ffffff':col}" stroke-width="${se?4:sel?3:2.2}" stroke-linecap="round"/>`;
-    if(SK.dim&&!skCircle(c)&&V.s*elLen(e)>46){const mp=e.k=='L'?V2.mul(V2.add(e.a,e.b),.5):(()=>{const P2=elPoly([e],0.05);return P2[Math.floor(P2.length/2)]||e.a;})(),t=e.k=='L'?nf(r3(V2.dist(e.a,e.b))):'R'+nf(r3(V2.dist(e.a,e.c)));
-     h+=`<text x="${f(X(mp[0]))}" y="${f(Y(mp[1])-6)}" text-anchor="middle" fill="#c9ced8" font-size="11" font-family="ui-monospace,monospace" paint-order="stroke" stroke="#0a0c10" stroke-width="3">${t}</text>`;}});}
-  const cr=skCircle(c);if(cr)h+=`<path d="M${f(X(cr.cx)-5)} ${f(Y(cr.cy))}h10M${f(X(cr.cx))} ${f(Y(cr.cy)-5)}v10" stroke="${col}" stroke-width="1.2"/>`+(SK.dim?`<text x="${f(X(cr.cx)+6)}" y="${f(Y(cr.cy)-6)}" fill="#c9ced8" font-size="11" font-family="ui-monospace,monospace" paint-order="stroke" stroke="#0a0c10" stroke-width="3">Ø${nf(cr.d)}</text>`:'');
-  skVerts(c).forEach((p,vi)=>{if(cr&&vi)return;const sv2=sel&&SK.sel.v==vi;h+=`<circle cx="${f(X(p[0]))}" cy="${f(Y(p[1]))}" r="${sv2?7:vi?4:5}" fill="${sv2?'#ffffff':vi?col:'#2ecc71'}" stroke="#0a0c10" stroke-width="1.5"/>`;});});
- // предпросмотр инструмента
- const hv=SK.hov;if(hv){const A=SK.act!=null&&D.cs[SK.act]?skVerts(D.cs[SK.act]).pop():SK.tmp&&SK.tmp.a;
-  if(A&&SK.tool=='line')h+=`<path d="M${f(X(A[0]))} ${f(Y(A[1]))}L${f(X(hv[0]))} ${f(Y(hv[1]))}" stroke="#ffffff" stroke-dasharray="5 4" stroke-width="1.5"/>`;
-  if(A&&SK.tool=='rect')h+=`<rect x="${f(Math.min(X(A[0]),X(hv[0])))}" y="${f(Math.min(Y(A[1]),Y(hv[1])))}" width="${f(Math.abs(X(hv[0])-X(A[0])))}" height="${f(Math.abs(Y(hv[1])-Y(A[1])))}" fill="none" stroke="#ffffff" stroke-dasharray="5 4"/>`;
-  if(A&&SK.tool=='circ')h+=`<circle cx="${f(X(A[0]))}" cy="${f(Y(A[1]))}" r="${f(V2.dist(A,hv)*V.s)}" fill="none" stroke="#ffffff" stroke-dasharray="5 4"/>`;
-  h+=`<circle cx="${f(X(hv[0]))}" cy="${f(Y(hv[1]))}" r="4" fill="none" stroke="#4da3ff" stroke-width="2"/>`;}
- if(SK.cal)SK.cal.forEach((p,i)=>{h+=`<circle cx="${f(X(p[0]))}" cy="${f(Y(p[1]))}" r="7" fill="none" stroke="#c084fc" stroke-width="2.5"/><text x="${f(X(p[0])+9)}" y="${f(Y(p[1])-9)}" fill="#c084fc" font-size="13" font-weight="700" font-family="inherit">${i?'B':'A'}</text>`;});
- if(SK.cal&&SK.cal.length==2)h+=`<path d="M${f(X(SK.cal[0][0]))} ${f(Y(SK.cal[0][1]))}L${f(X(SK.cal[1][0]))} ${f(Y(SK.cal[1][1]))}" stroke="#c084fc" stroke-width="2"/>`;
- sv.innerHTML=h;const ch=$('#dXY');if(ch)ch.textContent=hv?`X ${nf(r3(hv[0]))}  Y ${nf(r3(hv[1]))}`:`сетка ${g} мм`;}
-/* ---------- привязка ---------- */
-function skSnap(w,raw){const V=SK.V,D=skD();let best=null,bd=14/V.s;
- if(!raw){D.cs.forEach((c,ci)=>{skVerts(c).forEach((p,vi)=>{const d=V2.dist(p,w);if(d<bd){bd=d;best=[p[0],p[1],ci,vi];}});const cr=skCircle(c);if(cr){const d=V2.dist([cr.cx,cr.cy],w);if(d<bd){bd=d;best=[cr.cx,cr.cy,ci,-1];}}});
-  if(best)return{p:[best[0],best[1]],c:best[2],v:best[3]};
-  if(SK.snap){const g=+D.grid||1;return{p:[r3(Math.round(w[0]/g)*g),r3(Math.round(w[1]/g)*g)]};}}
- return{p:[r3(w[0]),r3(w[1])]};}
-function skHitEl(w){const D=skD();let best=null,bd=10/SK.V.s;D.cs.forEach((c,ci)=>{skE(c).E.forEach((e,ei)=>{const d=elDist(e,w);if(d<bd){bd=d;best={c:ci,e:ei};}});});return best;}
-/* ---------- указатель: касание, перетаскивание, щипок ---------- */
-(()=>{const el=$('#dcv');if(!el)return;const P=new Map();let st0=null,pinch=null;
- const wpt=e=>{const r=el.getBoundingClientRect(),V=SK.V;return[V.cx+(e.clientX-r.left-r.width/2)/V.s,V.cy-(e.clientY-r.top-r.height/2)/V.s];};
+ h+=`<path d="M0 ${f(Y(0))}H${W}" stroke="#ff5c5c" stroke-opacity=".5"/><path d="M${f(X(0))} 0V${H}" stroke="#2ecc71" stroke-opacity=".5"/>`;
+ /* заливка замкнутых контуров */
+ const CS=skCont();CS.forEach(c=>{if(c.closed!='1')return;const P=skPoly(c);if(P.length>2)h+=`<path d="${pth(P)}Z" fill="#ffc400" fill-opacity=".06"/>`;});
+ const openP=new Set();CS.forEach(c=>{if(c.closed!='1')c.pis.forEach(i=>openP.add(i));});
+ D.ps.forEach((p,i)=>{const sel=SK.sel.has(i),col=sel?PCOL.sel:openP.has(i)?PCOL.open:PCOL.base,w=sel?3.2:2.2;
+  if(p.t=='L')h+=`<path d="M${f(X(p.x1))} ${f(Y(p.y1))}L${f(X(p.x2))} ${f(Y(p.y2))}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;
+  else if(p.t=='C')h+=`<circle cx="${f(X(p.cx))}" cy="${f(Y(p.cy))}" r="${f(p.r*V.s)}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
+  else{const P=elPoly([pE(p)[0]],0.03/Math.max(0.2,V.s/4));P.push(arcPt(p,p.a2));h+=`<path d="${pth(P)}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;}
+  if(SK.dim){let t='',mp=null;if(p.t=='L'){const L=Math.hypot(p.x2-p.x1,p.y2-p.y1);if(L*V.s>50){t=nf(r3(L));mp=[(p.x1+p.x2)/2,(p.y1+p.y2)/2];}}else if(p.r*V.s>14){t=(p.t=='C'?'Ø'+nf(r3(2*p.r)):'R'+nf(r3(p.r)));mp=p.t=='C'?[p.cx+p.r*0.7,p.cy+p.r*0.7]:arcPt(p,p.a1+arcSw(p)/2);}
+   if(t)h+=`<text x="${f(X(mp[0]))}" y="${f(Y(mp[1])-6)}" text-anchor="middle" fill="#c9ced8" font-size="11" font-family="ui-monospace,monospace" paint-order="stroke" stroke="#0a0c10" stroke-width="3">${t}</text>`;}
+  if(p.t!='L')h+=`<path d="M${f(X(p.cx)-4)} ${f(Y(p.cy))}h8M${f(X(p.cx))} ${f(Y(p.cy)-4)}v8" stroke="${col}" stroke-width="1"/>`;});
+ /* концы */
+ if(V.s>0.6)D.ps.forEach((p,i)=>{const E=p.t=='L'?[[p.x1,p.y1],[p.x2,p.y2]]:p.t=='A'?[arcPt(p,p.a1),arcPt(p,p.a2)]:[];E.forEach(q=>h+=`<circle cx="${f(X(q[0]))}" cy="${f(Y(q[1]))}" r="${SK.sel.has(i)?4.5:3}" fill="${SK.sel.has(i)?'#fff':'#ffc400'}"/>`);});
+ /* предпросмотр */
+ const hv=SK.hov,A=SK.pts[0],T=SK.tool;if(hv){const dsh=`stroke="#7fc0ff" stroke-dasharray="6 4" stroke-width="1.6" fill="none"`;
+  if(A&&T=='line')h+=`<path d="M${f(X(A[0]))} ${f(Y(A[1]))}L${f(X(hv[0]))} ${f(Y(hv[1]))}" ${dsh}/>`;
+  if(A&&T=='rect')h+=`<rect x="${f(Math.min(X(A[0]),X(hv[0])))}" y="${f(Math.min(Y(A[1]),Y(hv[1])))}" width="${f(Math.abs(X(hv[0])-X(A[0])))}" height="${f(Math.abs(Y(hv[1])-Y(A[1])))}" ${dsh}/>`;
+  if(A&&(T=='circ'||(T=='arc'&&SK.pts.length==1)))h+=`<circle cx="${f(X(A[0]))}" cy="${f(Y(A[1]))}" r="${f(V2.dist(A,hv)*V.s)}" ${dsh}/>`;
+  if(T=='arc'&&SK.pts.length==2){const r=V2.dist(A,SK.pts[1]),q={cx:A[0],cy:A[1],r,a1:angOf(A,SK.pts[1]),a2:angOf(A,hv)};const P=elPoly([pE(q)[0]],0.05);P.push(arcPt(q,q.a2));h+=`<path d="${pth(P)}" ${dsh}/>`;}
+  const cx=X(hv[0]),cy=Y(hv[1]);h+=`<path d="M${f(cx-14)} ${f(cy)}H${f(cx+14)}M${f(cx)} ${f(cy-14)}V${f(cy+14)}" stroke="#7fc0ff" stroke-width="1.4"/>`;
+  if(SK.hk&&SK.hk!='grid')h+=SK.hk=='end'?`<rect x="${f(cx-7)}" y="${f(cy-7)}" width="14" height="14" fill="none" stroke="#2ecc71" stroke-width="2"/>`:SK.hk=='mid'?`<path d="M${f(cx)} ${f(cy-8)}L${f(cx+8)} ${f(cy+6)}H${f(cx-8)}Z" fill="none" stroke="#2ecc71" stroke-width="2"/>`:SK.hk=='int'?`<path d="M${f(cx-7)} ${f(cy-7)}L${f(cx+7)} ${f(cy+7)}M${f(cx+7)} ${f(cy-7)}L${f(cx-7)} ${f(cy+7)}" stroke="#2ecc71" stroke-width="2.2"/>`:`<circle cx="${f(cx)}" cy="${f(cy)}" r="7" fill="none" stroke="#2ecc71" stroke-width="2"/>`;
+  if(SK.aim&&SK.aimF)h+=`<path d="M${f(SK.aimF[0])} ${f(SK.aimF[1])}L${f(cx)} ${f(cy+16)}" stroke="#7fc0ff" stroke-opacity=".35"/>`;}
+ SK.pts.forEach(q=>h+=`<circle cx="${f(X(q[0]))}" cy="${f(Y(q[1]))}" r="5" fill="#7fc0ff"/>`);
+ if(SK.offP!=null&&D.ps[SK.offP])SK.sel.add(SK.offP);
+ if(SK.cal){SK.cal.forEach((p,i)=>{h+=`<circle cx="${f(X(p[0]))}" cy="${f(Y(p[1]))}" r="7" fill="none" stroke="#c084fc" stroke-width="2.5"/><text x="${f(X(p[0])+9)}" y="${f(Y(p[1])-9)}" fill="#c084fc" font-size="13" font-weight="700">${i?'B':'A'}</text>`;});if(SK.cal.length==2)h+=`<path d="M${f(X(SK.cal[0][0]))} ${f(Y(SK.cal[0][1]))}L${f(X(SK.cal[1][0]))} ${f(Y(SK.cal[1][1]))}" stroke="#c084fc" stroke-width="2"/>`;}
+ sv.innerHTML=h;const ch=$('#dXY');if(ch)ch.innerHTML=hv?`X ${nf(r3(hv[0]))}  Y ${nf(r3(hv[1]))}${A&&['line','circ','rect'].includes(T)?`  ·  L ${nf(r3(V2.dist(A,hv)))}${T=='line'?`  ∠${nf(r3(angOf(A,hv)))}°`:''}`:''}${SK.hk&&SK.hk!='grid'?' · '+SNK[SK.hk]:''}`:`сетка ${g} мм · ${D.ps.length} объектов`;
+ const hn=$('#dHint');if(hn)hn.textContent=skHintTxt();}
+function skHintTxt(){const T=SK.tool,n=SK.pts.length;return({line:n?'Следующая точка — или «Стоп»':'Первая точка отрезка',circ:n?'Точка на окружности (радиус)':'Центр окружности',arc:['Центр дуги','Начало дуги','Конец дуги (против часовой)'][n],rect:n?'Противоположный угол':'Первый угол',poly:'Коснись — центр многоугольника',slot:'Коснись — центр паза',
+ sel:'Коснись объекта — выделить. Тяни точку — переместить',trim:'Коснись куска линии, который убрать',ext:'Коснись конца отрезка — удлинится до ближайшей линии',fil:'Коснись угла, где сходятся две прямые',cha:'Коснись угла, где сходятся две прямые',off:SK.offP==null?'Коснись линии или окружности':'Коснись стороны, куда сдвинуть',del:'Коснись объекта, чтобы удалить',cal:SK.cal&&SK.cal.length==1?'Точка B':'Точка A известного размера',zero:'Точка нуля на фото'})[T]||'';}
+/* ---------- касания: один палец — инструмент (прицел над пальцем), два — двигать и масштаб ---------- */
+(()=>{const el=$('#dcv');if(!el)return;const P=new Map();let s0=null,pin=null;const AIM=70;
+ const toW=(x,y)=>{const r=el.getBoundingClientRect(),V=SK.V;return[V.cx+(x-r.left-r.width/2)/V.s,V.cy-(y-r.top-r.height/2)/V.s];};
+ const anchor=()=>SK.tool=='line'||SK.tool=='rect'||SK.tool=='circ'?SK.pts[0]:SK.tool=='arc'&&SK.pts.length?SK.pts[0]:null;
+ const hover=(x,y,aim)=>{const r=el.getBoundingClientRect(),yy=aim?y-AIM:y,w=toW(x,yy),s=skSnap(w,{anchor:anchor()});SK.hov=s.p;SK.hk=s.k;SK.aim=aim;SK.aimF=aim?[x-r.left,y-r.top]:null;renderSk();};
  el.addEventListener('pointerdown',e=>{try{el.setPointerCapture(e.pointerId);}catch(_){}P.set(e.pointerId,[e.clientX,e.clientY]);
-  if(P.size==2){const[a,b]=[...P.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:SK.V.s};st0=null;return;}
-  const w=wpt(e);st0={x:e.clientX,y:e.clientY,w,cx:SK.V.cx,cy:SK.V.cy,moved:false,drag:null};
-  if(SK.tool=='sel'){const s=skSnap(w,true),D=skD();let hit=null,bd=14/SK.V.s;D.cs.forEach((c,ci)=>{if(skCircle(c))return;skVerts(c).forEach((p,vi)=>{const d=V2.dist(p,w);if(d<bd){bd=d;hit={c:ci,v:vi};}});});if(hit)st0.drag=hit;}});
+  if(P.size==2){const[a,b]=[...P.values()];pin={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:SK.V.s,m:[(a[0]+b[0])/2,(a[1]+b[1])/2],cx:SK.V.cx,cy:SK.V.cy};s0=null;SK.hov=null;renderSk();return;}
+  s0={x:e.clientX,y:e.clientY,cx:SK.V.cx,cy:SK.V.cy,mv:false,touch:e.pointerType!='mouse',drag:null};
+  if(SK.tool=='sel'){const w=toW(e.clientX,e.clientY),D=skD(),tol=18/SK.V.s;let best=null,bd=tol;
+   D.ps.forEach((p,i)=>{const pts=p.t=='L'?[['1',[p.x1,p.y1]],['2',[p.x2,p.y2]]]:p.t=='A'?[['c',[p.cx,p.cy]],['a1',arcPt(p,p.a1)],['a2',arcPt(p,p.a2)]]:[['c',[p.cx,p.cy]]];pts.forEach(([k,q])=>{const d=V2.dist(q,w);if(d<bd-1e-9){bd=d;best=q;}});});
+   if(best){const refs=[];D.ps.forEach((p,i)=>{const pts=p.t=='L'?[['1',[p.x1,p.y1]],['2',[p.x2,p.y2]]]:p.t=='A'?[['c',[p.cx,p.cy]],['a1',arcPt(p,p.a1)],['a2',arcPt(p,p.a2)]]:[['c',[p.cx,p.cy]]];pts.forEach(([k,q])=>{if(V2.dist(q,best)<0.02)refs.push([i,k]);});});s0.drag={refs,from:best};}}
+  else if(!s0.touch)hover(e.clientX,e.clientY,false);});
  el.addEventListener('pointermove',e=>{if(P.has(e.pointerId))P.set(e.pointerId,[e.clientX,e.clientY]);
-  if(pinch&&P.size==2){const[a,b]=[...P.values()];SK.V.s=Math.max(0.05,Math.min(200,pinch.s*Math.hypot(a[0]-b[0],a[1]-b[1])/pinch.d));renderSk();return;}
-  if(!st0){if(e.pointerType=='mouse'&&SK.tool!='sel'){SK.hov=skSnap(wpt(e),SK.tool=='cal').p;renderSk();}return;}
-  const dx=e.clientX-st0.x,dy=e.clientY-st0.y;if(Math.hypot(dx,dy)>6)st0.moved=true;if(!st0.moved)return;
-  if(st0.drag){const D=skD(),c=D.cs[st0.drag.c],v=st0.drag.v,q=skSnapEx(wpt(e),st0.drag);if(v==0){c.sx=q[0];c.sy=q[1];}else{c.els[v-1].x=q[0];c.els[v-1].y=q[1];}SK.sel={c:st0.drag.c,v};renderSk();return;}
-  if(SK.tool!='sel'&&e.pointerType!='mouse'){SK.hov=skSnap(wpt(e),SK.tool=='cal').p;renderSk();return;}
-  SK.V.cx=st0.cx-dx/SK.V.s;SK.V.cy=st0.cy+dy/SK.V.s;renderSk();});
- const up=e=>{P.delete(e.pointerId);if(pinch){if(P.size<2)pinch=null;return;}if(!st0)return;const s0=st0;st0=null;
-  if(s0.drag&&s0.moved){save();skPanel();return;}
-  if(!s0.moved||(SK.tool!='sel'&&e.pointerType!='mouse'&&SK.hov))skTap(SK.tool!='sel'&&SK.hov&&s0.moved?SK.hov:wpt(e));};
- el.addEventListener('pointerup',up);el.addEventListener('pointercancel',e=>{P.delete(e.pointerId);st0=null;pinch=null;});
- el.addEventListener('pointerleave',()=>{if(!st0){SK.hov=null;renderSk();}});
- el.addEventListener('wheel',e=>{e.preventDefault();const r=el.getBoundingClientRect(),V=SK.V,w=wpt(e),k=e.deltaY<0?1.15:1/1.15;V.s=Math.max(0.05,Math.min(200,V.s*k));
+  if(pin&&P.size==2){const[a,b]=[...P.values()],m=[(a[0]+b[0])/2,(a[1]+b[1])/2],r=el.getBoundingClientRect();const w0=[pin.cx+(pin.m[0]-r.left-r.width/2)/pin.s,pin.cy-(pin.m[1]-r.top-r.height/2)/pin.s];
+   SK.V.s=Math.max(0.05,Math.min(300,pin.s*Math.hypot(a[0]-b[0],a[1]-b[1])/pin.d));SK.V.cx=w0[0]-(m[0]-r.left-r.width/2)/SK.V.s;SK.V.cy=w0[1]+(m[1]-r.top-r.height/2)/SK.V.s;renderSk();return;}
+  if(!s0){if(e.pointerType=='mouse'&&SK.tool!='sel')hover(e.clientX,e.clientY,false);return;}
+  const dx=e.clientX-s0.x,dy=e.clientY-s0.y;if(Math.hypot(dx,dy)>7)s0.mv=true;if(!s0.mv)return;
+  if(s0.drag){const w=toW(e.clientX,e.clientY),sk=new Set(s0.drag.refs.map(r=>r[0]));const q=skSnap(w,{keys:skKeyPts().filter(k=>V2.dist(k.p,s0.drag.from)>0.02)}).p;skMoveRefs(s0.drag.refs,q);s0.drag.from=q;renderSk();return;}
+  if(SK.tool!='sel'&&s0.touch){hover(e.clientX,e.clientY,true);return;}
+  if(SK.tool!='sel'&&!s0.touch){hover(e.clientX,e.clientY,false);return;}
+  SK.V.cx=s0.cx-dx/SK.V.s;SK.V.cy=s0.cy+dy/SK.V.s;renderSk();});
+ const up=e=>{P.delete(e.pointerId);if(pin){if(P.size<2)pin=null;return;}if(!s0)return;const s=s0;s0=null;
+  if(s.drag&&s.mv){save();skPanel();return;}
+  let w;if(SK.tool!='sel'&&s.mv&&s.touch&&SK.hov)w={p:SK.hov,k:SK.hk,ok:1};else if(!s.mv){const ww=toW(e.clientX,e.clientY);w=SK.tool=='sel'||['trim','ext','del','off','fil','cha'].includes(SK.tool)?{raw:ww}:skSnap(ww,{anchor:anchor()});}
+  if(s.touch){SK.hov=null;SK.aim=false;}if(w)skTap(w);};
+ el.addEventListener('pointerup',up);el.addEventListener('pointercancel',e=>{P.delete(e.pointerId);s0=null;pin=null;SK.hov=null;renderSk();});
+ el.addEventListener('pointerleave',e=>{if(e.pointerType=='mouse'&&!s0){SK.hov=null;renderSk();}});
+ el.addEventListener('wheel',e=>{e.preventDefault();const r=el.getBoundingClientRect(),V=SK.V,w=toW(e.clientX,e.clientY),k=e.deltaY<0?1.15:1/1.15;V.s=Math.max(0.05,Math.min(300,V.s*k));
   V.cx=w[0]-(e.clientX-r.left-r.width/2)/V.s;V.cy=w[1]+(e.clientY-r.top-r.height/2)/V.s;renderSk();},{passive:false});
  new ResizeObserver(()=>{if($('#t-draw').classList.contains('on')){if(!SK.fitted){SK.fitted=true;skFit();}else renderSk();}}).observe(el);})();
-function skSnapEx(w,self){const D=skD();let best=null,bd=14/SK.V.s;D.cs.forEach((c,ci)=>skVerts(c).forEach((p,vi)=>{if(ci==self.c&&vi==self.v)return;const d=V2.dist(p,w);if(d<bd){bd=d;best=p;}}));
- if(best)return[best[0],best[1]];const g=+D.grid||1;return SK.snap?[r3(Math.round(w[0]/g)*g),r3(Math.round(w[1]/g)*g)]:[r3(w[0]),r3(w[1])];}
+function skMoveRefs(refs,q){const D=skD();refs.forEach(([i,k])=>{const p=D.ps[i];if(!p)return;if(k=='1'){p.x1=q[0];p.y1=q[1];}else if(k=='2'){p.x2=q[0];p.y2=q[1];}else if(k=='c'){p.cx=q[0];p.cy=q[1];}else if(k=='a1')p.a1=r3(angOf([p.cx,p.cy],q));else if(k=='a2')p.a2=r3(angOf([p.cx,p.cy],q));});}
 /* ---------- действия по касанию ---------- */
-function skTap(w){const D=skD(),T=SK.tool;SK.hov=null;
- if(T=='sel'){const s=skSnap(w,true);let hit=null,bd=14/SK.V.s;D.cs.forEach((c,ci)=>skVerts(c).forEach((p,vi)=>{const d=V2.dist(p,w);if(d<bd){bd=d;hit={c:ci,v:vi};}}));
-  SK.sel=hit||skHitEl(w)||null;renderSk();skPanel();return;}
- if(T=='cal'){SK.cal=(SK.cal&&SK.cal.length<2?SK.cal:[]).concat([[w[0],w[1]]]);renderSk();skPanel();return;}
- if(T=='zero'){const m=D.img;if(m){m.x=r3(m.x-w[0]);m.y=r3(m.y-w[1]);save();SK.tool='sel';toast('Ноль поставлен в эту точку фото');}renderSk();skTools();skPanel();return;}
- const p=skSnap(w).p;
- if(T=='line'){if(SK.act==null||!D.cs[SK.act]){D.cs.push({sx:p[0],sy:p[1],els:[],closed:'0'});SK.act=D.cs.length-1;}
-  else skAddPt(p);save();renderSk();skPanel();return;}
- if(T=='rect'){if(!SK.tmp){SK.tmp={a:p};renderSk();skPanel();return;}const a=SK.tmp.a;SK.tmp=null;if(Math.abs(a[0]-p[0])<1e-6||Math.abs(a[1]-p[1])<1e-6)return toast('Нужны два противоположных угла');
-  D.cs.push(skRect((a[0]+p[0])/2,(a[1]+p[1])/2,Math.abs(p[0]-a[0]),Math.abs(p[1]-a[1]),+SK.rr||0));SK.sel={c:D.cs.length-1};save();renderSk();skPanel();return;}
- if(T=='circ'){if(!SK.tmp){SK.tmp={a:p};renderSk();skPanel();return;}const a=SK.tmp.a;SK.tmp=null;const r=V2.dist(a,p);if(!(r>0))return;
-  D.cs.push(skCirc(a[0],a[1],r3(2*r)));SK.sel={c:D.cs.length-1};save();renderSk();skPanel();return;}
- if(T=='fil'||T=='cha'){const s=skSnap(w,true);if(s.c==null||s.v<0)return toast('Нажми на угол (точку) контура');const er=skCorner(s.c,s.v,T=='fil'?'R':'C',T=='fil'?+SK.fr||5:+SK.fc||1);if(er)return toast(er);save();renderSk();skPanel();return;}}
-function skAddPt(p){const D=skD(),c=D.cs[SK.act];const L=skVerts(c).pop();if(V2.dist(L,p)<1e-6)return;
- if(c.els.length>=2&&V2.dist([c.sx,c.sy],p)<1e-6){if(SK.seg!='L')c.els.push({t:SK.seg,x:p[0],y:p[1],r:skR(L,p)});c.closed='1';SK.act=null;toast('Контур замкнут');return;}
- c.els.push({t:SK.seg,x:p[0],y:p[1],r:SK.seg=='L'?0:skR(L,p)});}
-function skR(a,b){let R=Math.abs(+SK.R||10);const h=V2.dist(a,b)/2;if(R<h){R=r3(h+0.001);toast(`R увеличен до ${nf(R)} — меньше половины расстояния между точками нельзя`);}return R;}
-/* ---------- фигуры ---------- */
-function skRect(cx,cy,w,h,r){r=Math.max(0,Math.min(r,w/2-1e-3,h/2-1e-3));const x0=cx-w/2,x1=cx+w/2,y0=cy-h/2,y1=cy+h/2,R=r3;
- if(!(r>0))return{sx:R(x0),sy:R(y0),els:[{t:'L',x:R(x1),y:R(y0),r:0},{t:'L',x:R(x1),y:R(y1),r:0},{t:'L',x:R(x0),y:R(y1),r:0}],closed:'1'};
- return{sx:R(x1-r),sy:R(y0),els:[{t:'CCW',x:R(x1),y:R(y0+r),r},{t:'L',x:R(x1),y:R(y1-r),r:0},{t:'CCW',x:R(x1-r),y:R(y1),r},{t:'L',x:R(x0+r),y:R(y1),r:0},{t:'CCW',x:R(x0),y:R(y1-r),r},{t:'L',x:R(x0),y:R(y0+r),r:0},{t:'CCW',x:R(x0+r),y:R(y0),r}],closed:'1'};}
-const skCirc=(cx,cy,d)=>{const r=d/2;return{sx:r3(cx+r),sy:r3(cy),els:[{t:'CCW',x:r3(cx-r),y:r3(cy),r:r3(r)},{t:'CCW',x:r3(cx+r),y:r3(cy),r:r3(r)}],closed:'1'};};
-function skPolyC(n,sw,cx,cy,ang){n=Math.max(3,Math.min(24,Math.round(n)));const Rv=sw/2/Math.cos(Math.PI/n),a0=(+ang||0)*Math.PI/180,V=[...Array(n)].map((_,k)=>{const t=a0+(k+.5)*2*Math.PI/n;return[r3(cx+Rv*Math.cos(t)),r3(cy+Rv*Math.sin(t))];});
- return{sx:V[0][0],sy:V[0][1],els:V.slice(1).map(([x,y])=>({t:'L',x,y,r:0})),closed:'1'};}
-function skSlot(cx,cy,L,Wd,ang){const r=Wd/2,hl=Math.max(0,(L-Wd)/2),a=(+ang||0)*Math.PI/180,c=Math.cos(a),s=Math.sin(a),T=(x,y)=>[r3(cx+x*c-y*s),r3(cy+x*s+y*c)];const p0=T(-hl,-r),p1=T(hl,-r),p2=T(hl,r),p3=T(-hl,r);
- return{sx:p0[0],sy:p0[1],els:[{t:'L',x:p1[0],y:p1[1],r:0},{t:'CCW',x:p2[0],y:p2[1],r:r3(r)},{t:'L',x:p3[0],y:p3[1],r:0},{t:'CCW',x:p0[0],y:p0[1],r:r3(r)}],closed:'1'};}
-/* ---------- скругление / фаска угла ---------- */
-function skCorner(ci,v,kind,R){const c=skD().cs[ci];if(skCircle(c))return 'У окружности нет углов';if(!(R>0))return 'Задай размер';
- let V=skVerts(c);if(c.closed=='1'&&V2.dist(V[V.length-1],V[0])>1e-6){c.els.push({t:'L',x:V[0][0],y:V[0][1],r:0});}
- let n=c.els.length;
- if(v==0||v==n){if(c.closed!='1')return v?'У конца открытого контура нет угла':'У начала открытого контура нет угла';
-  const e0=c.els[0];c.sx=e0.x;c.sy=e0.y;c.els=[...c.els.slice(1),e0];v=n-1;}
- V=skVerts(c);const e1=c.els[v-1],e2=c.els[v];if(!e1||!e2)return 'Угол не найден';if(e1.t!='L'||e2.t!='L')return 'Скругление и фаска — только между двумя прямыми';
- const P=V[v-1],Q=V[v],N=V[v+1],u1=nrm(V2.sub(P,Q)),u2=nrm(V2.sub(N,Q)),cos=Math.max(-1,Math.min(1,u1[0]*u2[0]+u1[1]*u2[1])),th=Math.acos(cos);
- if(th<0.01||th>Math.PI-0.01)return 'Прямые на одной линии — угла нет';const d=kind=='R'?R/Math.tan(th/2):R;
- if(d>V2.dist(P,Q)-1e-6||d>V2.dist(N,Q)-1e-6)return 'Слишком большой размер для этих сторон';
- const T1=V2.add(Q,V2.mul(u1,d)),T2=V2.add(Q,V2.mul(u2,d)),cr=(Q[0]-P[0])*(N[1]-Q[1])-(Q[1]-P[1])*(N[0]-Q[0]);
- e1.x=r3(T1[0]);e1.y=r3(T1[1]);c.els.splice(v,0,{t:kind=='R'?(cr>0?'CCW':'CW'):'L',x:r3(T2[0]),y:r3(T2[1]),r:kind=='R'?r3(R):0});SK.sel={c:ci};return '';}
-/* ---------- удаление ---------- */
-window.skDelV=()=>{const s=SK.sel,D=skD();if(!s||s.v==null)return;const c=D.cs[s.c];if(c.els.length<=1){D.cs.splice(s.c,1);}else if(s.v==0){c.sx=c.els[0].x;c.sy=c.els[0].y;c.els.splice(0,1);}else c.els.splice(s.v-1,1);
- SK.sel=null;save();renderSk();skPanel();snack('Точка удалена',()=>{undo();renderSk();skPanel();});};
-window.skDelC=i=>{const D=skD();D.cs.splice(i,1);SK.sel=null;if(SK.act==i)SK.act=null;save();renderSk();skPanel();snack('Контур удалён',()=>{undo();renderSk();skPanel();});};
-window.skClose=i=>{const c=skD().cs[i];c.closed=c.closed=='1'?'0':'1';if(SK.act==i)SK.act=null;save();renderSk();skPanel();};
-window.skRev=i=>{const c=skD().cs[i],pts=skVerts(c),n=c.els.length,fl={L:'L',CW:'CCW',CCW:'CW'},E=[];for(let k=n-1;k>=0;k--)E.push({t:fl[c.els[k].t],x:pts[k][0],y:pts[k][1],r:c.els[k].r});c.sx=pts[n][0];c.sy=pts[n][1];c.els=E;save();renderSk();skPanel();};
+function skHit(w,tolPx=16){const D=skD();let bi=-1,bd=tolPx/SK.V.s;D.ps.forEach((p,i)=>{const d=pDist(p,w);if(d<bd){bd=d;bi=i;}});return bi;}
+function skAddP(p){skD().ps.push(p);}
+function skTap(w){const D=skD(),T=SK.tool,p=w.p,raw=w.raw;
+ if(T=='sel'){const i=skHit(raw);if(i<0)SK.sel.clear();else SK.sel.has(i)?SK.sel.delete(i):SK.sel.add(i);renderSk();skPanel();return;}
+ if(T=='del'){const i=skHit(raw);if(i<0)return toast('Коснись линии, окружности или дуги');D.ps.splice(i,1);SK.sel.clear();save();renderSk();skPanel();return;}
+ if(T=='trim'){const er=skTrim(raw);if(er)return toast(er);SK.sel.clear();save();renderSk();skPanel();return;}
+ if(T=='ext'){const er=skExtend(raw);if(er)return toast(er);save();renderSk();skPanel();return;}
+ if(T=='fil'||T=='cha'){const er=skCornerP(raw,T=='fil'?'R':'C',T=='fil'?+SK.R:+SK.C);if(er)return toast(er);save();renderSk();skPanel();return;}
+ if(T=='off'){if(SK.offP==null){const i=skHit(raw);if(i<0)return toast('Коснись линии или окружности');SK.offP=i;SK.sel=new Set([i]);renderSk();skPanel();return;}
+  const er=skOffset(SK.offP,raw,+SK.off);SK.offP=null;SK.sel.clear();if(er)return toast(er);save();renderSk();skPanel();return;}
+ if(T=='cal'){const q=w.raw||w.p;SK.cal=(SK.cal&&SK.cal.length<2?SK.cal:[]).concat([q]);renderSk();skPanel();return;}
+ if(T=='zero'){const m=D.img,q=w.raw||w.p;if(m){m.x=r3(m.x-q[0]);m.y=r3(m.y-q[1]);save();toast('Ноль поставлен — теперь обводи деталь');skTool('line');}return;}
+ if(!p)return;
+ if(T=='line'){const A=SK.pts[0];if(!A){SK.pts=[p];}else{if(V2.dist(A,p)<1e-6){SK.pts=[];toast('Цепочка закончена');}else{skAddP({t:'L',x1:A[0],y1:A[1],x2:p[0],y2:p[1]});SK.pts=[p];save();}}renderSk();skPanel();return;}
+ if(T=='circ'){const A=SK.pts[0];if(!A){SK.pts=[p];}else{const r=r3(V2.dist(A,p));if(r>0){skAddP({t:'C',cx:A[0],cy:A[1],r});save();}SK.pts=[];}renderSk();skPanel();return;}
+ if(T=='arc'){SK.pts.push(p);if(SK.pts.length==3){const[c,a,b]=SK.pts,r=r3(V2.dist(c,a));if(r>0)skAddP({t:'A',cx:c[0],cy:c[1],r,a1:r3(angOf(c,a)),a2:r3(angOf(c,b))});SK.pts=[];save();}renderSk();skPanel();return;}
+ if(T=='rect'){const A=SK.pts[0];if(!A){SK.pts=[p];renderSk();skPanel();return;}SK.pts=[];if(Math.abs(A[0]-p[0])<1e-6||Math.abs(A[1]-p[1])<1e-6)return toast('Нужны два противоположных угла');
+  skRectP((A[0]+p[0])/2,(A[1]+p[1])/2,Math.abs(p[0]-A[0]),Math.abs(p[1]-A[1]),+SK.rr||0);save();renderSk();skPanel();return;}
+ if(T=='poly'){skPolyP(gv('dpn')||6,gv('dps')||30,p[0],p[1],gv('dpa'));save();renderSk();return;}
+ if(T=='slot'){const L=gv('dsl')||40,Wd=gv('dsw')||10;if(L<Wd)return toast('Длина паза меньше ширины');skSlotP(p[0],p[1],L,Wd,gv('dsa'));save();renderSk();return;}}
+/* ---------- фигуры из примитивов ---------- */
+function skRectP(cx,cy,w,h,r){r=Math.max(0,Math.min(+r||0,w/2-1e-3,h/2-1e-3));const x0=r3(cx-w/2),x1=r3(cx+w/2),y0=r3(cy-h/2),y1=r3(cy+h/2),L=(a,b,c,d)=>skAddP({t:'L',x1:a,y1:b,x2:c,y2:d});
+ if(!(r>0)){L(x0,y0,x1,y0);L(x1,y0,x1,y1);L(x1,y1,x0,y1);L(x0,y1,x0,y0);return;}r=r3(r);
+ L(r3(x0+r),y0,r3(x1-r),y0);skAddP({t:'A',cx:r3(x1-r),cy:r3(y0+r),r,a1:270,a2:0});L(x1,r3(y0+r),x1,r3(y1-r));skAddP({t:'A',cx:r3(x1-r),cy:r3(y1-r),r,a1:0,a2:90});
+ L(r3(x1-r),y1,r3(x0+r),y1);skAddP({t:'A',cx:r3(x0+r),cy:r3(y1-r),r,a1:90,a2:180});L(x0,r3(y1-r),x0,r3(y0+r));skAddP({t:'A',cx:r3(x0+r),cy:r3(y0+r),r,a1:180,a2:270});}
+function skPolyP(n,sw,cx,cy,ang){n=Math.max(3,Math.min(24,Math.round(n)));const Rv=sw/2/Math.cos(Math.PI/n),a0=(+ang||0)*D2R,V=[...Array(n)].map((_,k)=>{const t=a0+(k+.5)*2*Math.PI/n;return[r3(cx+Rv*Math.cos(t)),r3(cy+Rv*Math.sin(t))];});
+ V.forEach((a,k)=>{const b=V[(k+1)%n];skAddP({t:'L',x1:a[0],y1:a[1],x2:b[0],y2:b[1]});});}
+function skSlotP(cx,cy,L,Wd,ang){const r=r3(Wd/2),hl=Math.max(0,(L-Wd)/2),a=(+ang||0)*D2R,c=Math.cos(a),s=Math.sin(a),T=(x,y)=>[r3(cx+x*c-y*s),r3(cy+x*s+y*c)],p0=T(-hl,-r),p1=T(hl,-r),p2=T(hl,r),p3=T(-hl,r),c1=T(hl,0),c2=T(-hl,0),A=+ang||0;
+ skAddP({t:'L',x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1]});skAddP({t:'A',cx:c1[0],cy:c1[1],r,a1:r3(angN(A-90)),a2:r3(angN(A+90))});skAddP({t:'L',x1:p2[0],y1:p2[1],x2:p3[0],y2:p3[1]});skAddP({t:'A',cx:c2[0],cy:c2[1],r,a1:r3(angN(A+90)),a2:r3(angN(A+270))});}
+/* ---------- усечь, удлинить, скругление, фаска, эквидистанта ---------- */
+function skTrim(w){const D=skD(),i=skHit(w);if(i<0)return 'Коснись куска линии, который нужно убрать';const p=D.ps[i],X=[];D.ps.forEach((q,j)=>{if(j!=i)ix(p,q).forEach(P=>X.push(P));});
+ if(p.t=='L'){const d=[p.x2-p.x1,p.y2-p.y1],L2=d[0]*d[0]+d[1]*d[1],par=P=>((P[0]-p.x1)*d[0]+(P[1]-p.y1)*d[1])/L2,tp=par(w),T=X.map(par).filter(t=>t>1e-6&&t<1-1e-6);
+  const lo=Math.max(-1,...T.filter(t=>t<tp)),hi=Math.min(2,...T.filter(t=>t>tp)),pt=t=>[r3(p.x1+d[0]*t),r3(p.y1+d[1]*t)],rep=[];
+  if(lo>0){const a=pt(lo);rep.push({t:'L',x1:p.x1,y1:p.y1,x2:a[0],y2:a[1]});}if(hi<1){const b=pt(hi);rep.push({t:'L',x1:b[0],y1:b[1],x2:p.x2,y2:p.y2});}D.ps.splice(i,1,...rep);return '';}
+ const C=[p.cx,p.cy],ta=angOf(C,w);
+ if(p.t=='C'){const A=[...new Set(X.map(P=>+angOf(C,P).toFixed(5)))].sort((a,b)=>a-b);if(A.length<2){D.ps.splice(i,1);return '';}let lo=A.filter(a=>a<ta).pop(),hi=A.find(a=>a>ta);if(lo==null)lo=A[A.length-1];if(hi==null)hi=A[0];
+  D.ps.splice(i,1,{t:'A',cx:p.cx,cy:p.cy,r:p.r,a1:r3(hi),a2:r3(lo)});return '';}
+ const sw=arcSw(p),rel=a=>angN(a-p.a1),tr=rel(ta),T=X.map(P=>rel(angOf(C,P))).filter(t=>t>1e-5&&t<sw-1e-5),lo=Math.max(-1,...T.filter(t=>t<tr)),hi=Math.min(400,...T.filter(t=>t>tr)),rep=[];
+ if(lo>0)rep.push({t:'A',cx:p.cx,cy:p.cy,r:p.r,a1:p.a1,a2:r3(angN(p.a1+lo))});if(hi<sw)rep.push({t:'A',cx:p.cx,cy:p.cy,r:p.r,a1:r3(angN(p.a1+hi)),a2:p.a2});D.ps.splice(i,1,...rep);return '';}
+function skExtend(w){const D=skD(),i=skHit(w,22);if(i<0)return 'Коснись отрезка у того конца, который удлинить';const p=D.ps[i];if(p.t!='L')return 'Удлинить можно отрезок';
+ const e2=V2.dist([p.x2,p.y2],w)<V2.dist([p.x1,p.y1],w),E=e2?[p.x2,p.y2]:[p.x1,p.y1],O=e2?[p.x1,p.y1]:[p.x2,p.y2],dir=nrm(V2.sub(E,O)),ray={t:'L',x1:E[0],y1:E[1],x2:E[0]+dir[0]*1e5,y2:E[1]+dir[1]*1e5};let best=null,bd=1e18;
+ D.ps.forEach((q,j)=>{if(j==i)return;ix(ray,q).forEach(P=>{const d=V2.dist(P,E);if(d>1e-4&&d<bd){bd=d;best=P;}});});if(!best)return 'Впереди нет линии, до которой удлинить';
+ if(e2){p.x2=r3(best[0]);p.y2=r3(best[1]);}else{p.x1=r3(best[0]);p.y1=r3(best[1]);}return '';}
+function skCornerP(w,kind,R){if(!(R>0))return 'Задай размер';const D=skD(),K=[];D.ps.forEach(p=>{if(p.t=='L')K.push([p.x1,p.y1],[p.x2,p.y2]);});let Q=null,bd=22/SK.V.s;K.forEach(q=>{const d=V2.dist(q,w);if(d<bd){bd=d;Q=q;}});
+ if(!Q)return 'Коснись угла, где сходятся две прямые';const L=D.ps.map((p,i)=>[p,i]).filter(([p])=>p.t=='L'&&(V2.dist([p.x1,p.y1],Q)<0.02||V2.dist([p.x2,p.y2],Q)<0.02));
+ if(L.length!=2)return L.length<2?'В этой точке сходится меньше двух прямых — сначала усеки или удлини':'В этой точке сходится больше двух прямых';
+ const ends=L.map(([p])=>V2.dist([p.x1,p.y1],Q)<0.02?{far:[p.x2,p.y2],k:'1'}:{far:[p.x1,p.y1],k:'2'}),u1=nrm(V2.sub(ends[0].far,Q)),u2=nrm(V2.sub(ends[1].far,Q)),cs=Math.max(-1,Math.min(1,u1[0]*u2[0]+u1[1]*u2[1])),th=Math.acos(cs);
+ if(th<0.01||th>Math.PI-0.01)return 'Прямые на одной линии — угла нет';const d=kind=='R'?R/Math.tan(th/2):R;if(d>V2.dist(ends[0].far,Q)-1e-6||d>V2.dist(ends[1].far,Q)-1e-6)return 'Размер больше стороны';
+ const T1=V2.add(Q,V2.mul(u1,d)),T2=V2.add(Q,V2.mul(u2,d));L.forEach(([p],k)=>{const T=k?T2:T1;if(ends[k].k=='1'){p.x1=r3(T[0]);p.y1=r3(T[1]);}else{p.x2=r3(T[0]);p.y2=r3(T[1]);}});
+ if(kind=='C'){skAddP({t:'L',x1:r3(T1[0]),y1:r3(T1[1]),x2:r3(T2[0]),y2:r3(T2[1])});return '';}
+ const c=V2.add(Q,V2.mul(nrm(V2.add(u1,u2)),R/Math.sin(th/2)));let a1=angOf(c,T1),a2=angOf(c,T2);if(angN(a2-a1)>180)[a1,a2]=[a2,a1];skAddP({t:'A',cx:r3(c[0]),cy:r3(c[1]),r:r3(R),a1:r3(a1),a2:r3(a2)});return '';}
+function skOffset(i,w,d){const D=skD(),p=D.ps[i];if(!p)return '';if(!(d>0))return 'Задай расстояние';
+ if(p.t=='L'){const n=lft(nrm([p.x2-p.x1,p.y2-p.y1])),sg=Math.sign((w[0]-p.x1)*n[0]+(w[1]-p.y1)*n[1])||1,o=V2.mul(n,d*sg);D.ps.push({t:'L',x1:r3(p.x1+o[0]),y1:r3(p.y1+o[1]),x2:r3(p.x2+o[0]),y2:r3(p.y2+o[1])});return '';}
+ const r=V2.dist([p.cx,p.cy],w)>p.r?p.r+d:p.r-d;if(!(r>0))return 'Внутрь не помещается';D.ps.push({...p,r:r3(r)});return '';}
+/* ---------- преобразования выделенного ---------- */
+function tfPrim(p,f,o={}){if(p.t=='L'){const a=f([p.x1,p.y1]),b=f([p.x2,p.y2]);return{t:'L',x1:r3(a[0]),y1:r3(a[1]),x2:r3(b[0]),y2:r3(b[1])};}
+ const c=f([p.cx,p.cy]),r=r3(p.r*(o.k||1));if(p.t=='C')return{t:'C',cx:r3(c[0]),cy:r3(c[1]),r};let a1=p.a1+(o.rot||0),a2=p.a2+(o.rot||0);if(o.mir=='x')[a1,a2]=[-a2,-a1];if(o.mir=='y')[a1,a2]=[180-a2,180-a1];
+ return{t:'A',cx:r3(c[0]),cy:r3(c[1]),r,a1:r3(angN(a1)),a2:r3(angN(a2))};}
+function selCenter(){const D=skD();let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;[...SK.sel].forEach(i=>{const p=D.ps[i];if(!p)return;const P=p.t=='L'?[[p.x1,p.y1],[p.x2,p.y2]]:[[p.cx-p.r,p.cy-p.r],[p.cx+p.r,p.cy+p.r]];P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});});return[(x0+x1)/2,(y0+y1)/2];}
+window.skXf=k=>{const D=skD(),S=[...SK.sel].filter(i=>D.ps[i]);if(!S.length)return toast('Сначала выдели объекты');const copy=$('#dxc')?.checked;let f,o={};
+ if(k=='mv'){const dx=gv('dxx'),dy=gv('dxy');f=p=>[p[0]+dx,p[1]+dy];}
+ if(k=='rot'){const a=gv('dxa')*D2R,C=$('#dxo')?.value=='0'?[0,0]:selCenter(),c=Math.cos(a),s=Math.sin(a);f=p=>[C[0]+(p[0]-C[0])*c-(p[1]-C[1])*s,C[1]+(p[0]-C[0])*s+(p[1]-C[1])*c];o.rot=gv('dxa');}
+ if(k=='mx'){f=p=>[p[0],-p[1]];o.mir='x';}if(k=='my'){f=p=>[-p[0],p[1]];o.mir='y';}
+ if(k=='sc'){const kk=gv('dxk');if(!(kk>0))return toast('Масштаб больше 0');const C=selCenter();f=p=>[C[0]+(p[0]-C[0])*kk,C[1]+(p[1]-C[1])*kk];o.k=kk;}
+ const N=S.map(i=>tfPrim(D.ps[i],f,o));if(copy){const n0=D.ps.length;D.ps.push(...N);SK.sel=new Set(N.map((_,j)=>n0+j));}else S.forEach((i,j)=>D.ps[i]=N[j]);save();renderSk();skPanel();toast(copy?'Копия создана':'Готово');};
+window.skSelAll=()=>{SK.sel=new Set(skD().ps.map((_,i)=>i));renderSk();skPanel();};
+window.skSelNone=()=>{SK.sel.clear();renderSk();skPanel();};
+window.skDelSel=()=>{const D=skD(),S=[...SK.sel].sort((a,b)=>b-a);if(!S.length)return;S.forEach(i=>D.ps.splice(i,1));SK.sel.clear();save();renderSk();skPanel();snack(`Удалено объектов: ${S.length}`,()=>{undo();renderDraw();});};
+window.skPSet=(f,v)=>{const D=skD(),i=[...SK.sel][0],p=D.ps[i];if(!p)return;const x=num(v);
+ if(f=='len'||f=='ang'){const L=f=='len'?x:Math.hypot(p.x2-p.x1,p.y2-p.y1),a=(f=='ang'?x:Math.atan2(p.y2-p.y1,p.x2-p.x1)/D2R)*D2R;p.x2=r3(p.x1+L*Math.cos(a));p.y2=r3(p.y1+L*Math.sin(a));}
+ else if(f=='d')p.r=r3(x/2);else p[f]=x;save();renderSk();};
 /* ---------- инструменты и панель ---------- */
-const SKT=[['sel','Выбор','<path d="M5 3l12 9-5 1 3 6-2 1-3-6-4 4z"/>'],['line','Линия','<path d="M4 18l6-10 5 6 5-9"/><circle cx="4" cy="18" r="1.5"/><circle cx="20" cy="5" r="1.5"/>'],['rect','Прямоуг.','<rect x="4" y="6" width="16" height="12" rx="1"/>'],['circ','Окружн.','<circle cx="12" cy="12" r="8"/><path d="M12 12h8"/>'],
- ['poly','Многоуг.','<path d="M12 3l8 5v8l-8 5-8-5V8z"/>'],['slot','Паз','<rect x="3" y="8" width="18" height="8" rx="4"/>'],['fil','Скругл.','<path d="M4 20V12a8 8 0 0 1 8-8h8"/>'],['cha','Фаска','<path d="M4 20V10l6-6h10"/>'],['photo','Фото','<rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l2-3h4l2 3"/>'],['file','Файл','<path d="M4 4h10l6 6v10H4z"/><path d="M14 4v6h6"/>']];
-function skTools(){const t=$('#dTools');if(!t)return;t.innerHTML=SKT.map(([k,n,ic])=>`<button class="${SK.tool==k||(k=='photo'&&['cal','zero'].includes(SK.tool))?'on':''}" onclick="skTool('${k}')" aria-label="${n}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ic}</svg>${n}</button>`).join('');}
-window.skTool=k=>{if(SK.tool=='line'&&k!='line'&&SK.act!=null){SK.act=null;}SK.tool=k;SK.tmp=null;SK.hov=null;if(k!='cal')SK.cal=null;if(k!='sel')SK.sel=null;skTools();renderSk();skPanel();};
-const sin=(id,l,v,step)=>`<label>${l}<input id="${id}" type="text" inputmode="decimal" value="${v}"></label>`;
-const gv=id=>num($('#'+id)?.value);
-function skPanel(){const p=$('#dPan');if(!p)return;const D=skD(),T=SK.tool;let h='';
- const tip=t=>`<div class="hint" style="margin:0">${t}</div>`;
- if(T=='line'){const c=SK.act!=null?D.cs[SK.act]:null;
-  h=`<b>Линия — касайся поля по точкам</b>${tip(c?'Следующая точка — касанием или числами ниже. Коснись зелёной стартовой точки — контур замкнётся.':'Коснись поля — это начало контура. Точки липнут к сетке и к другим точкам.')}
-  <div class="seg"><button class="${SK.seg=='L'?'on':''}" onclick="SK.seg='L';skPanel()">Прямая</button><button class="${SK.seg=='CW'?'on':''}" onclick="SK.seg='CW';skPanel()">Дуга ↻</button><button class="${SK.seg=='CCW'?'on':''}" onclick="SK.seg='CCW';skPanel()">Дуга ↺</button></div>
-  ${SK.seg!='L'?`<div class="grid"><label>Радиус дуги R<input type="text" inputmode="decimal" value="${SK.R}" oninput="SK.R=num(this.value)"></label></div>`:''}
-  <div class="grid">${sin('dlx','X точки',c?skVerts(c).pop()[0]:0)}${sin('dly','Y точки',c?skVerts(c).pop()[1]:0)}<label>&nbsp;<button class="btn p" onclick="skNum('abs')">＋ Точка</button></label></div>
-  ${c?`<div class="grid">${sin('dll','или длина L',10)}${sin('dla','под углом°',0)}<label>&nbsp;<button class="btn" onclick="skNum('rel')">＋ От последней</button></label></div>
-  <div class="row"><button class="btn p" onclick="skClose(${SK.act})">⭘ Замкнуть контур</button><button class="btn" onclick="SK.act=null;skPanel();renderSk()">Закончить открытым</button></div>`:''}`;}
- else if(T=='rect')h=`<b>Прямоугольник</b>${tip(SK.tmp?'Теперь коснись противоположного угла.':'Коснись одного угла, потом противоположного — или впиши размеры.')}
-  <div class="grid">${sin('drw','Длина X',60)}${sin('drh','Ширина Y',40)}${sin('drx','Центр X',0)}${sin('dry','Центр Y',0)}<label>Скругление углов R<input type="text" inputmode="decimal" value="${SK.rr||0}" oninput="SK.rr=num(this.value)"></label></div><button class="btn p" onclick="skAdd('rect')">＋ Добавить прямоугольник</button>`;
- else if(T=='circ')h=`<b>Окружность</b>${tip(SK.tmp?'Теперь коснись края — получится радиус.':'Коснись центра, потом края — или впиши Ø и центр.')}<div class="grid">${sin('dcd','Диаметр Ø',20)}${sin('dcx','Центр X',0)}${sin('dcy','Центр Y',0)}</div><button class="btn p" onclick="skAdd('circ')">＋ Добавить окружность</button>`;
- else if(T=='poly')h=`<b>Многоугольник</b><div class="grid">${sin('dpn','Граней',6)}${sin('dps','Под ключ SW',30)}${sin('dpx','Центр X',0)}${sin('dpy','Центр Y',0)}${sin('dpa','Поворот°',0)}</div><button class="btn p" onclick="skAdd('poly')">＋ Добавить</button>`;
- else if(T=='slot')h=`<b>Паз (овал)</b><div class="grid">${sin('dsl','Длина L',40)}${sin('dsw','Ширина W',10)}${sin('dsx','Центр X',0)}${sin('dsy','Центр Y',0)}${sin('dsa','Угол°',0)}</div><button class="btn p" onclick="skAdd('slot')">＋ Добавить паз</button>`;
- else if(T=='fil'||T=='cha')h=`<b>${T=='fil'?'Скругление угла':'Фаска на угле'}</b>${tip('Впиши размер и коснись угла контура (точки между двумя прямыми).')}<div class="grid"><label>${T=='fil'?'Радиус R':'Катет фаски C'}<input type="text" inputmode="decimal" value="${T=='fil'?SK.fr||5:SK.fc||1}" oninput="SK.${T=='fil'?'fr':'fc'}=num(this.value)"></label></div>`;
+const SKI={line:['Отрезок','<path d="M4 19L20 5"/><circle cx="4" cy="19" r="1.6"/><circle cx="20" cy="5" r="1.6"/>'],circ:['Окружн.','<circle cx="12" cy="12" r="8"/><path d="M12 12h8"/>'],arc:['Дуга','<path d="M5 18a9 9 0 0 1 14-12"/><circle cx="12" cy="15" r="1.3"/>'],rect:['Прямоуг.','<rect x="4" y="6" width="16" height="12" rx="1"/>'],
+ poly:['Многоуг.','<path d="M12 3l8 5v8l-8 5-8-5V8z"/>'],slot:['Паз','<rect x="3" y="8" width="18" height="8" rx="4"/>'],sel:['Выбор','<path d="M5 3l12 9-5 1 3 6-2 1-3-6-4 4z"/>'],trim:['Усечь','<path d="M4 12h6M14 12h6"/><path d="M12 4v16" stroke-dasharray="2 2"/><path d="M9 7l6 10M15 7L9 17"/>'],
+ ext:['Удлинить','<path d="M3 12h10"/><path d="M13 12h5" stroke-dasharray="2 2"/><path d="M20 5v14"/>'],fil:['Скругл.','<path d="M4 20V12a8 8 0 0 1 8-8h8"/>'],cha:['Фаска','<path d="M4 20V10l6-6h10"/>'],off:['Эквидист.','<path d="M4 16L16 4M8 20L20 8"/>'],del:['Удалить','<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>'],
+ photo:['Фото','<rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l2-3h4l2 3"/>'],file:['DXF','<path d="M4 4h10l6 6v10H4z"/><path d="M14 4v6h6"/>'],work:['В работу','<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>']};
+const SKG={draw:['Чертить',['line','circ','arc','rect','poly','slot']],edit:['Править',['sel','trim','ext','fil','cha','off','del']],more:['Ещё',['work','photo','file']]};
+function skTools(){const g=$('#dGrp'),t=$('#dTools');if(g)g.innerHTML=Object.entries(SKG).map(([k,[n]])=>`<button class="${SK.grp==k?'on':''}" onclick="skGrp('${k}')">${n}</button>`).join('');
+ if(t)t.innerHTML=SKG[SK.grp][1].map(k=>`<button class="${SK.tool==k||(k=='photo'&&['cal','zero'].includes(SK.tool))?'on':''}" onclick="skTool('${k}')" aria-label="${SKI[k][0]}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SKI[k][1]}</svg>${SKI[k][0]}</button>`).join('');
+ const sn=$('#dSnap'),or=$('#dOrt');if(sn)sn.classList.toggle('on',SK.snap);if(or)or.classList.toggle('on',SK.ortho);}
+window.skGrp=k=>{SK.grp=k;skTool(SKG[k][1][0]);};
+window.skTool=k=>{SK.tool=k;SK.pts=[];SK.hov=null;SK.offP=null;if(!['cal'].includes(k))SK.cal=null;if(!['sel'].includes(k))SK.sel.clear();const gk=Object.keys(SKG).find(g=>SKG[g][1].includes(k));if(gk)SK.grp=gk;SK.sheet=true;$('#dSide')?.classList.remove('min');skTools();renderSk();skPanel();};
+window.skSheet=()=>{SK.sheet=!SK.sheet;$('#dSide').classList.toggle('min',!SK.sheet);setTimeout(()=>renderSk(),60);};
+window.skTog=k=>{SK[k]=!SK[k];skTools();toast(k=='snap'?(SK.snap?'Привязки включены':'Привязки выключены'):(SK.ortho?'Орто: только горизонталь и вертикаль':'Орто выключено'));};
+const sin=(id,l,v)=>`<label>${l}<input id="${id}" type="text" inputmode="decimal" value="${v}"></label>`,gv=id=>num($('#'+id)?.value);
+function skPanel(){const p=$('#dPan');if(!p)return;const D=skD(),T=SK.tool;let h='';const tip=t=>`<div class="hint" style="margin:0">${t}</div>`,A=SK.pts[0];
+ if(T=='line')h=`<b>Отрезок${A?' · цепочка':''}</b>${tip('Касайся по точкам: отрезки идут цепочкой. Веди пальцем — прицел будет над пальцем, отпусти — точка поставится. Точки липнут к концам, серединам, центрам и пересечениям.')}
+  ${A?`<div class="grid">${sin('dll','Длина L',10)}${sin('dla','Угол°',0)}<label>&nbsp;<button class="btn p" onclick="skLine('rel')">＋ Отрезок</button></label></div>`:''}
+  <div class="grid">${sin('dlx',A?'или до X':'Начало X',A?A[0]:0)}${sin('dly','Y',A?A[1]:0)}<label>&nbsp;<button class="btn ${A?'':'p'}" onclick="skLine('abs')">${A?'＋ До точки':'Поставить'}</button></label></div>${A?`<button class="btn" onclick="SK.pts=[];renderSk();skPanel()">■ Стоп — закончить цепочку</button>`:''}`;
+ else if(T=='circ')h=`<b>Окружность</b>${tip('Касание центра, потом края. Или впиши числа.')}<div class="grid">${sin('dcd','Диаметр Ø',20)}${sin('dcx','Центр X',A?A[0]:0)}${sin('dcy','Центр Y',A?A[1]:0)}</div><button class="btn p" onclick="skAddN('circ')">＋ Окружность</button>`;
+ else if(T=='arc')h=`<b>Дуга</b>${tip('Центр → начало → конец (против часовой). Или впиши числа.')}<div class="grid">${sin('dax','Центр X',0)}${sin('day','Центр Y',0)}${sin('dar','Радиус R',10)}${sin('da1','Угол начала°',0)}${sin('da2','Угол конца°',90)}</div><button class="btn p" onclick="skAddN('arc')">＋ Дуга</button>`;
+ else if(T=='rect')h=`<b>Прямоугольник</b>${tip('Два касания — противоположные углы. Или впиши размеры.')}<div class="grid">${sin('drw','Длина X',60)}${sin('drh','Ширина Y',40)}${sin('drx','Центр X',0)}${sin('dry','Центр Y',0)}<label>Скругление углов R<input type="text" inputmode="decimal" value="${SK.rr||0}" oninput="SK.rr=num(this.value)"></label></div><button class="btn p" onclick="skAddN('rect')">＋ Прямоугольник</button>`;
+ else if(T=='poly')h=`<b>Многоугольник</b>${tip('Задай размеры и коснись поля — там будет центр. Или впиши центр.')}<div class="grid">${sin('dpn','Граней',6)}${sin('dps','Под ключ SW',30)}${sin('dpa','Поворот°',0)}${sin('dpx','Центр X',0)}${sin('dpy','Центр Y',0)}</div><button class="btn p" onclick="skAddN('poly')">＋ Многоугольник</button>`;
+ else if(T=='slot')h=`<b>Паз</b>${tip('Задай размеры и коснись поля — там будет центр.')}<div class="grid">${sin('dsl','Длина L',40)}${sin('dsw','Ширина W',10)}${sin('dsa','Угол°',0)}${sin('dsx','Центр X',0)}${sin('dsy','Центр Y',0)}</div><button class="btn p" onclick="skAddN('slot')">＋ Паз</button>`;
+ else if(T=='trim')h=`<b>Усечь кривую</b>${tip('Коснись куска линии между пересечениями — он удалится, остальное останется. Как «Усечь кривую» в КОМПАС.')}`;
+ else if(T=='ext')h=`<b>Удлинить до ближайшей</b>${tip('Коснись отрезка у его конца — он дотянется до ближайшей линии впереди.')}`;
+ else if(T=='fil')h=`<b>Скругление</b><div class="grid"><label>Радиус R<input type="text" inputmode="decimal" value="${SK.R}" oninput="SK.R=num(this.value)"></label></div>${tip('Коснись угла, где сходятся две прямые.')}`;
+ else if(T=='cha')h=`<b>Фаска</b><div class="grid"><label>Катет C<input type="text" inputmode="decimal" value="${SK.C}" oninput="SK.C=num(this.value)"></label></div>${tip('Коснись угла, где сходятся две прямые.')}`;
+ else if(T=='off')h=`<b>Эквидистанта</b><div class="grid"><label>Расстояние<input type="text" inputmode="decimal" value="${SK.off}" oninput="SK.off=num(this.value)"></label></div>${tip(SK.offP==null?'Коснись отрезка, дуги или окружности.':'Теперь коснись стороны, куда построить параллельную.')}`;
+ else if(T=='del')h=`<b>Удалить</b>${tip('Коснись объекта — он удалится. Ошибся — стрелка «Отменить» сверху.')}`;
+ else if(T=='sel'){const S=[...SK.sel].filter(i=>D.ps[i]);
+  if(S.length==1){const q=D.ps[S[0]];h=`<b>${q.t=='L'?'Отрезок':q.t=='C'?'Окружность':'Дуга'}</b><div class="grid">`+(q.t=='L'?['x1','y1','x2','y2'].map(k=>`<label>${k.toUpperCase()}<input type="text" inputmode="decimal" value="${q[k]}" oninput="skPSet('${k}',this.value)"></label>`).join('')+`<label>Длина<input type="text" inputmode="decimal" value="${nf(r3(Math.hypot(q.x2-q.x1,q.y2-q.y1)))}" onchange="skPSet('len',this.value);skPanel()"></label><label>Угол°<input type="text" inputmode="decimal" value="${nf(r3(angOf([q.x1,q.y1],[q.x2,q.y2])))}" onchange="skPSet('ang',this.value);skPanel()"></label>`
+   :`<label>Центр X<input type="text" inputmode="decimal" value="${q.cx}" oninput="skPSet('cx',this.value)"></label><label>Центр Y<input type="text" inputmode="decimal" value="${q.cy}" oninput="skPSet('cy',this.value)"></label>${q.t=='C'?`<label>Диаметр Ø<input type="text" inputmode="decimal" value="${r3(2*q.r)}" oninput="skPSet('d',this.value)"></label>`:`<label>Радиус R<input type="text" inputmode="decimal" value="${q.r}" oninput="skPSet('r',this.value)"></label><label>Угол начала°<input type="text" inputmode="decimal" value="${q.a1}" oninput="skPSet('a1',this.value)"></label><label>Угол конца°<input type="text" inputmode="decimal" value="${q.a2}" oninput="skPSet('a2',this.value)"></label>`}`)+`</div>`;}
+  if(S.length){h+=`<b>Выделено: ${S.length}</b><label class="wck"><input type="checkbox" id="dxc">Создать копию (исходное останется)</label>
+   <div class="grid">${sin('dxx','Сдвиг X',0)}${sin('dxy','Сдвиг Y',0)}<label>&nbsp;<button class="btn" onclick="skXf('mv')">↔ Сдвинуть</button></label></div>
+   <div class="grid">${sin('dxa','Поворот°',90)}<label>Вокруг<select id="dxo"><option value="c">центра выделения</option><option value="0">нуля X0 Y0</option></select></label><label>&nbsp;<button class="btn" onclick="skXf('rot')">⟳ Повернуть</button></label></div>
+   <div class="row"><button class="btn" onclick="skXf('my')">⇋ Отразить влево-вправо</button><button class="btn" onclick="skXf('mx')">⇵ Отразить вверх-вниз</button></div>
+   <div class="grid">${sin('dxk','Масштаб',1)}<label>&nbsp;<button class="btn" onclick="skXf('sc')">⤢ Масштаб</button></label></div>
+   <div class="row"><button class="btn d" onclick="skDelSel()">🗑 Удалить выделенное</button><button class="btn" onclick="skSelNone()">Снять выделение</button></div>`;}
+  else h=`<b>Выбор</b>${tip('Коснись объектов — они выделятся (повторное касание снимает). Потом: сдвиг, копия, поворот, зеркало, масштаб. Точки (концы, центры) можно тянуть пальцем — соединённые линии тянутся вместе.')}<button class="btn" onclick="skSelAll()">Выделить всё</button>`;}
  else if(T=='photo'||T=='cal'||T=='zero'){const m=D.img;
-  h=`<b>Фото чертежа</b>${tip('Сфотографируй чертёж ровно сверху. Потом укажи масштаб по известному размеру и обведи деталь линиями поверх фото.')}
-  <div class="row"><button class="btn p" onclick="document.getElementById('dImg').click()">📷 ${m&&SK.img?'Другое фото':'Выбрать фото'}</button>${m&&SK.img?`<button class="btn" onclick="skImgShow()">${m.show===false?'Показать':'Скрыть'}</button><button class="btn d" onclick="skImgDel()">Убрать фото</button>`:''}</div>
+  h=`<b>Фото чертежа</b>${tip('Сфотографируй чертёж ровно сверху. Укажи масштаб по известному размеру и ноль — потом обведи деталь поверх фото.')}
+  <div class="row"><button class="btn p" onclick="document.getElementById('dImg').click()">📷 ${m&&SK.img?'Другое фото':'Выбрать фото'}</button>${m&&SK.img?`<button class="btn" onclick="skImgShow()">${m.show===false?'Показать':'Скрыть'}</button><button class="btn d" onclick="skImgDel()">Убрать</button>`:''}</div>
   ${m&&SK.img?`<label>Прозрачность<input type="range" min="0.1" max="1" step="0.05" value="${m.op??0.5}" oninput="skImgOp(this.value)"></label>
-  <div class="zres"><b style="color:var(--tx)">1. Масштаб.</b> Нажми «Указать размер», коснись двух концов известного размера на фото (A и B) и впиши, сколько это мм.<br><b style="color:var(--tx)">2. Ноль.</b> Нажми «Поставить ноль» и коснись точки на фото, где ноль детали.<br><b style="color:var(--tx)">3. Обведи</b> инструментами «Линия», «Окружность»…</div>
-  <div class="row"><button class="btn ${T=='cal'?'p':''}" onclick="skTool('cal')">📏 Указать размер</button><button class="btn ${T=='zero'?'p':''}" onclick="skTool('zero')">⌖ Поставить ноль</button></div>
-  ${T=='cal'?(SK.cal&&SK.cal.length==2?`<div class="grid"><label>A–B на чертеже, мм<input id="dcl" type="text" inputmode="decimal" value="${nf(r3(V2.dist(SK.cal[0],SK.cal[1])))}"></label><label class="wck" style="align-self:end"><input type="checkbox" id="dch">Это горизонталь — выровнять</label></div><button class="btn p" onclick="skCal()">Применить масштаб</button>`:tip(SK.cal&&SK.cal.length?'Теперь коснись точки B.':'Коснись точки A — начала известного размера.')):''}
-  ${T=='zero'?tip('Коснись точки на фото, где у детали ноль.'):''}`:''}`;}
- else if(T=='file')h=`<b>Файлы</b><div class="row"><button class="btn" onclick="document.getElementById('dDxf').click()">📂 Открыть DXF</button><button class="btn" onclick="skDxfOut()">⬇ Сохранить DXF</button><button class="btn" onclick="skFromStock()">⬅ Взять контур заготовки</button></div>${tip('DXF открывается в КОМПАС, AutoCAD и любом CAD. Из DXF берутся линии, дуги, окружности и полилинии.')}
-  <div class="grid"><label>Шаг сетки<select onchange="skGrid(this.value)">${[0.1,0.5,1,2,5,10].map(g=>`<option ${g==(+D.grid||1)?'selected':''}>${g}</option>`).join('')}</select></label><label class="wck" style="align-self:end"><input type="checkbox" ${SK.snap?'checked':''} onchange="SK.snap=this.checked">Привязка к сетке</label><label class="wck" style="align-self:end"><input type="checkbox" ${SK.dim?'checked':''} onchange="SK.dim=this.checked;renderSk()">Показывать размеры</label></div>
+  <div class="row"><button class="btn ${T=='cal'?'p':''}" onclick="skTool('cal')">📏 1. Указать размер</button><button class="btn ${T=='zero'?'p':''}" onclick="skTool('zero')">⌖ 2. Поставить ноль</button></div>
+  ${T=='cal'?(SK.cal&&SK.cal.length==2?`<div class="grid"><label>A–B на чертеже, мм<input id="dcl" type="text" inputmode="decimal" value="${nf(r3(V2.dist(SK.cal[0],SK.cal[1])))}"></label><label class="wck" style="align-self:end"><input type="checkbox" id="dch">Это горизонталь — выровнять</label></div><button class="btn p" onclick="skCal()">Применить масштаб</button>`:tip(SK.cal&&SK.cal.length?'Коснись точки B.':'Коснись точки A — начала известного размера.')):''}`:''}`;}
+ else if(T=='file')h=`<b>DXF и настройки</b><div class="row"><button class="btn" onclick="document.getElementById('dDxf').click()">📂 Открыть DXF</button><button class="btn" onclick="skDxfOut()">⬇ Сохранить DXF</button><button class="btn" onclick="skFromStock()">⬅ Контур заготовки</button></div>${tip('DXF открывается в КОМПАС, AutoCAD и любом CAD.')}
+  <div class="grid"><label>Шаг сетки, мм<select onchange="skGrid(this.value)">${[0.1,0.5,1,2,5,10].map(g=>`<option ${g==(+D.grid||1)?'selected':''}>${g}</option>`).join('')}</select></label><label class="wck" style="align-self:end"><input type="checkbox" ${SK.dim?'checked':''} onchange="SK.dim=this.checked;renderSk()">Размеры на чертеже</label></div>
   <button class="btn d" onclick="skClear()">🗑 Очистить чертёж</button>`;
- else{const s=SK.sel;
-  if(s&&s.v!=null&&D.cs[s.c]){const c=D.cs[s.c],P=skVerts(c)[s.v],q=s.v?c.els[s.v-1]:null;
-   h=`<b>Точка ${s.v?s.v:'старт'} · контур ${s.c+1}</b><div class="grid"><label>X<input type="text" inputmode="decimal" value="${P[0]}" oninput="skSetV('x',this.value)"></label><label>Y<input type="text" inputmode="decimal" value="${P[1]}" oninput="skSetV('y',this.value)"></label>
-   ${q?`<label>К этой точке<select onchange="skSetV('t',this.value,1)"><option value="L" ${q.t=='L'?'selected':''}>Прямая</option><option value="CW" ${q.t=='CW'?'selected':''}>Дуга ↻</option><option value="CCW" ${q.t=='CCW'?'selected':''}>Дуга ↺</option></select></label>${q.t!='L'?`<label>Радиус R<input type="text" inputmode="decimal" value="${q.r}" oninput="skSetV('r',this.value)"></label>`:''}`:''}</div>
-   <div class="row"><button class="btn" onclick="skSelCorner('R')">◜ Скругл. R</button><button class="btn" onclick="skSelCorner('C')">◸ Фаска C</button><button class="btn d" onclick="skDelV()">✕ Удалить точку</button></div>${tip('Точку можно перетаскивать пальцем — она липнет к сетке и к другим точкам.')}`;}
-  else if(s&&s.e!=null&&D.cs[s.c]){const c=D.cs[s.c],q=c.els[s.e];h=`<b>Элемент ${s.e+1} · контур ${s.c+1}</b>${q?`<div class="grid"><label>Тип<select onchange="SK.sel={c:${s.c},v:${s.e+1}};skSetV('t',this.value,1)"><option value="L" ${q.t=='L'?'selected':''}>Прямая</option><option value="CW" ${q.t=='CW'?'selected':''}>Дуга ↻</option><option value="CCW" ${q.t=='CCW'?'selected':''}>Дуга ↺</option></select></label></div>`:tip('Замыкающая прямая контура.')}`;}
-  if(D.cs.length)h+=`<div class="grid"><label>Глубина обработки, мм<input type="text" inputmode="decimal" value="${SK.dep}" oninput="SK.dep=num(this.value)"></label><label>Высота заготовки Z<input type="text" inputmode="decimal" value="${st.stock.z}" oninput="skStockZ(this.value)"></label></div>`;
-  h+=`<b>Контуры (${D.cs.length})</b>`+(D.cs.length?D.cs.map((c,i)=>{const P=skPoly(c),cr=skCircle(c),er=skE(c).err;let bb='';if(P.length){let a=1e9,b=1e9,cc=-1e9,d=-1e9;P.forEach(([x,y])=>{a=Math.min(a,x);b=Math.min(b,y);cc=Math.max(cc,x);d=Math.max(d,y);});bb=`${nf(r3(cc-a))}×${nf(r3(d-b))}`;}
-   return `<div class="dcl ${SK.sel&&SK.sel.c==i?'on':''}"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span onclick="SK.sel={c:${i}};renderSk();skPanel()" style="cursor:pointer;flex:1;min-width:0"><b>${i+1}. ${cr?'Окружность Ø'+nf(cr.d):c.closed=='1'?'Замкнутый':'Открытый'}</b> <small>${cr?'':c.els.length+' эл. · '}${bb}${er?' · ⚠ '+esc(er):''}</small></span><button class="ib" aria-label="Удалить контур ${i+1}" onclick="skDelC(${i})">✕</button></div>
-    <div class="row" style="gap:6px">${c.closed=='1'&&!er?`<button class="btn s" onclick="skUse(${i},'out')">Обработать снаружи</button><button class="btn s" onclick="skUse(${i},'in')">Окно внутри</button><button class="btn s" onclick="skUse(${i},'pocket')">Карман</button><button class="btn s" onclick="skUse(${i},'stock')">Сделать заготовкой</button>`:!er?`<button class="btn s" onclick="skUse(${i},'open')">Контур по линии</button>`:''}${cr?`<button class="btn s" onclick="skUse(${i},'drill')">Сверлить</button>`:''}${cr?'':`<button class="btn s" onclick="skClose(${i})">${c.closed=='1'?'Разомкнуть':'Замкнуть'}</button><button class="btn s" onclick="skRev(${i})">⇄</button>`}</div></div>`;}).join(''):tip('Пока пусто. Выбери «Линия», «Прямоугольник» или «Окружность» и начерти деталь. Или возьми фото чертежа / DXF.'));
-  if(D.cs.some(c=>c.closed=='1'))h+=`<button class="btn p" style="white-space:normal;text-align:left" onclick="skUse(-1,'auto')">⚡ Всё сразу: внешний контур — заготовка, внутри — карманы, окружности — отверстия</button>`;
-  if(st.ops.length)h+=`<button class="btn" onclick="show('sim')">🧊 Деталь в 3D (${st.ops.filter(o=>o.on).length} опер.)</button>`;
-  const nC=D.cs.filter(skCircle).length;if(nC>1)h+=`<button class="btn" onclick="skUse(-1,'drillAll')">⦿ Сверлить все окружности (${nC})</button>`;}
+ else if(T=='work'){const CS=skCont();
+  h=`<b>В работу</b>${tip('Замкнутые контуры собираются сами из соединённых линий. Выбери, что сделать с каждым.')}<div class="grid"><label>Глубина обработки, мм<input type="text" inputmode="decimal" value="${SK.dep}" oninput="SK.dep=num(this.value)"></label><label>Высота заготовки Z<input type="text" inputmode="decimal" value="${st.stock.z}" oninput="skStockZ(this.value)"></label></div>`;
+  if(CS.some(c=>c.closed=='1'))h+=`<button class="btn p" style="white-space:normal;text-align:left" onclick="skUse(-1,'auto')">⚡ Всё сразу: внешний контур — заготовка, внутри — карманы, окружности — отверстия</button>`;
+  h+=CS.length?CS.map((c,i)=>{const P=skPoly(c),cr=skCircle(c),er=skE(c).err;let bb='';if(P.length){let a=1e9,b=1e9,cc=-1e9,d=-1e9;P.forEach(([x,y])=>{a=Math.min(a,x);b=Math.min(b,y);cc=Math.max(cc,x);d=Math.max(d,y);});bb=`${nf(r3(cc-a))}×${nf(r3(d-b))}`;}
+   return `<div class="dcl"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span onclick="SK.sel=new Set([${c.pis}]);skTool('sel');SK.sel=new Set([${c.pis}]);renderSk();skPanel()" style="cursor:pointer;flex:1;min-width:0"><b>${i+1}. ${cr?'Окружность Ø'+nf(cr.d):c.closed=='1'?'Замкнутый контур':'Открытый'}</b> <small>${cr?'':c.els.length+' эл. · '}${bb}${er?' · ⚠ '+esc(er):''}</small></span></div>
+    <div class="row" style="gap:6px">${c.closed=='1'&&!er?`<button class="btn s" onclick="skUse(${i},'out')">Снаружи</button><button class="btn s" onclick="skUse(${i},'in')">Окно</button><button class="btn s" onclick="skUse(${i},'pocket')">Карман</button><button class="btn s" onclick="skUse(${i},'stock')">Заготовка</button>`:!er?`<button class="btn s" onclick="skUse(${i},'open')">По линии</button>${tip('Контур не замкнут — проверь, что концы сходятся (привязка «конец»).')}`:''}${cr?`<button class="btn s" onclick="skUse(${i},'drill')">Сверлить</button>`:''}</div></div>`;}).join(''):tip('Пока пусто — начерти деталь.');
+  if(st.ops.length)h+=`<button class="btn" onclick="show('sim')">🧊 Деталь в 3D (${st.ops.filter(o=>o.on).length} опер.)</button>`;}
  p.innerHTML=h;}
-window.skNum=m=>{const D=skD(),p=m=='abs'?[r3(gv('dlx')),r3(gv('dly'))]:(()=>{const c=D.cs[SK.act],L=skVerts(c).pop(),l=gv('dll'),a=gv('dla')*Math.PI/180;return[r3(L[0]+l*Math.cos(a)),r3(L[1]+l*Math.sin(a))];})();
- if(SK.act==null||!D.cs[SK.act]){D.cs.push({sx:p[0],sy:p[1],els:[],closed:'0'});SK.act=D.cs.length-1;}else skAddPt(p);save();renderSk();skPanel();};
-window.skAdd=k=>{const D=skD();let c;if(k=='rect'){if(!(gv('drw')>0&&gv('drh')>0))return toast('Задай длину и ширину');c=skRect(gv('drx'),gv('dry'),gv('drw'),gv('drh'),+SK.rr||0);}
- if(k=='circ'){if(!(gv('dcd')>0))return toast('Задай диаметр');c=skCirc(gv('dcx'),gv('dcy'),gv('dcd'));}
- if(k=='poly'){if(!(gv('dps')>0))return toast('Задай размер под ключ');c=skPolyC(gv('dpn'),gv('dps'),gv('dpx'),gv('dpy'),gv('dpa'));}
- if(k=='slot'){if(!(gv('dsl')>=gv('dsw')&&gv('dsw')>0))return toast('Длина должна быть не меньше ширины');c=skSlot(gv('dsx'),gv('dsy'),gv('dsl'),gv('dsw'),gv('dsa'));}
- D.cs.push(c);SK.sel={c:D.cs.length-1};save();renderSk();skPanel();toast('Добавлено');};
-window.skSetV=(f,v,full)=>{const s=SK.sel;if(!s||s.v==null)return;const c=skD().cs[s.c];if(f=='x'||f=='y'){if(s.v==0)c['s'+f]=num(v);else c.els[s.v-1][f]=num(v);}
- else{const q=c.els[s.v-1];if(!q)return;if(f=='t'){q.t=v;if(v!='L'&&!(+q.r)){const P=skVerts(c);q.r=r3(Math.max(10,V2.dist(P[s.v-1],P[s.v])/2+0.01));}}else q.r=num(v);}
- save();renderSk();if(full)skPanel();};
-window.skSelCorner=k=>{const s=SK.sel;if(!s)return;const R=num(prompt(k=='R'?'Радиус скругления R, мм':'Катет фаски C, мм',k=='R'?SK.fr||5:SK.fc||1));if(!(R>0))return;const er=skCorner(s.c,s.v,k,R);if(er)return toast(er);save();renderSk();skPanel();};
-window.skClear=()=>{const D=skD();if(!D.cs.length)return;D.cs=[];SK.sel=null;SK.act=null;save();renderSk();skPanel();snack('Чертёж очищен',()=>{undo();renderSk();skPanel();});};
+window.skLine=m=>{const A=SK.pts[0];let p;if(m=='abs')p=[r3(gv('dlx')),r3(gv('dly'))];else{const L=gv('dll'),a=gv('dla')*D2R;if(!(L>0))return toast('Длина больше 0');p=[r3(A[0]+L*Math.cos(a)),r3(A[1]+L*Math.sin(a))];}skTap({p});};
+window.skAddN=k=>{if(k=='circ'){if(!(gv('dcd')>0))return toast('Задай диаметр');skAddP({t:'C',cx:gv('dcx'),cy:gv('dcy'),r:r3(gv('dcd')/2)});SK.pts=[];}
+ if(k=='arc'){if(!(gv('dar')>0))return toast('Задай радиус');skAddP({t:'A',cx:gv('dax'),cy:gv('day'),r:gv('dar'),a1:angN(gv('da1')),a2:angN(gv('da2'))});}
+ if(k=='rect'){if(!(gv('drw')>0&&gv('drh')>0))return toast('Задай длину и ширину');skRectP(gv('drx'),gv('dry'),gv('drw'),gv('drh'),+SK.rr||0);}
+ if(k=='poly'){if(!(gv('dps')>0))return toast('Задай размер под ключ');skPolyP(gv('dpn'),gv('dps'),gv('dpx'),gv('dpy'),gv('dpa'));}
+ if(k=='slot'){if(!(gv('dsl')>=gv('dsw')&&gv('dsw')>0))return toast('Длина паза не меньше ширины');skSlotP(gv('dsx'),gv('dsy'),gv('dsl'),gv('dsw'),gv('dsa'));}
+ save();renderSk();toast('Добавлено');};
+window.skClear=()=>{const D=skD();if(!D.ps.length)return;D.ps=[];SK.sel.clear();SK.pts=[];save();renderSk();skPanel();snack('Чертёж очищен',()=>{undo();renderDraw();});};
 /* ---------- фото ---------- */
 try{SK.img=localStorage.getItem('fcam_skimg')||null;}catch(e){}
 window.skImgLoad=inp=>{const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,2000/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);
   cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);const u=cv.toDataURL('image/jpeg',0.8);SK.img=u;try{localStorage.setItem('fcam_skimg',u);}catch(e){toast('Фото не поместилось в память — будет до закрытия приложения');}
-  const D=skD(),w=200;D.img={x:-w/2,y:w*cv.height/cv.width/2,w,ar:cv.height/cv.width,rot:0,op:0.5,show:true};save();SK.tool='cal';SK.cal=null;skTools();skFit();skPanel();toast('Фото добавлено — теперь укажи известный размер');};im.src=rd.result;};rd.readAsDataURL(f);inp.value='';};
+  const D=skD(),w=200;D.img={x:-w/2,y:w*cv.height/cv.width/2,w,ar:cv.height/cv.width,rot:0,op:0.5,show:true};save();skTool('cal');skFit();toast('Фото добавлено — укажи известный размер');};im.src=rd.result;};rd.readAsDataURL(f);inp.value='';};
 window.skImgOp=v=>{const m=skD().img;if(m){m.op=+v;renderSk();clearTimeout(skImgOp.t);skImgOp.t=setTimeout(save,400);}};
 window.skImgShow=()=>{const m=skD().img;if(m){m.show=m.show===false;save();renderSk();skPanel();}};
 window.skImgDel=()=>{skD().img=null;SK.img=null;try{localStorage.removeItem('fcam_skimg');}catch(e){}save();renderSk();skPanel();};
 window.skCal=()=>{const m=skD().img,A=SK.cal[0],B=SK.cal[1],L=gv('dcl'),d=V2.dist(A,B);if(!m||!(L>0)||!(d>0))return toast('Впиши размер в мм');const k=L/d;
  m.x=A[0]+(m.x-A[0])*k;m.y=A[1]+(m.y-A[1])*k;m.w*=k;
  if($('#dch')?.checked){const B2=[A[0]+(B[0]-A[0])*k,A[1]+(B[1]-A[1])*k];let a=Math.atan2(B2[1]-A[1],B2[0]-A[0]);if(Math.abs(a)>Math.PI/2)a+=a>0?-Math.PI:Math.PI;const c=Math.cos(-a),s=Math.sin(-a),dx=m.x-A[0],dy=m.y-A[1];m.x=A[0]+dx*c-dy*s;m.y=A[1]+dx*s+dy*c;m.rot=(m.rot||0)-a*180/Math.PI;}
- ['x','y','w','rot'].forEach(q=>m[q]=Math.round(m[q]*1e4)/1e4);SK.cal=null;SK.tool='zero';save();skTools();skFit();skPanel();toast('Масштаб задан — теперь поставь ноль');};
+ ['x','y','w','rot'].forEach(q=>m[q]=Math.round(m[q]*1e4)/1e4);SK.cal=null;save();skTool('zero');skFit();toast('Масштаб задан — теперь поставь ноль');};
 /* ---------- DXF ---------- */
-window.skDxfIn=inp=>{const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const{P}=dxfPrims(String(rd.result));if(!P.length)throw Error('нет линий и дуг');const ch=chainPrims(P),D=skD();
-  ch.forEach(c=>{const r=chainEls(c,[0,0]);D.cs.push({sx:r.sx,sy:r.sy,els:r.els,closed:r.closed});});save();skFit();skPanel();toast(`Из DXF добавлено контуров: ${ch.length}`);}catch(e){toast('DXF: '+e.message);}};rd.readAsText(f);inp.value='';};
-window.skDxfOut=()=>{const D=skD();if(!D.cs.length)return toast('Чертёж пуст');const o=['0','SECTION','2','ENTITIES'],n=v=>String(r3(v));
- D.cs.forEach(c=>{skE(c).E.forEach(e=>{if(e.k=='L')o.push('0','LINE','8','0','10',n(e.a[0]),'20',n(e.a[1]),'11',n(e.b[0]),'21',n(e.b[1]));else{const a=e.cw?e.b:e.a,b=e.cw?e.a:e.b,R=V2.dist(e.a,e.c),ang=p=>{let t=Math.atan2(p[1]-e.c[1],p[0]-e.c[0])*180/Math.PI;return t<0?t+360:t;};o.push('0','ARC','8','0','10',n(e.c[0]),'20',n(e.c[1]),'40',n(R),'50',n(ang(a)),'51',n(ang(b)));}});});
+window.skDxfIn=inp=>{const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const{P}=dxfPrims(String(rd.result));if(!P.length)throw Error('нет линий и дуг');const D=skD();P.forEach(e=>D.ps.push(e2p(e)));skMergeCircles();save();skFit();skPanel();toast(`Из DXF добавлено объектов: ${P.length}`);}catch(e){toast('DXF: '+e.message);}};rd.readAsText(f);inp.value='';};
+function skMergeCircles(){const D=skD(),A=D.ps;for(let i=0;i<A.length;i++)for(let j=i+1;j<A.length;j++){const a=A[i],b=A[j];if(a.t=='A'&&b.t=='A'&&Math.abs(a.cx-b.cx)<1e-3&&Math.abs(a.cy-b.cy)<1e-3&&Math.abs(a.r-b.r)<1e-3&&Math.abs(arcSw(a)+arcSw(b)-360)<1e-3&&Math.abs(angN(a.a2-b.a1))<1e-3){A[i]={t:'C',cx:a.cx,cy:a.cy,r:a.r};A.splice(j,1);break;}}}
+window.skDxfOut=()=>{const D=skD();if(!D.ps.length)return toast('Чертёж пуст');const o=['0','SECTION','2','ENTITIES'],n=v=>String(r3(v));
+ D.ps.forEach(p=>{if(p.t=='L')o.push('0','LINE','8','0','10',n(p.x1),'20',n(p.y1),'11',n(p.x2),'21',n(p.y2));else if(p.t=='C')o.push('0','CIRCLE','8','0','10',n(p.cx),'20',n(p.cy),'40',n(p.r));else o.push('0','ARC','8','0','10',n(p.cx),'20',n(p.cy),'40',n(p.r),'50',n(p.a1),'51',n(p.a2));});
  o.push('0','ENDSEC','0','EOF');const txt=o.join('\r\n'),fn=`${String(st.prog.name||'chertezh').replace(/[^\wА-Яа-яЁё.-]+/g,'_')}.dxf`;if(saveNative(fn,txt))return;
  const bl=new Blob([txt],{type:'application/dxf'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.appendChild(a);a.click();a.remove();toast('Сохранён '+fn);};
 window.skFromStock=()=>{const s=st.stock,P=stockGeo().P;if(!P||P.length<3)return;const D=skD();
- if(s.shape=='custom'&&s.cin=='els')D.cs.push({sx:s.sx,sy:s.sy,els:JSON.parse(JSON.stringify(s.els)),closed:'1'});
- else if(s.shape=='round')D.cs.push(skCirc(0,0,+s.d));else D.cs.push({sx:r3(P[0][0]),sy:r3(P[0][1]),els:P.slice(1).map(p=>({t:'L',x:r3(p[0]),y:r3(p[1]),r:0})),closed:'1'});save();skFit();skPanel();toast('Контур заготовки добавлен');};
-/* ---------- в работу: заготовка / контур / карман / сверление ---------- */
+ if(s.shape=='custom'&&s.cin=='els'){try{ctrEls({sx:s.sx,sy:s.sy,els:s.els,closed:'1'}).E.forEach(e=>D.ps.push(e2p(e)));}catch(e){}}
+ else if(s.shape=='round')D.ps.push({t:'C',cx:0,cy:0,r:r3(+s.d/2)});else P.forEach((a,k)=>{const b=P[(k+1)%P.length];D.ps.push({t:'L',x1:r3(a[0]),y1:r3(a[1]),x2:r3(b[0]),y2:r3(b[1])});});save();skFit();skPanel();toast('Контур заготовки добавлен');};
+/* ---------- в работу ---------- */
 function skOriented(c,ccw){const P=skPoly(c),cc=JSON.parse(JSON.stringify(c));if(P.length>2&&(area(P)>0)!==ccw){const pts=skVerts(cc),n=cc.els.length,fl={L:'L',CW:'CCW',CCW:'CW'},E=[];for(let k=n-1;k>=0;k--)E.push({t:fl[cc.els[k].t],x:pts[k][0],y:pts[k][1],r:cc.els[k].r});
-  const last=pts[n],first=pts[0];cc.sx=last[0];cc.sy=last[1];cc.els=E;if(cc.closed=='1'&&V2.dist(last,first)>1e-6){/* замыкающая прямая была неявной — добавим её в начало */cc.els.unshift({t:'L',x:first[0],y:first[1],r:0});cc.sx=last[0];cc.sy=last[1];}}return cc;}
+  const last=pts[n],first=pts[0];cc.sx=last[0];cc.sy=last[1];cc.els=E;if(cc.closed=='1'&&V2.dist(last,first)>1e-6)cc.els.unshift({t:'L',x:first[0],y:first[1],r:0});}return cc;}
 function skDrill(L){const G={};L.forEach(q=>{(G[q.d]=G[q.d]||[]).push(q);});Object.entries(G).forEach(([d,Q])=>{d=+d;
   const o=newOp('drill');Object.assign(o,{cycle:SK.dep>3*d?'G83':'G81',q:+Math.max(0.5,d).toFixed(1),depth:SK.dep,pat:'list',list:Q.map(q=>`${nf(q.cx)} ${nf(q.cy)}`).join('; ')});
   const t=st.tools.find(x=>x.type=='drill'&&Math.abs(x.d-d)<0.011)||newTool('drill',d);o.tool=t.id;st.ops.push(o);});return L.length;}
 function skMill(P){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});const lim=0.7*Math.min(x1-x0,y1-y0);
  const t=st.tools.filter(q=>q.type=='endmill'&&q.d<=lim).sort((a,b)=>b.d-a.d)[0];if(t)return t;const d=[20,16,12,10,8,6,5,4,3,2,1].find(v=>v<=lim)||1;return newTool('endmill',d);}
-function skAuto(){const D=skD(),cl=D.cs.map((c,i)=>({c,i,P:skPoly(c),cr:skCircle(c),err:skE(c).err})).filter(x=>x.c.closed=='1'&&!x.err&&x.P.length>2);
- if(!cl.length)return toast('Нет замкнутых контуров');cl.forEach(x=>x.A=Math.abs(area(x.P)));const outer=cl.filter(x=>!x.cr).sort((a,b)=>b.A-a.A)[0]||cl.sort((a,b)=>b.A-a.A)[0];
+function skAuto(){const cl=skCont().map((c,i)=>({c,i,P:skPoly(c),cr:skCircle(c),err:skE(c).err})).filter(x=>x.c.closed=='1'&&!x.err&&x.P.length>2);
+ if(!cl.length)return toast('Нет замкнутых контуров');cl.forEach(x=>x.A=Math.abs(area(x.P)));const outer=cl.filter(x=>!x.cr).sort((a,b)=>b.A-a.A)[0]||cl.slice().sort((a,b)=>b.A-a.A)[0];
  const inside=x=>x!==outer&&x.P.every(p=>pip(outer.P,p[0],p[1]));let nP=0,nH=0;
  if(outer.cr)Object.assign(st.stock,{shape:'round',d:outer.cr.d,origin:'center'});else Object.assign(st.stock,{shape:'custom',cin:'els',sx:outer.c.sx,sy:outer.c.sy,els:JSON.parse(JSON.stringify(outer.c.els))});
  const holes=cl.filter(x=>x.cr&&inside(x));
- cl.filter(x=>!x.cr&&inside(x)).forEach(x=>{const g=skOriented(x.c,true),base=newOp('contour');Object.assign(base,{sx:g.sx,sy:g.sy,els:g.els,closed:'1',mirror:'none',comp:'41',on:false});pickTool(base);st.ops.push(base);
-  const isl=holes.filter(h=>pip(x.P,h.cr.cx,h.cr.cy)).map(h=>`О ${nf(h.cr.cx)} ${nf(h.cr.cy)} ${nf(h.cr.d)}`).join('; '),o=newOp('pocketIsl');Object.assign(o,{src:'op',opn:st.ops.length,isl,depth:SK.dep});pickTool(o);o.tool=skMill(x.P).id;base.tool=o.tool;st.ops.push(o);nP++;});
+ cl.filter(x=>!x.cr&&inside(x)).forEach(x=>{const g=skOriented(x.c,true),base=newOp('contour');Object.assign(base,{sx:g.sx,sy:g.sy,els:g.els,closed:'1',mirror:'none',comp:'41',on:false});st.ops.push(base);
+  const isl=holes.filter(h=>pip(x.P,h.cr.cx,h.cr.cy)).map(h=>`О ${nf(h.cr.cx)} ${nf(h.cr.cy)} ${nf(h.cr.d)}`).join('; '),o=newOp('pocketIsl');Object.assign(o,{src:'op',opn:st.ops.length,isl,depth:SK.dep});o.tool=skMill(x.P).id;base.tool=o.tool;st.ops.push(o);nP++;});
  const freeH=holes.filter(h=>!cl.some(x=>!x.cr&&x!==outer&&inside(x)&&pip(x.P,h.cr.cx,h.cr.cy)));if(freeH.length)nH=skDrill(freeH.map(h=>h.cr));
  save();OTC.clear();renderAll();show('ops');toast(`Готово: заготовка${nP?`, карманов ${nP}`:''}${nH?`, отверстий ${nH}`:''} — проверь глубины и смотри 3D`);}
-window.skUse=(i,how)=>{const D=skD(),c=D.cs[i];
+window.skUse=(i,how)=>{if(how=='auto')return skAuto();const CS=skCont(),c=CS[i];if(!c&&how!='drillAll')return;
  if(how=='stock'){Object.assign(st.stock,{shape:'custom',cin:'els',sx:c.sx,sy:c.sy,els:JSON.parse(JSON.stringify(c.els))});save();OTC.clear();renderAll();toast('Контур стал заготовкой');show('proj');return;}
- if(how=='drill'||how=='drillAll'){const n=skDrill((how=='drill'?[c]:D.cs).map(skCircle).filter(Boolean));save();renderAll();show('ops');selO(st.ops[st.ops.length-1].id);toast(`Сверление: ${n} отв. — свёрла подобраны по диаметрам`);return;}
- if(how=='auto'){skAuto();return;}
+ if(how=='drill'){const n=skDrill([skCircle(c)]);save();renderAll();show('ops');selO(st.ops[st.ops.length-1].id);toast(`Сверление: ${n} отв.`);return;}
  const g=how=='out'?skOriented(c,false):how=='open'?JSON.parse(JSON.stringify(c)):skOriented(c,true),geo={sx:g.sx,sy:g.sy,els:g.els,closed:how=='open'?c.closed:'1',mirror:'none',comp:'41'};
- if(how=='pocket'){const base=newOp('contour');Object.assign(base,geo,{on:false});pickTool(base);st.ops.push(base);const n=st.ops.length;const P=skPoly(c);
-  const isl=D.cs.map(skCircle).filter(q=>q&&pip(P,q.cx,q.cy)&&!(Math.abs(q.cx)<1e-9&&false)).filter(q=>{const cc=skCircle(c);return !cc||q.d<cc.d;}).map(q=>`О ${nf(q.cx)} ${nf(q.cy)} ${nf(q.d)}`).join('; ');
-  addOp('pocketIsl',{src:'op',opn:n,isl,depth:SK.dep});toast(`Карман по контуру${isl?' с островами':''} — контур-основа №${n} добавлен выключенным`);return;}
+ if(how=='pocket'){const base=newOp('contour');Object.assign(base,geo,{on:false});st.ops.push(base);const n=st.ops.length,P=skPoly(c),cc=skCircle(c);
+  const isl=CS.map(skCircle).filter(q=>q&&q!==cc&&pip(P,q.cx,q.cy)&&(!cc||q.d<cc.d)).map(q=>`О ${nf(q.cx)} ${nf(q.cy)} ${nf(q.d)}`).join('; ');const t=skMill(P);base.tool=t.id;
+  addOp('pocketIsl',{src:'op',opn:n,isl,depth:SK.dep});const o=st.ops.find(x=>x.id==selOp);if(o){o.tool=t.id;save();renderOpEd();renderOpList();}toast(`Карман по контуру${isl?' с островами':''}`);return;}
  addOp('contour',{...geo,depth:SK.dep});toast(how=='in'?'Окно: фреза идёт внутри контура':how=='out'?'Фреза идёт снаружи контура (попутно)':'Контур по линии');};
-window.SK=SK;window.num=num;window.skPanel=skPanel;window.renderSk=renderSk;window.renderDraw=renderDraw;window.skGrid=v=>{skD().grid=+v;save();renderSk();};window.skStockZ=v=>{st.stock.z=num(v);save();OTC.clear();};window.__sk={skCorner,skPoly,skCircle,opTime};
-function renderDraw(){skTools();skPanel();if(!SK.fitted&&$('#dcv').clientWidth){SK.fitted=true;skFit();}else renderSk();}
+window.SK=SK;window.num=num;window.skPanel=skPanel;window.renderSk=renderSk;window.skGrid=v=>{skD().grid=+v;save();renderSk();};window.skStockZ=v=>{st.stock.z=num(v);save();OTC.clear();};window.__sk={skCorner:(c,v,k,R)=>'',skPoly,skCircle,opTime,skTrim,skExtend,skCornerP,skOffset,skCont};
+function renderDraw(){skD();SK.sel=new Set([...SK.sel].filter(i=>st.sketch.ps[i]));skTools();skPanel();if(!SK.fitted&&$('#dcv').clientWidth){SK.fitted=true;skFit();}else renderSk();}
+window.renderDraw=renderDraw;
 
 /* ---------- вкладки ---------- */
-function show(t){const nt={proj:'ops',upd:'home'}[t]||t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==nt));const mn=$('main');if(mn)mn.scrollTop=0;document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
+function show(t){document.body.classList.toggle('drawing',t=='draw');const nt={proj:'ops',upd:'home'}[t]||t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==nt));const mn=$('main');if(mn)mn.scrollTop=0;document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
  visible=t=='sim';if(PV)PV.on=t=='ops';
  if(t=='home')renderHome();if(t=='draw')requestAnimationFrame(renderDraw);if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code'){$('#fmtSel').value=st.prog.fmt=='plain'?'plain':'macro';$('#cmtSel').value=st.prog.cmt||'lat';regen();}
  if(t=='sim'){regen();if(!R3)init3d();resize();build();}
