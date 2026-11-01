@@ -86,7 +86,7 @@ input[type=range]{padding:0;accent-color:var(--acc);border:0;background:none}
 .kf{grid-column:1/-1}.kch{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.kch button{min-width:38px;padding:7px 0;border:1px solid var(--line);border-radius:9px;background:var(--pan2);color:var(--tx);font:600 14px/1 inherit;cursor:pointer}.kch button.on{background:var(--acc);border-color:var(--acc);color:#111}
 .ctabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ctabs::-webkit-scrollbar{display:none}.ctabs button{flex:none;border:1px solid var(--line);border-radius:20px;background:var(--pan2);color:var(--tx);padding:7px 13px;font:600 13px/1 inherit;cursor:pointer}.ctabs button.on{background:var(--acc);border-color:var(--acc);color:#111}
 .cyc button small{color:var(--mut);font-size:10px;line-height:1.2}
-#welcome{position:fixed;inset:0;z-index:100;background:#0008;display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}#welcome .wb{background:var(--pan);border:1px solid var(--line);border-radius:20px;padding:22px 18px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px #000a}#welcome img{width:72px;height:72px;border-radius:18px}#welcome h2{margin:10px 0 6px;font-size:20px}#welcome p{margin:8px 0}#welcome a{color:var(--acc)}
+#welcome,#modeM{position:fixed;inset:0;z-index:100;background:#0008;display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}#welcome .wb,#modeM .wb{background:var(--pan);border:1px solid var(--line);border-radius:20px;padding:22px 18px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px #000a}#welcome img{width:72px;height:72px;border-radius:18px}#welcome h2{margin:10px 0 6px;font-size:20px}#welcome p{margin:8px 0}#welcome a{color:var(--acc)}
 .zd{margin:10px 0 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--pan2)}.zd summary{cursor:pointer;color:var(--mut);font-size:13px}.zd summary b{color:var(--acc)}.zd .grid{margin-top:10px}
 .nw{display:flex;gap:6px}.nw input{flex:1;min-width:0}.pm{flex:none;width:42px;border:1px solid var(--line);border-radius:10px;background:var(--pan2);color:var(--acc);font:700 18px/1 inherit;cursor:pointer}
 .burger{background:var(--pan2);border:1px solid var(--line);color:var(--tx);width:42px;height:42px;border-radius:12px;font-size:20px;cursor:pointer;flex:none}
@@ -161,6 +161,31 @@ details.cycd[open] summary:before{content:'－'}
  #opList .it .m{flex:1 1 calc(100% - 50px)}
  #opList .it .ib{flex:1;font-size:18px;padding:6px 0}
 }
+
+/* режим новичка */
+.lt{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.q{flex:none;width:26px;height:26px;margin:-4px 0;border-radius:50%;border:1.5px solid var(--acc);background:none;color:var(--acc);font-weight:700;font-size:13px;line-height:1;font-family:inherit;cursor:pointer;padding:0}
+.q.on{background:var(--acc);color:#141414}
+.qt{display:block;background:#ffc40014;border:1px solid #ffc40033;border-radius:8px;padding:8px 10px;color:var(--tx);font-size:12.5px;line-height:1.45}
+.qt[hidden]{display:none}
+.guide{background:linear-gradient(135deg,#ffc40018,#ffc40008);border:1px solid #ffc40040;border-radius:16px;padding:12px 14px;margin-bottom:14px}
+.guide[hidden]{display:none}
+.guide .gs{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--acc);text-transform:uppercase}
+.guide b{display:block;font-size:16px;margin:2px 0 4px}
+.guide p{margin:0 0 10px;color:var(--tx);font-size:13px;line-height:1.45}
+.guide .gdots{display:flex;gap:4px;margin:6px 0 8px}.guide .gdots i{flex:1;height:4px;border-radius:2px;background:var(--line)}.guide .gdots i.on{background:var(--acc)}
+#t-sim .guide{margin:8px 10px 0;flex:none;padding:10px 12px}#t-sim .guide p{margin-bottom:8px}
+.what{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--pan2);font-size:13px;line-height:1.45}.what b{color:var(--acc)}
+details.adv{margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+details.adv summary{cursor:pointer;color:var(--mut);font-size:13px;list-style:none}details.adv summary::-webkit-details-marker{display:none}
+details.adv summary:before{content:'▸ '}details.adv[open] summary:before{content:'▾ '}details.adv[open] summary{margin-bottom:10px}
+.modeb{background:var(--pan2);border:1px solid var(--line);color:var(--tx);height:36px;padding:0 12px;border-radius:18px;font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;flex:none;white-space:nowrap}
+.mp h2{margin:4px 0 6px;font-size:21px}.mp>p{margin:0 0 14px;color:var(--mut);font-size:13px}
+.mpc{display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;background:var(--pan2);border:2px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;color:var(--tx);font:inherit;cursor:pointer}
+.mpc.on{border-color:var(--acc)}.mpc i{font-style:normal;font-size:30px;line-height:1}.mpc b{display:block;font-size:16px;margin-bottom:4px}.mpc small{color:var(--mut);font-size:13px;line-height:1.45}
+@media(max-width:820px){.modeb{position:absolute;right:62px;bottom:9px;width:42px;height:42px;padding:0;border-radius:12px;font-size:18px}.modeb .mt{display:none}}
+.modeb .mt{margin-left:6px}
+#t-sim .guide .gdots{display:none}#t-sim .guide b{font-size:14px;margin:0 0 2px}#t-sim .guide p{font-size:12px;margin-bottom:6px}#t-sim .guide .btn{padding:6px 12px}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head>
@@ -175,6 +200,7 @@ details.cycd[open] summary:before{content:'－'}
   <button data-t="sim"><i>🧊</i>3D</button>
   <button data-t="upd"><i>⟳</i>Обновл.</button>
  </nav>
+ <button class="modeb" id="modeB" hidden onclick="modePick()" aria-label="Режим работы"></button>
  <button class="burger" onclick="openMenu()" aria-label="Меню">☰</button>
 </header>
 <div id="updBar" class="updbar" hidden></div>
@@ -266,7 +292,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.0.2';
+const APP_VERSION='2.1.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -457,9 +483,124 @@ let selTool=st.tools[0]?.id,selOp=st.ops[0]?.id,manual=false;
 const save=keep=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(manual&&keep!==true){manual=false;setTimeout(()=>toast('Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}codeDirty=true;};
 let codeDirty=true;
 
+
+/* ---------- режим: новичок / опытный ---------- */
+let MODE=null;try{MODE=localStorage.getItem('fcam_mode');}catch(e){}
+const easy=()=>MODE=='easy';
+const hCtx=o=>o===st.prog?'prog':o===st.stock?'stock':st.tools.includes(o)?'tool':o===WZ?'wz':(o.type&&OPS[o.type])?o.type:'';
+const HELP={
+ tool:'Чем обрабатывать. Список — из вкладки «Инструмент»; подходящие для этой операции стоят вверху.',
+ safe:'Высота над нулём Z, на которой фреза быстро перемещается над деталью. 10 мм обычно хватает, если прижимы и тиски ниже.',
+ depth:'На сколько миллиметров уйти вниз от верха детали (от нуля Z). Пиши положительное число: 5 — значит на 5 мм вглубь.',
+ dmode:'Как задать глубину: «Съёмом» — сколько снять от верха (например, 2 мм). «Конечной Z» — до какой координаты опуститься (например, −7.8), как в чертеже от нуля.',
+ zend:'Координата Z, до которой опустится фреза. Ниже нуля — с минусом: нажми ± справа.',
+ step:'Сколько снимать за один проход в глубину. Меньше — бережнее к фрезе, но дольше. В стали концевой фрезой обычно 0.3–0.5 диаметра, в алюминии — до 1 диаметра.',
+ over:'На сколько фреза сдвигается вбок между проходами, в % от её диаметра. 40–50 % — спокойно, 60–70 % — быстрее, но тяжелее для фрезы.',
+ cx:'Где центр элемента по X — от нуля детали. Элемент в центре заготовки и ноль в центре — оставь 0.',
+ cy:'Где центр элемента по Y — от нуля детали. Минус — к себе, плюс — от себя (к станку).',
+ x0:'Левая граница участка по X (от нуля детали). Фреза сама выйдет за край на свой радиус.',x1:'Правая граница участка по X.',y0:'Ближняя к тебе граница по Y.',y1:'Дальняя граница по Y.',
+ side:'«Снаружи» — фреза идёт вокруг, остаётся выступ (бобышка). «Внутри» — фреза выбирает окно или отверстие.',
+ strat:'«Прямыми» — каждый проход в одну сторону, затем подъём и возврат: поверхность чище. «Зигзагом» — туда-обратно без подъёма: быстрее.',
+ fdir:'В какую сторону идут рабочие проходы.',
+ rf:'Скругление в углу между стенкой и дном. 0 — острый угол, как от обычной концевой фрезы.',
+ fs:'Мелкий шаг по Z на скруглении: меньше — глаже радиус, но дольше.',
+ ang:'Поворот в градусах: 0° — вправо (по +X), 90° — от себя (по +Y), 180° — влево.',
+ cnt:'Сколько штук. Нажми цифру под полем или впиши своё число.',
+ n:'Сколько граней: 4 — квадрат, 6 — шестигранник, 8 — восьмигранник.',
+ sw:'Размер «под ключ» — расстояние между противоположными гранями, как у гаечного ключа.',
+ wall:'Сколько металла снять вокруг контура с каждой стороны. Заготовка больше выступа на 5 мм с каждого бока — пиши 5.',
+ cycle:'G81 — сверлит сразу на всю глубину (неглубокие отверстия, центровка). G83 — сверлит порциями и выводит сверло, чтобы вышла стружка (глубже 3 диаметров). G73 — порциями, но только ломает стружку: быстрее. G82 — с паузой на дне (зенковка).',
+ rp:'С какой высоты над деталью сверло начинает рабочую подачу. 2–5 мм над верхом.',
+ q:'Глубина одного «клевка» сверла перед выводом. Обычно около диаметра сверла.',
+ dwell:'Пауза на дне, в миллисекундах: 500 = полсекунды.',
+ pat:'Как стоят отверстия: списком точек, по окружности, в ряд или сеткой.',
+ list:'Координаты отверстий от нуля детали: «X Y», точки через «;». Пример: -20 0; 20 0',
+ pr:'Радиус окружности, на которой стоят отверстия, — половина диаметра PCD с чертежа.',
+ lx:'Откуда начинается ряд: X первого отверстия.',ly:'Y первого отверстия ряда.',lc:'Сколько отверстий в ряду.',lp:'Расстояние между соседними отверстиями.',
+ gx:'X первого (левого нижнего) отверстия сетки.',gy:'Y первого (левого нижнего) отверстия.',nx:'Сколько отверстий по X.',ny:'Сколько отверстий по Y.',dx:'Шаг между отверстиями по X.',dy:'Шаг между отверстиями по Y.',
+ lead:'Длина плавного подхода к детали и отхода от неё — чтобы фреза не оставила след при врезании.',
+ pitch:'Шаг резьбы: M6 — 1, M8 — 1.25, M10 — 1.5, M12 — 1.75 (обычный крупный шаг). Таблица — в ☰ → Резьбы.',
+ dia:'Номинальный диаметр резьбы: для M10 пиши 10.',
+ hand:'Правая — обычная резьба. Левая (LH) — только если так написано на чертеже.',
+ aA:'Только для прутка на 4-й оси: на какой угол повернуть пруток перед этой операцией. Несколько углов через «;» — операция повторится на каждом.',
+ ox:'Сдвиг нуля только для этой операции. Обычно 0 — тогда работает общий ноль детали.',oy:'Сдвиг нуля по Y только для этой операции. Обычно 0.',zt:'Сдвиг нуля по Z только для этой операции. Обычно 0.',
+ 'face.depth':'Сколько срезать сверху, мм. Например, заготовка 31 мм, а нужна 30 — пиши 1.',
+ 'pocketRect.w':'Длина кармана по X, как на чертеже.','pocketRect.h':'Ширина кармана по Y.',
+ 'pocketCircle.d':'Диаметр кармана, как на чертеже. Фреза должна быть меньше.',
+ 'pocketOval.l':'Общая длина паза — от края до края, со скруглениями.','pocketOval.w':'Ширина паза.',
+ 'contourRect.w':'Длина прямоугольника по X, как на чертеже.','contourRect.h':'Ширина по Y.',
+ 'contourCircle.d':'Диаметр, как на чертеже: для выступа — наружный, для окна — внутренний.',
+ 'contourOval.l':'Общая длина овала.','contourOval.w':'Ширина овала.',
+ 'flats.h':'Расстояние от центра детали до плоскости лыски. Для размера под ключ S пиши S ÷ 2.',
+ 'flats.bd':'Диаметр круглой заготовки или сторона квадратной.','flats.blank':'Какой формы деталь в сечении.',
+ 'flats.depth':'Высота лыски вдоль оси детали — на сколько мм вниз.',
+ 'slot.x1':'X начала паза.','slot.y1':'Y начала паза.','slot.x2':'X конца паза.','slot.y2':'Y конца паза. Ширина паза = диаметр фрезы.',
+ 'slotsRad.pr':'Расстояние от центра детали до середины паза.','slotsRad.l':'Длина одного паза.','slotsRad.w':'Ширина одного паза.',
+ 'slotsArc.pr':'Радиус средней линии пазов.','slotsArc.sw':'Длина паза в градусах дуги.','slotsArc.w':'Ширина паза.',
+ 'chamf.c':'Ширина фаски с чертежа: фаска 1×45° — пиши 1.','chamf.z0':'Высота кромки, где делаем фаску. 0 — верх детали.','chamf.ex':'Насколько кончик фаскоснима уходит ниже фаски, чтобы она вышла ровной. 0.3 — нормально.',
+ 'helix.d':'Диаметр отверстия или бобышки, как на чертеже.','helix.pitch':'Насколько фреза опускается за один круг. Меньше — легче фрезе.','helix.shape':'Форма отверстия или бобышки.',
+ 'engrave.txt':'Что написать. Новая строка — через «|».','engrave.th':'Высота букв, мм.','engrave.sp':'Промежуток между буквами, мм.','engrave.depth':'Глубина гравировки. 0.1–0.3 мм обычно хватает.',
+ 'rodFlats.th':'Сколько металла останется между лысками — толщина ушка.','rodFlats.from':'От какого торца прутка отмеряется длина лыски.','rodFlats.len':'Длина лыски вдоль прутка, от выбранного торца.',
+ 'rodFlats.cnt':'Сколько сторон: 2 — ушко, 4 — квадрат, 6 — шестигранник.','rodFlats.a0':'Угол оси A для первой лыски. Обычно 0.','rodFlats.aend':'На какой угол повернуть ось A в конце. Пусто — не поворачивать.',
+ 'tap.depth':'Длина резьбы. Отверстие под метчик должно быть глубже на 2–3 шага.',
+ 'drill.depth':'Глубина по вершине сверла. Для сквозного — толщина детали + 1/3 диаметра + 1 мм.',
+ 'prog.num':'Номер программы на станке: O1000 — пиши 1000. Не должен совпадать с другой программой в памяти станка.','prog.name':'Название — для себя, попадёт в комментарий программы.','prog.note':'Любая заметка — попадёт в комментарий.',
+ 'stock.shape':'Какая заготовка: брусок (прямоугольная), диск (круглая), многогранник или пруток на 4-й оси.',
+ 'stock.x':'Длина заготовки по X — слева направо, если стоишь лицом к станку.','stock.y':'Ширина по Y — от себя к станку.','stock.z':'Высота (толщина) заготовки.',
+ 'stock.d':'Диаметр заготовки.','stock.origin':'Где ноль детали по X и Y — точка, от которой считаются все размеры. «Центр» — если находишь центр щупом, «угол» — если касаешься двух сторон. Должен совпадать с тем, как ты снимаешь ноль на станке.',
+ 'stock.wcs':'Ячейка станка, куда записан ноль детали. Почти всегда G54.','stock.mat':'Из чего деталь: по материалу считаются обороты и подачи.',
+ 'stock.rl':'Длина прутка, которая выступает из патрона.','stock.rx':'Где левый торец прутка по X относительно нуля детали.','stock.rz':'Где ноль Z: на оси (в центре) прутка или на его верхней точке.',
+ 'stock.adir':'Направление вращения оси A. Меняй, только если на станке ось крутится наоборот.','stock.n':'Сколько граней у заготовки.','stock.sw':'Размер заготовки под ключ.','stock.pts':'Контур заготовки точками «X Y» через «;».',
+ 'tool.num':'Номер гнезда в магазине станка (T). Под этим же номером станок хранит длину инструмента (H).','tool.type':'Что это за инструмент: фреза, сверло, метчик…',
+ 'tool.d':'Диаметр — написан на хвостовике или на коробке.','tool.ri':'Радиус на углу пластины, если фреза с пластинами (например, r0.8 или r2). 0 — острый угол.',
+ 'tool.cr':'Радиус скругления на кончике фрезы.','tool.ang':'Угол при вершине: у сверла обычно 118–140°, у фаскоснима 90°.','tool.tip':'Диаметр плоского кончика фаскоснима. 0 — острый.',
+ 'tool.fl':'Сколько режущих зубьев (кромок) у фрезы.','tool.s':'Обороты шпинделя. Посчитай кнопкой «По материалу» ниже.','tool.f':'Скорость подачи — как быстро фреза идёт по детали, мм/мин.',
+ 'tool.pitch':'Шаг резьбы метчика или резьбофрезы.','tool.name':'Название для себя — например, фирма или артикул.',
+ 'polygon.blank':'Диаметр круглой заготовки, из которой делаешь грани. 0 — тогда используется «Съём вокруг».','polygon.side':'Выступ — грани снаружи, как у головки болта. Гнездо — карман под гайку внутри детали.',
+ 'contour.comp':'С какой стороны контура идёт фреза. «Слева» — обычный вариант для наружного контура по часовой стрелке.','contour.cmode':'«В программе» — проще: программа сама учтёт диаметр фрезы. «Корректором» — если на станке привык вносить радиус фрезы в D.',
+ 'contour.closed':'Замкнутый — контур возвращается в начальную точку (обход вокруг). Открытый — от точки до точки.','contour.mirror':'Можно ввести контур с одной стороны детали, а обработать с обеих.',
+ src:'Откуда взять форму: прямоугольник, окружность или готовый контур из другой операции.',opn:'Номер операции «Контур по элементам», из которой взять форму.',rc:'Радиус скругления углов.',isl:'Бобышки, которые останутся внутри кармана: «О X Y Ø» — круглая, «П X Y длина ширина» — прямоугольная, через «;».',
+ 'chamf.w':'Длина прямоугольника по X.','chamf.h':'Ширина по Y.','chamf.d':'Диаметр отверстия или бобышки.','chamf.side':'Наружная — фаска на выступе, внутренняя — в кармане или отверстии.',
+ 'pocketIsl.w':'Длина кармана по X.','pocketIsl.h':'Ширина кармана по Y.','pocketIsl.d':'Диаметр кармана.',
+ 'arc.part':'Какую часть окружности обработать.','arc.d':'Диаметр окружности, как на чертеже.','arc.side':'Снаружи — выпуклая дуга (край бобышки), внутри — вогнутая (часть отверстия).',
+ 'groove.prof':'Форма канавки в разрезе.','groove.dir':'Вдоль какой оси идёт канавка.','groove.pos':'Где середина канавки поперёк её направления.','groove.s0':'Где канавка начинается.','groove.s1':'Где канавка заканчивается.',
+ 'groove.w':'Ширина канавки по верху.','groove.h':'Глубина канавки.','groove.rf':'Радиус дна (или полукруга).',
+ 'slotsRad.orient':'Пазы смотрят от центра (вдоль радиуса) или лежат поперёк.','engrave.lay':'Текст по прямой или по дуге окружности.','engrave.al':'Как поставить текст относительно точки привязки.',
+ 'engrave.ar':'Радиус дуги, по которой идёт низ букв.','engrave.aa':'Где середина текста на дуге: 90° — сверху.','engrave.adir':'Буквы смотрят наружу (текст сверху) или к центру.'};
+const helpFor=(o,k)=>{const c=hCtx(o);return HELP[c+'.'+k]||(['prog','stock','tool'].includes(c)?'':HELP[k])||'';};
+function lab(o,k,l){if(!easy())return l;const h=helpFor(o,k);return h?`<span class="lt"><span>${l}</span><button type="button" class="q" aria-label="Что это?" onmousedown="event.preventDefault()" onclick="qTip(event,this)">?</button></span><span class="qt" hidden>${h}</span>`:l;}
+window.qTip=(e,b)=>{e.preventDefault();e.stopPropagation();const t=b.parentElement.nextElementSibling;t.hidden=!t.hidden;b.classList.toggle('on',!t.hidden);};
+/* что делает каждый цикл — простыми словами */
+const EASY={face:'Срезает верх заготовки и делает его ровным. Обычно это первая операция.',pocketRect:'Выбирает прямоугольное углубление (карман) внутри детали.',pocketCircle:'Круглое углубление с плоским дном — как большое отверстие, но не насквозь.',
+ pocketOval:'Продолговатый паз со скруглёнными концами.',contourRect:'Обходит прямоугольник: снаружи — остаётся выступ, внутри — получается окно.',contourCircle:'Обходит окружность: снаружи — круглая бобышка, внутри — круглое окно.',
+ contourOval:'Обходит овал: снаружи — выступ, внутри — окно.',polygon:'Шестигранник, квадрат и т. п.: выступ — как головка болта, гнездо — карман под гайку.',contour:'Любой контур с чертежа: по порядку вводишь прямые и дуги или загружаешь DXF.',
+ chamf:'Снимает фаску по краю — прямоугольника, отверстия или контура.',arc:'Обрабатывает только часть окружности — например, половину.',helix:'Фреза идёт по спирали вниз — так делают отверстие больше фрезы без сверла.',
+ slot:'Прямой паз от точки до точки, шириной с фрезу.',groove:'Канавка с профилем (U, полукруг или V), обычно сферической фрезой.',slotsRad:'Несколько одинаковых пазов по кругу.',slotsArc:'Пазы в виде дуги, расставленные по окружности.',
+ flats:'Лыски на круглой или квадратной детали, которая стоит вертикально (например, под ключ).',drill:'Сверление отверстий: одно, по окружности, в ряд или сеткой. Перед сверлом обычно делают центровку — тот же цикл с центровкой.',
+ tap:'Нарезает резьбу метчиком в уже просверленном отверстии. Удобнее всего — цикл «Под резьбу (мастер)»: он сам добавит центровку, сверло и метчик.',thread:'Резьба специальной резьбофрезой — для больших диаметров и твёрдых материалов.',
+ pocketIsl:'Карман, внутри которого остаются нетронутые бобышки (острова).',engrave:'Гравировка надписей — по прямой или по дуге.',rodFlats:'Лыски на прутке в 4-й оси: срезает сторону, поворачивает пруток и срезает следующую.'};
+/* что не нужно новичку — прячем в «Дополнительно» */
+const ADV=new Set(['safe','over','strat','fs','dwell','lead','ex','so','cmode','da','passes','aend','dmode','rp','q','fdir','a0']);
+/* пошаговые подсказки на вкладках */
+const GUIDE={proj:[1,'Заготовка','Впиши размеры заготовки и выбери, где ноль детали — точку, которую ты снимаешь щупом на станке. Материал нужен, чтобы подобрать обороты и подачи.','tools','Дальше: инструмент →'],
+ tools:[2,'Инструмент','Добавь фрезы и свёрла, которые стоят в станке, под теми же номерами T. Главное — тип и диаметр. Обороты и подачу посчитает кнопка «По материалу».','ops','Дальше: операции →'],
+ ops:[3,'Операции','Добавь по порядку, что сделать с деталью: обычно торцовка → контур или карманы → отверстия → фаски. Выбери цикл ниже и заполни размеры. Не понятно поле — нажми «?» рядом с ним.','sim','Дальше: проверить в 3D →'],
+ sim:[4,'Проверка в 3D','Нажми ▶ и посмотри, как идёт обработка. Голубые линии — работа фрезы, красные — быстрые перемещения: они не должны проходить сквозь деталь.','code','Дальше: программа →'],
+ code:[5,'Программа','Программа готова. «⬇ Скачать .NC» — сохранить файлом и перенести на станок. Первый запуск: проверь в графике стойки, затем «по воздуху» (ноль Z поднят) и на пониженной подаче.',null,'']};
+function guideUI(t){document.querySelectorAll('.guide').forEach(g=>g.hidden=true);const G=GUIDE[t],g=$('#gd-'+t);if(!easy()||!G||!g)return;const[n,ti,tx,nx,nl]=G;
+ g.innerHTML=`<div class="gs">Шаг ${n} из 5</div><div class="gdots">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div><b>${ti}</b><p>${tx}</p><div class="row">${nx?`<button class="btn p" onclick="show('${nx}')">${nl}</button>`:`<button class="btn p" onclick="openMenu('check')">✅ Проверить программу</button>`}</div>`;g.hidden=false;}
+const modeHTML=()=>`<div class="mp"><h2>Как ты работаешь?</h2><p>Покажу столько, сколько нужно. Сменить можно в любой момент: ☰ → «Режим работы» или кнопка вверху.</p>
+ <button class="mpc ${MODE=='easy'?'on':''}" onclick="modeSet('easy')"><i>🔰</i><span><b>Я только начинаю</b><small>Пошагово: заготовка → инструмент → операции → проверка → программа. У каждого поля кнопка «?» с объяснением простыми словами, лишние настройки спрятаны.</small></span></button>
+ <button class="mpc ${MODE=='pro'?'on':''}" onclick="modeSet('pro')"><i>🛠</i><span><b>Я уже умею</b><small>Знаю станок и G-код. Все параметры сразу, без подсказок: параметрия, 4-я ось, тонкие настройки.</small></span></button></div>`;
+function modeUI(){const b=$('#modeB');if(!b)return;b.hidden=!MODE;b.innerHTML=MODE=='easy'?'<span>🔰</span><span class="mt">Новичок</span>':'<span>🛠</span><span class="mt">Опытный</span>';b.title=MODE=='easy'?'Режим: новичок':'Режим: опытный';}
+window.modePick=()=>openMenu('mode');
+window.modeSet=m=>{MODE=m;try{localStorage.setItem('fcam_mode',m);}catch(e){}closeMenu();const w=$('#modeM');if(w)w.remove();modeUI();renderAll();
+ const cur=document.querySelector('nav button.on')?.dataset.t||'proj';show(cur);toast(m=='easy'?'Режим «Новичок»: подсказки включены':'Режим «Опытный»: все параметры');};
+function modeModal(){if($('#modeM'))return;const d=document.createElement('div');d.id='modeM';d.innerHTML=`<div class="wb" style="text-align:left">${modeHTML()}</div>`;document.body.appendChild(d);}
+
 /* ---------- формы ---------- */
 const shown=(o,f)=>!f[4]||(typeof f[4]=='function'?f[4](o):Object.entries(f[4]).every(([k,v])=>Array.isArray(v)?v.includes(o[k]):o[k]==v));
-function fld(o,f){const[k,l,,kind]=f,v=o[k]??'';
+function fld(o,f){const[k,l0,,kind]=f,v=o[k]??'',l=lab(o,k,l0);
  if(kind=='k')return `<label class="kf">${l}<div class="nw"><input data-k="${k}" type="text" inputmode="numeric" value="${v}"></div><div class="kch">${[1,2,3,4,5,6,8,12].map(n=>`<button type="button" class="${+v==n?'on':''}" onmousedown="event.preventDefault()" onclick="kSet(this,${n})">${n}</button>`).join('')}</div></label>`;
  if(Array.isArray(kind))return `<label>${l}<select data-k="${k}">${kind.map(([a,b])=>`<option value="${a}" ${a==v?'selected':''}>${b}</option>`).join('')}</select></label>`;
  if(kind=='text')return `<label>${l}<input data-k="${k}" data-s="1" value="${esc(v)}"></label>`;
@@ -509,12 +650,12 @@ function stkInfo(g){const s=st.stock;if(g.rod){const hint=$('#stockHint');if(hin
  const hint=$('#stockHint');if(hint&&hint.dataset.t)hint.innerHTML=hint.dataset.t;return `<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+s.z).toFixed(2)} мм</b></span>`;}
 function renderProj(){{const h=$('#stockHint');if(h&&!h.dataset.t)h.dataset.t=h.innerHTML;}
  $('#progF').innerHTML=[['num','Номер O',1000,'n'],['name','Имя программы','','text'],['note','Комментарий','','text']].map(f=>fld(st.prog,f)).join('');
- const SFr=SF.map(f=>f[0]=='mat'?['mat','Материал','',[...(MATS[st.stock.mat]||!st.stock.mat?[]:[[st.stock.mat,st.stock.mat]]),...Object.keys(MATS).map(k=>[k,k])]]:f);
+ const SFr=SF.filter(f=>!(easy()&&f[0]=='adir')).map(f=>f[0]=='mat'?['mat','Материал','',[...(MATS[st.stock.mat]||!st.stock.mat?[]:[[st.stock.mat,st.stock.mat]]),...Object.keys(MATS).map(k=>[k,k])]]:f);
  $('#stockF').innerHTML=SFr.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');
  const g=stockGeo();$('#stockInfo').innerHTML=stkInfo(g)+(g.bad?'<span style="color:var(--bad)">⚠ Мало точек контура — показан прямоугольник</span>':'');
  bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock,()=>{$('#stockInfo').innerHTML=stkInfo(stockGeo());},()=>renderProj(),true);
  const mpI=()=>{const PT=parts();$('#mpInfo').innerHTML=`<span>Деталей: <b>${PT.length}</b></span>`+(mpGet().mode=='wcs'?`<span>${PT.map(q=>q.w).join(' · ')}</span>`:'');};
- $('#mpF').innerHTML=MPF.filter(f=>shown(mpGet(),f)).map(f=>fld(mpGet(),f)).join('');mpI();bindForm($('#mpF'),mpGet,mpI,()=>renderProj());
+ {const c=$('#mpF').closest('.card');if(c)c.hidden=easy()&&mpGet().mode=='off';}$('#mpF').innerHTML=MPF.filter(f=>shown(mpGet(),f)).map(f=>fld(mpGet(),f)).join('');mpI();bindForm($('#mpF'),mpGet,mpI,()=>renderProj());
  $('#projStats').innerHTML=`<span>Инструментов: <b>${st.tools.length}</b></span><span>Операций: <b>${st.ops.length}</b></span><span>Пресетов: <b>${PRE.length}</b></span>`;}
 /* приложение Android (APK) / Windows (EXE) / браузер */
 const NATIVE=window.AndroidApp?'android':(window.chrome&&window.chrome.webview?'windows':'');
@@ -595,12 +736,12 @@ function renderOpEd(){
  const d=OPS[o.type],sug=st.tools.filter(t=>d.k.includes(t.type));
  const toolF=['tool','Инструмент',null,(sug.length?sug:st.tools).concat(sug.length?st.tools.filter(t=>!sug.includes(t)):[]).map(t=>[t.id,`T${t.num} · ${TT[t.type].n} Ø${t.d}`])];
  $('#opEd').innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${d.n}</h3><button class="btn s" onclick="savePreset()">★ В пресеты</button></div>
- <div class="oped"><div>${o.type=='contour'?ctrPanel(o):''}${SKETCH[o.type]?`<div id="opSk">${SKETCH[o.type](o)}</div>`:''}<div class="grid" id="of">${fld(o,toolF)}${fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div>
- ${d.rodNo?'':`<details class="zd" ${num(o.ox)||num(o.oy)||num(o.zt)||String(o.aA??'').trim()?'open':''}><summary>⌖ Ноль операции: <b id="zSum">${zSum(o)}</b></summary><div class="grid" id="of2">${ZF.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint" style="margin-top:8px">По умолчанию у всех операций ноль детали (G54). Сдвиг — только для этой операции: программа выведет <b>G52 X… Y… Z…</b> перед ней и отменит после. На 3D ноль показан осями: <b style="color:#ff5c5c">X</b> <b style="color:#2ecc71">Y</b> <b style="color:#4aa3ff">Z</b>.</div></details>`}<div class="hint">${HINT[o.type]||''}${['pocketRect','pocketCircle','pocketOval'].includes(o.type)||(o.type=='polygon'&&o.side=='in')?HINT._rf:''}</div></div>
+ <div class="oped"><div>${o.type=='contour'?ctrPanel(o):''}${SKETCH[o.type]?`<div id="opSk">${SKETCH[o.type](o)}</div>`:''}${easy()&&EASY[o.type]?`<div class="what"><b>Что это:</b> ${EASY[o.type]}</div>`:''}<div class="grid" id="of">${fld(o,toolF)}${easy()?'':fld(o,['safe','Безопасная Z',10,'n'])}${d.f.filter(f=>shown(o,f)&&!(easy()&&ADV.has(f[0]))).map(f=>fld(o,f)).join('')}</div>${easy()?(()=>{const A=[['safe','Безопасная Z',10,'n'],...d.f.filter(f=>shown(o,f)&&ADV.has(f[0]))];return `<details class="adv"><summary>Дополнительные настройки (${A.length}) — можно не трогать</summary><div class="grid" id="of3">${A.map(f=>fld(o,f)).join('')}</div></details>`;})():''}
+ ${d.rodNo?'':`<details class="zd" ${num(o.ox)||num(o.oy)||num(o.zt)||String(o.aA??'').trim()?'open':''}><summary>⌖ Ноль операции: <b id="zSum">${zSum(o)}</b></summary><div class="grid" id="of2">${ZF.filter(f=>shown(o,f)).map(f=>fld(o,f)).join('')}</div><div class="hint" style="margin-top:8px">По умолчанию у всех операций ноль детали (G54). Сдвиг — только для этой операции: программа выведет <b>G52 X… Y… Z…</b> перед ней и отменит после. На 3D ноль показан осями: <b style="color:#ff5c5c">X</b> <b style="color:#2ecc71">Y</b> <b style="color:#4aa3ff">Z</b>.</div></details>`}${(()=>{const ht=(HINT[o.type]||'')+(['pocketRect','pocketCircle','pocketOval'].includes(o.type)||(o.type=='polygon'&&o.side=='in')?HINT._rf:'');return easy()&&ht?`<details class="adv"><summary>Подробнее о цикле</summary><div class="hint" style="margin-top:0">${ht}</div></details>`:`<div class="hint">${ht}</div>`;})()}</div>
  <div class="prevw"><div class="prev" id="opPrev"><div class="prevmsg" id="prevMsg"></div><div class="prevtag">3D-модель результата · вращайте пальцем</div>
   <div class="prevbar"><div class="row" style="gap:6px"><label class="chip"><input type="checkbox" ${prevAll?'checked':''} onchange="setPrevAll(this.checked)">с предыдущими</label><label class="chip"><input type="checkbox" class="stkChk" ${showStock?'checked':''} onchange="setStock(this.checked)">заготовка</label></div><button class="btn s" onclick="fitPrev()">⌖</button></div></div>
   <div class="stats" id="prevStats"></div></div></div>`;
- bindForm($('#of'),()=>o,()=>{renderOpList();if(o.type=='contour')ctrDraw(o);const sk=$('#opSk');if(sk&&SKETCH[o.type])sk.innerHTML=SKETCH[o.type](o);updPrev();},()=>renderOpEd());if($('#of2'))bindForm($('#of2'),()=>o,()=>{const z=$('#zSum');if(z)z.innerHTML=zSum(o);updPrev();});
+ const ofAfter=()=>{renderOpList();if(o.type=='contour')ctrDraw(o);const sk=$('#opSk');if(sk&&SKETCH[o.type])sk.innerHTML=SKETCH[o.type](o);updPrev();};bindForm($('#of'),()=>o,ofAfter,()=>renderOpEd());if($('#of3'))bindForm($('#of3'),()=>o,ofAfter,()=>renderOpEd());if($('#of2'))bindForm($('#of2'),()=>o,()=>{const z=$('#zSum');if(z)z.innerHTML=zSum(o);updPrev();});
  if(o.type=='contour'){ctrBind(o);ctrDraw(o);renderDxf();}
  updPrev(0);}
 const HINT={rodFlats:'Пруток на 4-й оси (вкладка «Проект» → заготовка «Пруток на 4-й оси A»). Фреза снимает лыску сверху от верха прутка до половины размера, затем ось A поворачивается (на 180° для ушка, через 90° для квадрата, через 60° для шестигранника) и снимается следующая сторона — останется ровно заданная толщина. На эскизе: L — длина лыски от выбранного торца прутка, T — толщина, которая останется. Фреза заходит снаружи торца и доходит краем точно до уступа. После лысок добавьте «Сверление» с «Поворот A» = A лыски и «Z0 операции» = половина толщины — отверстие пройдёт сквозь ушко.',pocketIsl:'Карман любой формы с островами (бобышками), которые остаются нетронутыми. Траектория — эквидистанты от стенок и островов (как «смещение» в CAM), от середины к стенкам, с подъёмом только когда нельзя перейти подачей. Острова: «О X Y Ø» — круглый, «П X Y длина ширина R угол» — прямоугольный, несколько — через «;». Контур кармана можно взять из операции «Контур по элементам» (замкнутый). Если острова не мешают друг другу, чистовой проход идёт точными дугами G2/G3.',engrave:'Однолинейный шрифт: русские и латинские буквы, цифры, знаки - . , / : ( ) + = ° Ø % № # ! ?. Строчные пишутся заглавными. Для гравировки удобен фаскосним/центровка (ширина линии = глубина × 2 × tg(угол/2)) или маленькая сферическая фреза. По дуге: центр дуги — X/Y привязки, «Угол середины» 90° — текст сверху, 270° с «К центру» — снизу.',chamf:'Фаска фаскоснимом (или центровкой) по кромке: прямоугольник, окружность или контур из операции «Контур по элементам» (берётся её сторона и зеркальные копии). Глубина и смещение считаются по углу и Ø вершины фаскоснима (поля инструмента): вершина уходит на «Запас» ниже фаски, а конус снимает фаску шириной C. Z кромки — высота ребра (0 — верх детали).',groove:'Канавка с заданным поперечным профилем: фреза ходит вдоль канавки туда-обратно (растр), смещаясь поперёк на «Шаг растра», а глубина в каждой строчке рассчитана так, чтобы получился профиль: U (вертикальные стенки + радиус R у дна), полукруглый или V. Лучше всего — сферическая фреза с радиусом не больше R (например Ø12 для R6): шаг растра 0.3–0.5 мм даёт гребешок около 0.005 мм. Фреза с радиусом больше R не зарежет профиль, но радиус выйдет больше. «Начало/Конец вдоль» задавайте с выходом за деталь, черновые слои — «Шаг по Z».',_rf:' Радиус у дна R (переход стенка–дно, «размер обеспечивается инструментом»): возьмите радиусную или сферическую фрезу с радиусом при вершине r = R — радиус получится сам, без лишних проходов. Если r меньше R (или обычная концевая фреза) — радиус вырабатывается ступенями: «Шаг Z по радиусу» 0.2–0.5 мм, на каждой ступени контур сужается по дуге R.',helix:'Фреза идёт по контуру и плавно опускается по винту: «Шаг винта» — сколько мм вниз за один виток (на дне — один чистовой виток без опускания). Внутреннее — отверстие или окно любого размера больше фрезы (вместо сверла нужного Ø), наружное — бобышка, квадрат, многогранник. Если отверстие больше двух диаметров фрезы и нужен сквозной проход без «пробки» — добавьте проходы вбок. Попутное фрезерование, коррекция G41 D(номер инструмента): в корректор D — радиус фрезы, размер подгоняется износом D. Нужна винтовая интерполяция (G2/G3 с Z) — на 0i-MF Plus она есть.',slotsRad:'Пазы с полукруглыми концами, равномерно по окружности (2, 4, 6… — меняйте «Кол-во пазов»). L — полная длина паза, W — ширина. «Вдоль радиуса» — паз смотрит от центра наружу, «Поперёк» — лежит по касательной. Каждый паз выбирается полностью, затем следующий.',
@@ -1705,7 +1846,7 @@ window.gotoLine=n=>{closeMenu();show('code');const ta=$('#code'),L=ta.value.spli
  const lh=parseFloat(getComputedStyle(ta).lineHeight)||20;ta.scrollTop=Math.max(0,n*lh-ta.clientHeight/3);};
 
 /* ---------- меню ☰ ---------- */
-const MENU=[['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['ocr','📷','Программа с фото','Сфотографировать программу — распознать и перевести в параметрию'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
+const MENU=[['mode','🎚','Режим работы','Новичок — подсказки и шаги · Опытный — все параметры'],['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['ocr','📷','Программа с фото','Сфотографировать программу — распознать и перевести в параметрию'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
  ['check','✅','Проверка программы','Столкновения G0, шпиндель, корректоры, режимы'],['calc','🧮','Калькулятор режимов','По материалу и инструменту, утончение стружки'],
  ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14'],['about','ℹ️','О программе','Версия, соглашение, политика конфиденциальности, связь']];
 const MENUX={thrw:['thrw','🔩','Отверстие под резьбу',''],ocr:['ocr','📷','Программа с фото','']};
@@ -1740,6 +1881,7 @@ window.wzAdd=()=>{const c=wzCalc();if(!c.n)return toast('Нет точек от�
  else mk('tap',{depth:c.dep,rp:5},need('tap',c.D,c.P));
  st.ops.push(...add);selOp=add[0].id;save();closeMenu();show('ops');toast(`Добавлено переходов: ${add.length}`+(newT.length?' · в магазин: '+newT.join(', '):''));};
 const VIEWS={
+ mode:()=>modeHTML(),
  sheet:()=>`<div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="printSheet()">🖨 Печать / PDF</button><button class="btn" onclick="saveSheet()">⬇ Сохранить HTML</button></div><div id="ssWrap">${sheetHTML()}</div>`,
  lib:()=>{const L=libGet();return `<div class="row" style="margin-bottom:10px"><button class="btn p" onclick="libSave()">💾 Сохранить текущий проект</button><button class="btn" onclick="exportProj()">⬇ Экспорт .nc</button></div>`+
   (L.length?L.map(p=>`<div class="it"><div class="m" onclick="libOpen('${p.id}')"><b>${esc(p.name)}</b><small>${new Date(p.date).toLocaleString('ru')} · операций: ${(p.data.ops||[]).length}</small></div><button class="ib" title="Открыть" onclick="libOpen('${p.id}')">📂</button><button class="ib" title="Удалить" onclick="libDel('${p.id}')">✕</button></div>`).join(''):'<div class="empty">Пока нет сохранённых деталей</div>')+
@@ -1858,23 +2000,25 @@ window.saveSheet=()=>{const n=`naladka_O${String(Math.round(st.prog.num)).padSta
 function show(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
  visible=t=='sim';if(PV)PV.on=t=='ops';
  if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code'){$('#fmtSel').value=st.prog.fmt=='plain'?'plain':'macro';$('#cmtSel').value=st.prog.cmt||'lat';regen();}
- if(t=='sim'){regen();if(!R3)init3d();resize();build();}}
+ if(t=='sim'){regen();if(!R3)init3d();resize();build();}
+ guideUI(t);}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+['proj','tools','ops','sim','code'].forEach(t=>{const sc=$('#t-'+t);if(sc&&!$('#gd-'+t)){const g=document.createElement('div');g.className='guide';g.id='gd-'+t;g.hidden=true;sc.prepend(g);}});
 function renderAll(){renderProj();renderTools();renderOps();codeDirty=true;}
 document.querySelectorAll('.stkChk').forEach(c=>c.checked=showStock);
 normStock();
 st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.find(o=>o.id==selOp))selOp=st.ops[0]?.id;
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
 if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
-renderAll();
+renderAll();modeUI();guideUI('proj');
 /* первый запуск: короткое предупреждение и согласие с соглашением */
-(()=>{let ok=false;try{ok=!!localStorage.getItem('fcam_terms1');}catch(e){ok=true;}if(ok||navigator.webdriver)return;
+(()=>{let ok=false;try{ok=!!localStorage.getItem('fcam_terms1');}catch(e){ok=true;}if(navigator.webdriver)return;if(ok){if(!MODE)modeModal();return;}
  const d=document.createElement('div');d.id='welcome';d.innerHTML=`<div class="wb"><img src="icons/icon-192.png" alt=""><h2>Fresa — G-код для ЧПУ</h2>
  <p>Программы для фрезерных станков с ЧПУ: циклы, 3D-проверка, параметрия, 4-я ось, программа с фото.</p>
  <div class="hint" style="border-left-color:var(--bad);text-align:left"><b>Важно.</b> Каждую программу перед запуском проверяйте на станке — в графике стойки, «по воздуху», на пониженной подаче. Ответственность за запуск программы — на пользователе.</div>
  <p style="font-size:13px;color:var(--mut)">Данные не собираются: проекты и фото остаются на этом устройстве.<br><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика конфиденциальности</a></p>
  <button class="btn p" id="wOk" style="width:100%;padding:13px">Понятно, принимаю</button></div>`;document.body.appendChild(d);
- $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms1',String(Date.now()));}catch(e){}d.remove();};})();
+ $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms1',String(Date.now()));}catch(e){}d.remove();if(!MODE)modeModal();};})();
 window.__fcam={ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
