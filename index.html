@@ -86,7 +86,7 @@ input[type=range]{padding:0;accent-color:var(--acc);border:0;background:none}
 .kf{grid-column:1/-1}.kch{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.kch button{min-width:38px;padding:7px 0;border:1px solid var(--line);border-radius:9px;background:var(--pan2);color:var(--tx);font:600 14px/1 inherit;cursor:pointer}.kch button.on{background:var(--acc);border-color:var(--acc);color:#111}
 .ctabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ctabs::-webkit-scrollbar{display:none}.ctabs button{flex:none;border:1px solid var(--line);border-radius:20px;background:var(--pan2);color:var(--tx);padding:7px 13px;font:600 13px/1 inherit;cursor:pointer}.ctabs button.on{background:var(--acc);border-color:var(--acc);color:#111}
 .cyc button small{color:var(--mut);font-size:10px;line-height:1.2}
-#welcome,#modeM{position:fixed;inset:0;z-index:100;background:#0008;display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}#welcome .wb,#modeM .wb{background:var(--pan);border:1px solid var(--line);border-radius:20px;padding:22px 18px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px #000a}#welcome img{width:72px;height:72px;border-radius:18px}#welcome h2{margin:10px 0 6px;font-size:20px}#welcome p{margin:8px 0}#welcome a{color:var(--acc)}
+#welcome,#modeM,#safeM{position:fixed;inset:0;z-index:100;background:#0008;display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}#welcome .wb,#modeM .wb,#safeM .wb{background:var(--pan);border:1px solid var(--line);border-radius:20px;padding:22px 18px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px #000a}#welcome img{width:72px;height:72px;border-radius:18px}#welcome h2{margin:10px 0 6px;font-size:20px}#welcome p{margin:8px 0}#welcome a{color:var(--acc)}
 .zd{margin:10px 0 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--pan2)}.zd summary{cursor:pointer;color:var(--mut);font-size:13px}.zd summary b{color:var(--acc)}.zd .grid{margin-top:10px}
 .nw{display:flex;gap:6px}.nw input{flex:1;min-width:0}.pm{flex:none;width:42px;border:1px solid var(--line);border-radius:10px;background:var(--pan2);color:var(--acc);font:700 18px/1 inherit;cursor:pointer}
 .burger{background:var(--pan2);border:1px solid var(--line);color:var(--tx);width:42px;height:42px;border-radius:12px;font-size:20px;cursor:pointer;flex:none}
@@ -186,6 +186,109 @@ details.adv summary:before{content:'▸ '}details.adv[open] summary:before{conte
 @media(max-width:820px){.modeb{position:absolute;right:62px;bottom:9px;width:42px;height:42px;padding:0;border-radius:12px;font-size:18px}.modeb .mt{display:none}}
 .modeb .mt{margin-left:6px}
 #t-sim .guide .gdots{display:none}#t-sim .guide b{font-size:14px;margin:0 0 2px}#t-sim .guide p{font-size:12px;margin-bottom:6px}#t-sim .guide .btn{padding:6px 12px}
+
+/* ===== v2.2: новый интерфейс ===== */
+nav button svg{width:22px;height:22px;display:block}
+.btn:disabled{opacity:.4;cursor:default}
+.hm{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.hnew{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#141414;border:0;border-radius:20px;padding:18px;text-align:left;font-family:inherit;cursor:pointer;width:100%}
+.hnew .pl{width:52px;height:52px;border-radius:16px;background:#141414;color:var(--acc);display:grid;place-items:center;flex:none}
+.hnew .m{flex:1}.hnew b{display:block;font-size:19px;font-weight:800}.hnew small{font-size:13px;font-weight:500}
+.h2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.hb{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 14px;border-radius:16px;border:1px solid var(--line);background:var(--pan);color:var(--tx);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left}
+.hb svg{flex:none;color:var(--acc)}
+.hh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 2px 0}.hh b{font-size:16px}.hh small{color:var(--mut);font-size:12px;text-align:right}
+.tpls{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.tpl{flex:0 0 146px;background:var(--pan);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;color:var(--tx);text-align:left;font-family:inherit;cursor:pointer}
+.tpl svg{width:120px;height:64px}.tpl b{font-size:13px}.tpl small{font-size:11px;color:var(--mut)}
+.pc{display:flex;align-items:center;gap:12px;background:var(--pan);border:1px solid var(--line);border-radius:16px;padding:12px 14px;cursor:pointer;width:100%;color:var(--tx);font-family:inherit;text-align:left}
+.pc .pi{width:44px;height:44px;border-radius:12px;background:var(--pan2);display:grid;place-items:center;flex:none;color:var(--acc)}
+.pc .m{flex:1;min-width:0}.pc b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pc small{color:var(--mut);font-size:12px}
+.pc.cur{border-color:var(--acc)}.pc em{font-style:normal;color:var(--acc);font-weight:700;font-size:13px;flex:none}
+.plan{display:grid;grid-template-columns:minmax(340px,440px) minmax(0,1fr);gap:16px;align-items:start}
+.plan>*{min-width:0}
+.phd{display:flex;align-items:center;gap:8px;margin-bottom:10px}.phd .m{flex:1;min-width:0}.phd b{display:block;font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.phd small{color:var(--mut);font-size:12px}
+.ub{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--pan);color:var(--tx);display:grid;place-items:center;cursor:pointer;flex:none;font-size:20px;padding:0}.ub:disabled{opacity:.35;cursor:default}
+.stkc{display:flex;align-items:center;gap:10px;width:100%;background:var(--pan);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--tx);font-family:inherit;text-align:left;cursor:pointer;margin-bottom:12px}
+.stkc .m{flex:1;min-width:0}.stkc b{display:block;font-size:13px}.stkc small{color:var(--mut);font-size:12px}.stkc em{font-style:normal;color:var(--acc);font-weight:700;font-size:13px}
+.opc{display:flex;background:var(--pan);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:8px;cursor:pointer}
+.opc>i{width:6px;flex:none;background:var(--oc)}
+.opc .bd{flex:1;min-width:0;padding:10px 8px 6px 12px;display:flex;flex-direction:column;gap:6px}
+.opc .r1{display:flex;align-items:center;gap:12px}
+.opc .ic{width:44px;height:44px;border-radius:12px;background:var(--pan2);display:grid;place-items:center;flex:none;color:var(--oc)}.opc .ic svg{width:30px;height:30px}
+.opc .m{flex:1;min-width:0}.opc b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.opc small{color:var(--mut);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opc .tm{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;flex:none;padding-right:4px}
+.opc.sel{border:2px solid var(--oc);background:var(--pan2)}.opc.sel .ic{background:var(--pan)}
+.opc.off{opacity:.5}
+.opc .wr{display:flex;align-items:center;gap:8px;background:#2a1f10;border-radius:10px;padding:7px 10px;color:#ffb366;font-size:12px}
+.opc .ac{display:flex;gap:2px;justify-content:flex-end;margin-right:-4px}
+.opc .ac button{background:none;border:0;color:var(--mut);min-width:40px;height:34px;border-radius:8px;font-size:15px;cursor:pointer;font-family:inherit}.opc .ac button:hover{background:var(--pan2);color:var(--tx)}
+.ptot{display:flex;justify-content:space-between;gap:8px;color:var(--mut);font-size:13px;margin:6px 2px 12px}.ptot b{color:var(--tx)}
+.pact{display:grid;grid-template-columns:2fr 1fr;gap:8px}.pact .btn{height:52px;font-size:16px;font-weight:800;text-align:center}
+.edhd{display:none}
+.snack{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + var(--sab));z-index:60;background:var(--tx);color:#141414;border-radius:14px;padding:0 6px 0 14px;min-height:48px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 30px #0008;max-width:calc(100% - 32px);width:440px}
+.snack span{flex:1;font-size:14px}.snack button{background:none;border:0;color:#8a5a00;font-weight:800;font-size:14px;height:44px;padding:0 10px;cursor:pointer;font-family:inherit}
+#wiz{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;flex-direction:column}
+#wiz[hidden]{display:none}
+.wz-h{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 8px;max-width:680px;width:100%;margin:0 auto;box-sizing:border-box}
+.wz-h b{flex:1;font-size:17px}.wz-h small{color:var(--mut);font-size:13px}
+.wz-st{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px 12px;max-width:680px;width:100%;margin:0 auto;box-sizing:border-box}
+.wz-st div{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mut)}.wz-st i{height:4px;border-radius:2px;background:var(--line)}.wz-st .on i{background:var(--acc)}.wz-st .cur{color:var(--acc);font-weight:700}
+.wz-b{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.wz-in{padding:0 16px 20px;max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.wz-in h2{font-size:22px;margin:4px 0 0}.wz-in>p{margin:-6px 0 0;color:var(--mut);font-size:14px}
+.wz-f{padding:12px 16px calc(14px + var(--sab));border-top:1px solid var(--line);background:var(--pan)}
+.wz-f .row{max-width:680px;margin:0 auto;flex-wrap:nowrap}.wz-f .btn{height:52px;font-size:16px}.wz-f .btn.p{flex:1;font-weight:800}
+.chc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.chc button{border-radius:16px;border:1px solid var(--line);background:var(--pan);color:var(--tx);padding:10px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;font-family:inherit;text-align:left;cursor:pointer;min-width:0}
+.chc button.on{border:2px solid var(--acc);background:var(--pan2)}.chc svg{width:100%;height:52px}.chc b{font-size:14px}.chc small{font-size:11px;color:var(--mut)}
+.wsk{background:var(--pan);border:1px solid var(--line);border-radius:16px;padding:8px;display:flex;justify-content:center}.wsk svg{width:100%;max-width:360px;height:auto;display:block}
+.mchips{display:flex;flex-wrap:wrap;gap:8px}.mchips button{min-height:38px;padding:0 14px;border-radius:19px;border:1px solid var(--line);background:var(--pan);color:var(--tx);font-family:inherit;font-size:13px;cursor:pointer}.mchips button.on{background:var(--acc);color:#141414;border-color:var(--acc);font-weight:700}
+.zp .pt{cursor:pointer}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--pan);border:1px solid var(--line);border-radius:14px;padding:4px}
+.seg button{min-height:40px;border-radius:10px;border:0;background:transparent;color:var(--tx);font-family:inherit;font-size:13px;cursor:pointer;padding:0 6px}.seg button.on{background:var(--acc);color:#141414;font-weight:700}
+.zres{background:var(--pan2);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.6}.zres b{color:var(--ok)}
+.wck{display:flex;flex-direction:row;gap:12px;align-items:flex-start;background:var(--pan);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;color:var(--tx);font-size:14px;line-height:1.45}
+.wck input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:var(--acc)}.wck small{display:block;color:var(--mut);font-size:12px}
+.wlbl{font-size:12px;color:var(--mut);margin-bottom:-4px}
+.tlw{padding:8px 12px 0;background:var(--pan);border-top:1px solid var(--line);flex:none}
+.tlt{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mut)}.tlt span:first-child,.tlt span:last-child{font-family:ui-monospace,Menlo,monospace}.tlt b{color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl{position:relative;height:34px;cursor:pointer;touch-action:none}
+.tl .bars{position:absolute;left:0;right:0;top:9px;height:16px;display:flex;gap:2px}
+.tl .bars i{border-radius:3px;min-width:3px;opacity:.9}
+.tl .ph{position:absolute;top:2px;width:4px;height:30px;margin-left:-2px;border-radius:2px;background:#fff;box-shadow:0 0 0 2px #000a;pointer-events:none;left:0}
+.tll{display:flex;gap:2px;font-size:11px;color:var(--mut);overflow:hidden;white-space:nowrap;padding-bottom:2px}.tll span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.safe{display:flex;gap:10px;align-items:flex-start;background:#2a1414;border:1px solid #5a2a2a;border-radius:12px;padding:10px 12px;color:#ffc2c2;font-size:12.5px;line-height:1.45;margin:10px 0}
+.safe svg{flex:none;margin-top:1px}
+.cv{background:#0a0c10;border:1px solid var(--line);border-radius:14px;font:13px/1.65 ui-monospace,Menlo,Consolas,monospace;padding:6px 0;max-height:60vh;overflow:auto;margin-top:8px}
+.cv .sh{display:flex;align-items:center;gap:8px;padding:6px 12px;border-left:4px solid var(--oc);background:#ffffff08;cursor:pointer;color:var(--oc);font:700 12px/1.3 -apple-system,"Segoe UI",Roboto,sans-serif;margin-top:2px;position:sticky;left:0}
+.cv .sh small{margin-left:auto;color:var(--mut);font-weight:400}.cv .sh .ar{display:inline-block;width:10px;transition:transform .15s}.cv .sh.op .ar{transform:rotate(90deg)}
+.cv .ln{display:flex;gap:10px;padding:0 12px 0 14px;cursor:pointer;white-space:pre;width:max-content;min-width:100%;box-sizing:border-box}
+.cv .ln:hover{background:#ffffff08}.cv .ln.on{background:#24405f}
+.cv .ln u{text-decoration:none;color:#5c6475;min-width:34px;text-align:right;flex:none;user-select:none}
+.cv .g{color:var(--acc)}.cv .mm{color:var(--ok)}.cv .c{color:var(--mut)}.cv .v{color:#c084fc}
+.cx{margin:4px 10px 6px;background:var(--pan);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:13px/1.45 -apple-system,"Segoe UI",Roboto,sans-serif;white-space:normal;display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;position:sticky;left:10px;max-width:calc(100% - 20px);box-sizing:border-box}
+.cx code{font-family:ui-monospace,Menlo,monospace;color:var(--acc);font-weight:700}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tc{background:var(--pan);border:1px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;cursor:pointer;min-width:0}
+.tc.sel{border:2px solid var(--acc);background:var(--pan2)}
+.tc .tn{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.tc .tn b{font:700 13px ui-monospace,Menlo,monospace;background:#2a2f3a;border-radius:6px;padding:2px 7px}.tc.sel .tn b{background:var(--acc);color:#141414}
+.tc .tn small{font-size:11px;color:var(--mut);white-space:nowrap}
+.tc .pic{height:84px;display:grid;place-items:center;overflow:hidden}.tc .pic svg{height:80px;width:auto;max-width:100%}
+.tc>b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tc>small{font-size:11px;color:var(--mut)}
+.tf{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tf button{min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--line);background:var(--pan);color:var(--tx);font-family:inherit;font-size:13px;cursor:pointer}.tf button.on{background:var(--tx);color:#141414;font-weight:700}
+.bkb{display:flex;align-items:center;gap:10px;margin-bottom:12px}.bkb b{font-size:17px}
+#safeM .wb ul{list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:8px;text-align:left}
+#safeM .wb p{text-align:left}
+@media(max-width:820px){
+ .plan{display:block}.plan>.pr{display:none}.plan.ed>.pl{display:none}.plan.ed>.pr{display:block}
+ .edhd{display:flex;align-items:center;gap:8px;margin:-4px 0 12px}.edhd b{flex:1;font-size:16px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .edm>.guide{display:none!important}
+ .chc{gap:8px}.chc button{padding:8px}
+}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head>
@@ -193,21 +296,23 @@ details.adv summary:before{content:'▸ '}details.adv[open] summary:before{conte
 <header>
  <div class="logo"><div class="lg"><img src="icons/icon-192.png" alt=""></div><div><b>FRESA</b><small>G-код для ЧПУ · v<span id="ver"></span></small></div></div>
  <nav id="tabs">
-  <button data-t="proj" class="on"><i>📐</i>Проект</button>
-  <button data-t="tools"><i>🔧</i>Инструмент</button>
-  <button data-t="ops"><i>⚙️</i>Операции</button>
-  <button data-t="code"><i>📄</i>G-код</button>
-  <button data-t="sim"><i>🧊</i>3D</button>
-  <button data-t="upd"><i>⟳</i>Обновл.</button>
+  <button data-t="home" class="on"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/></svg></i>Проекты</button>
+  <button data-t="ops"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></i>План</button>
+  <button data-t="sim"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></i>3D</button>
+  <button data-t="code"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></i>G-код</button>
+  <button data-t="tools"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v5l-1 2v11h-4V10L9 8z"/></svg></i>Инструм.</button>
  </nav>
  <button class="modeb" id="modeB" hidden onclick="modePick()" aria-label="Режим работы"></button>
  <button class="burger" onclick="openMenu()" aria-label="Меню">☰</button>
 </header>
 <div id="updBar" class="updbar" hidden></div>
 <main>
- <section id="t-proj" class="tab on">
+ <section id="t-home" class="tab on"><div class="hm" id="home"></div></section>
+
+ <section id="t-proj" class="tab">
+  <div class="bkb"><button class="btn" onclick="show('ops')">← План</button><b>Заготовка, ноль, проект</b></div>
   <div class="card"><h3>Программа</h3><div class="grid" id="progF"></div></div>
-  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div><div class="stats" id="stockInfo"></div><div class="row"><button class="btn s" onclick="matAll()">⚙ Режимы всех инструментов — по материалу</button></div>
+  <div class="card"><h3>Заготовка и нулевая точка</h3><div id="zPick"></div><div class="grid" id="stockF"></div><div class="stats" id="stockInfo"></div><div class="row"><button class="btn s" onclick="matAll()">⚙ Режимы всех инструментов — по материалу</button></div>
    <div class="hint" id="stockHint">Произвольный контур: точки «X Y» через «;» в координатах детали (дробь можно через точку или запятую: 1.5 или 1,5) (по часовой или против — не важно). Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
   <div class="card"><h3>Несколько деталей на столе</h3><div class="grid" id="mpF"></div><div class="stats" id="mpInfo"></div>
    <div class="hint"><b>G52</b> — детали стоят ровно с шагом: ноль ставится только на первую (G54), остальные — сдвигом G52 X Y. <b>G54…G59</b> — каждую деталь привязываете отдельно (тиски стоят как придётся); сдвиги в списке нужны только для 3D. Каждая операция выполняется на всех деталях подряд, потом смена инструмента — так меньше смен.</div></div>
@@ -223,50 +328,70 @@ details.adv summary:before{content:'▸ '}details.adv[open] summary:before{conte
  </section>
 
  <section id="t-tools" class="tab">
-  <div class="split">
-   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Магазин инструмента</h3><div class="row"><button class="btn d s" onclick="delAllTools()">🗑 Удалить всё</button><button class="btn p" onclick="addTool()">+ Добавить</button></div></div><div id="toolList"></div></div>
-   <div class="card" id="toolEd"></div>
+  <div class="plan" id="tplan">
+   <div class="pl">
+    <div class="phd"><div class="m"><b>Инструменты</b><small id="tSub"></small></div><button class="ub" onclick="addTool()" aria-label="Добавить инструмент" style="background:var(--acc);color:#141414;border:0;font-weight:800">+</button></div>
+    <div class="tf" id="tFil"></div>
+    <div id="toolList" class="tgrid"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn d s" onclick="delAllTools()">🗑 Удалить все</button></div>
+   </div>
+   <div class="pr card"><div class="edhd"><button class="btn" onclick="tBack()">← Инструменты</button><b id="tedT"></b><button class="btn p" onclick="tBack()">Готово</button></div><div id="toolEd"></div></div>
   </div>
  </section>
 
  <section id="t-ops" class="tab">
-  <div class="split">
-   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Технология</h3><button class="btn d s" onclick="delAllOps()">🗑 Удалить всё</button></div>
+  <div class="plan" id="plan">
+   <div class="pl">
+    <div class="phd"><div class="m"><b id="pName"></b><small id="pSub"></small></div>
+     <button class="ub" id="uB" onclick="undo()" aria-label="Отменить" title="Отменить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+     <button class="ub" id="rB" onclick="redo()" aria-label="Повторить" title="Повторить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
+    <button class="stkc" id="pStock" onclick="show('proj')"></button>
     <div id="opList"></div>
-    <details class="cycd" open><summary>Добавить цикл</summary><div id="cycG"></div></details>
+    <div class="ptot" id="pTot"></div>
+    <div class="pact"><button class="btn p" onclick="cycOpen()">＋ Операция</button><button class="btn" onclick="show('code')">G-код →</button></div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn d s" onclick="delAllOps()">🗑 Удалить все операции</button></div>
    </div>
-   <div class="card" id="opEd"></div>
+   <div class="pr card"><div class="edhd"><button class="btn" onclick="edBack()">← План</button><b id="edT"></b><button class="btn p" onclick="edBack()">Готово</button></div><div id="opEd"></div></div>
   </div>
  </section>
 
  <section id="t-code" class="tab">
   <div class="card">
+   <div class="cbar">
+    <div class="seg" id="fmtSeg" style="flex:1 1 280px"><button data-f="plain" onclick="setFmtB('plain')">Обычный</button><button data-f="macro" onclick="setFmtB('macro')">Параметрический #</button></div>
+    <button class="btn" id="cvEd" onclick="cvToggle()">✏ Править вручную</button>
+   </div>
+   <div class="stats" id="codeStats"></div><div id="convBox"></div><div id="chkBox"></div>
+   <div class="cv" id="cv"></div>
+   <textarea id="code" spellcheck="false" hidden></textarea>
+   <div class="safe"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg><span><b>Перед запуском проверь программу на станке:</b> графика стойки → прогон «по воздуху» (ноль Z поднят) → первая деталь на пониженной подаче, рука на STOP. Fresa не видит твой станок, тиски и зажимы — ответственность за запуск на тебе.</span></div>
+   <div class="cbar"><button class="btn p" style="flex:2 1 220px;height:50px;font-size:15px" onclick="dlSafe('nc')">⬇ Сохранить .nc на станок</button><button class="btn" style="flex:1 1 120px;height:50px" onclick="shareSafe()">↗ Поделиться</button><button class="btn" style="flex:1 1 120px;height:50px" onclick="copyCode()">⧉ Копировать</button></div>
+   <details class="adv"><summary>Ещё: открыть файл, с фото, .txt, параметрия, язык пояснений</summary>
    <div class="row">
     <button class="btn" onclick="document.getElementById('ncF').click()">📂 Открыть файл</button>
     <button class="btn" onclick="openMenu('ocr')">📷 С фото</button><input type="file" id="ncF" hidden onchange="openCode(this)">
-    <button class="btn p" onclick="downloadCode('nc')">⬇ Скачать .NC</button>
-    <button class="btn" onclick="downloadCode('txt')">⬇ .TXT</button>
-    <button class="btn" onclick="shareCode()">↗ Поделиться</button>
-    <button class="btn" onclick="copyCode()">⧉ Копировать</button>
+    <button class="btn" onclick="dlSafe('txt')">⬇ .TXT</button>
     <button class="btn" onclick="regen(true)">↻ Пересоздать</button>
     <button class="btn" onclick="convMacro()" title="Повторяющиеся проходы по Z — в цикл WHILE с переменными">🔁 В параметрию</button>
     <button class="btn" id="srcB" hidden onclick="srcBack()">↩ Исходный код</button>
-    <select id="fmtSel" style="width:auto" onchange="setFmt(this.value)"><option value="macro">Параметрический (макро)</option><option value="plain">Обычный</option></select>
+    <select id="fmtSel" hidden onchange="setFmt(this.value)"><option value="macro">Параметрический (макро)</option><option value="plain">Обычный</option></select>
     <select id="cmtSel" style="width:auto" onchange="setCmt(this.value)"><option value="lat">Пояснения: русские латиницей</option><option value="cyr">Пояснения: кириллица</option><option value="en">Пояснения: English</option></select>
     <span id="editFlag"></span>
    </div>
-   <div class="stats" id="codeStats"></div><div id="convBox"></div><div id="chkBox"></div>
-   <textarea id="code" spellcheck="false"></textarea>
    <div class="hint">Параметрический G-код: в начале каждой операции идут переменные — размеры (#1, #2…) и режимы фрезы: <b>#20</b> диаметр, <b>#21</b> обороты S, <b>#22</b> подача F, <b>#23</b> подача врезания, <b>#24</b> безопасная Z. Поменяйте число прямо на стойке — проходы пересчитаются сами (циклы WHILE). Нужна опция Custom Macro B (на 0i-MF Plus обычно включена). Пояснения по умолчанию — русские слова латиницей (GLUBINA, PODACHA): кириллицу стойки Fanuc часто не отображают. Ручные правки проверяются в 3D.</div>
+   </details>
   </div>
  </section>
 
  <section id="t-sim" class="tab">
   <div id="view"><div class="hud" id="hud">—</div></div>
-  <div class="simbar"><select id="simOp" class="simop" onchange="simJump(+this.value)"><option value="0">▶ Смотреть с начала программы</option></select><div class="sbr">
-   <button class="btn p" id="playB" onclick="simPlay()">▶</button>
-   <button class="btn" onclick="simReset()">⏮</button>
-   <button class="btn" onclick="simFinish()" title="Сразу показать результат">⏭ Итог</button>
+  <div class="tlw"><div class="tlt"><span id="tlC">0:00</span><b id="tlN">—</b><span id="tlA">0:00</span></div><div class="tl" id="tl" aria-label="Шкала времени программы"><div class="bars" id="tlB"></div><div class="ph" id="tlP"></div></div><div class="tll" id="tlL"></div></div>
+  <div class="simbar"><div class="sbr">
+   <button class="btn" onclick="simOpJ(-1)" aria-label="Предыдущая операция" title="Предыдущая операция">⏮</button>
+   <button class="btn p" id="playB" onclick="simPlay()" aria-label="Пуск / пауза">▶</button>
+   <button class="btn" onclick="simOpJ(1)" aria-label="Следующая операция" title="Следующая операция">⏭</button>
+   <button class="btn" onclick="simFinish()" title="Сразу показать результат">Итог</button>
+   <button class="btn" onclick="simReset()" title="С начала">↺</button>
    <label class="chip tg"><input type="checkbox" id="showPath" checked onchange="togglePath()">Путь</label>
    <label class="chip tg"><input type="checkbox" class="stkChk" checked onchange="setStock(this.checked)">Заготовка</label>
    <button class="btn" onclick="fitCam()" title="Вписать">⌖</button></div>
@@ -286,13 +411,14 @@ details.adv summary:before{content:'▸ '}details.adv[open] summary:before{conte
  </section>
 </main>
 <div id="sheet"><div class="bg" onclick="closeMenu()"></div><div class="pn"><div class="hd"><button class="ib" id="shBack" onclick="openMenu()" style="font-size:20px">←</button><b id="shTitle" style="font-size:16px">Меню</b><span style="flex:1"></span><button class="ib" onclick="closeMenu()" style="font-size:20px">✕</button></div><div class="bd" id="shBody"></div></div></div>
+<div id="wiz" hidden></div>
 <div id="toast"></div>
 
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.1.0';
+const APP_VERSION='2.2.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -480,7 +606,10 @@ if(!st||!st.tools)st=defaults();
 let PRE=[];try{PRE=JSON.parse(localStorage.getItem('fcam_presets'))||[]}catch(e){}
 const savePre=()=>{try{localStorage.setItem('fcam_presets',JSON.stringify(PRE))}catch(e){}};
 let selTool=st.tools[0]?.id,selOp=st.ops[0]?.id,manual=false;
-const save=keep=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(manual&&keep!==true){manual=false;setTimeout(()=>toast('Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}codeDirty=true;};
+const H={u:[],r:[],cur:null,t:0,mute:false};var CV={edit:false,open:new Set(),sel:-1,key:null};
+const OPC=['#ffc400','#4da3ff','#2ecc71','#c084fc','#ff8a00','#22d3ee','#f472b6','#a3e635'];
+const nf=v=>String(+(+v||0).toFixed(3));
+const save=keep=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(manual&&keep!==true){manual=false;setTimeout(()=>toast('Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}codeDirty=true;if(!H.mute){clearTimeout(H.t);H.t=setTimeout(hCommit,600);}};
 let codeDirty=true;
 
 
@@ -582,13 +711,13 @@ const EASY={face:'Срезает верх заготовки и делает е�
 /* что не нужно новичку — прячем в «Дополнительно» */
 const ADV=new Set(['safe','over','strat','fs','dwell','lead','ex','so','cmode','da','passes','aend','dmode','rp','q','fdir','a0']);
 /* пошаговые подсказки на вкладках */
-const GUIDE={proj:[1,'Заготовка','Впиши размеры заготовки и выбери, где ноль детали — точку, которую ты снимаешь щупом на станке. Материал нужен, чтобы подобрать обороты и подачи.','tools','Дальше: инструмент →'],
+const GUIDE={home:[1,'Деталь','Нажми «Новая деталь»: мастер спросит, что зажато в станке и где ноль. Или возьми шаблон ниже и поменяй размеры под себя.',null,''],proj:[1,'Заготовка','Впиши размеры заготовки и выбери, где ноль детали — точку, которую ты снимаешь щупом на станке. Материал нужен, чтобы подобрать обороты и подачи.','tools','Дальше: инструмент →'],
  tools:[2,'Инструмент','Добавь фрезы и свёрла, которые стоят в станке, под теми же номерами T. Главное — тип и диаметр. Обороты и подачу посчитает кнопка «По материалу».','ops','Дальше: операции →'],
- ops:[3,'Операции','Добавь по порядку, что сделать с деталью: обычно торцовка → контур или карманы → отверстия → фаски. Выбери цикл ниже и заполни размеры. Не понятно поле — нажми «?» рядом с ним.','sim','Дальше: проверить в 3D →'],
+ ops:[3,'План операций','Добавь по порядку, что сделать с деталью: обычно торцовка → контур или карманы → отверстия → фаски. Кнопка «＋ Операция» внизу. Не понятно поле — нажми «?» рядом с ним. Ошибся — стрелка «Отменить» вверху.','sim','Дальше: проверить в 3D →'],
  sim:[4,'Проверка в 3D','Нажми ▶ и посмотри, как идёт обработка. Голубые линии — работа фрезы, красные — быстрые перемещения: они не должны проходить сквозь деталь.','code','Дальше: программа →'],
  code:[5,'Программа','Программа готова. «⬇ Скачать .NC» — сохранить файлом и перенести на станок. Первый запуск: проверь в графике стойки, затем «по воздуху» (ноль Z поднят) и на пониженной подаче.',null,'']};
 function guideUI(t){document.querySelectorAll('.guide').forEach(g=>g.hidden=true);const G=GUIDE[t],g=$('#gd-'+t);if(!easy()||!G||!g)return;const[n,ti,tx,nx,nl]=G;
- g.innerHTML=`<div class="gs">Шаг ${n} из 5</div><div class="gdots">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div><b>${ti}</b><p>${tx}</p><div class="row">${nx?`<button class="btn p" onclick="show('${nx}')">${nl}</button>`:`<button class="btn p" onclick="openMenu('check')">✅ Проверить программу</button>`}</div>`;g.hidden=false;}
+ g.innerHTML=`<div class="gs">Шаг ${n} из 5</div><div class="gdots">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div><b>${ti}</b><p>${tx}</p><div class="row">${nx?`<button class="btn p" onclick="show('${nx}')">${nl}</button>`:t=='home'?`<button class="btn p" onclick="wizOpen()">＋ Новая деталь</button>`:`<button class="btn p" onclick="openMenu('check')">✅ Проверить программу</button>`}</div>`;g.hidden=false;}
 const modeHTML=()=>`<div class="mp"><h2>Как ты работаешь?</h2><p>Покажу столько, сколько нужно. Сменить можно в любой момент: ☰ → «Режим работы» или кнопка вверху.</p>
  <button class="mpc ${MODE=='easy'?'on':''}" onclick="modeSet('easy')"><i>🔰</i><span><b>Я только начинаю</b><small>Пошагово: заготовка → инструмент → операции → проверка → программа. У каждого поля кнопка «?» с объяснением простыми словами, лишние настройки спрятаны.</small></span></button>
  <button class="mpc ${MODE=='pro'?'on':''}" onclick="modeSet('pro')"><i>🛠</i><span><b>Я уже умею</b><small>Знаю станок и G-код. Все параметры сразу, без подсказок: параметрия, 4-я ось, тонкие настройки.</small></span></button></div>`;
@@ -616,8 +745,11 @@ function bindForm(el,getObj,after,rer,keep){
 const STK=[['rect','Прямоугольная'],['round','Круглая (диск)'],['poly','Многогранник'],['custom','Произвольный контур'],['rod','Пруток на 4-й оси A (вдоль X)']];
 const SF=[['shape','Форма','rect',STK],['x','Длина X',120,'n',{shape:'rect'}],['y','Ширина Y',80,'n',{shape:'rect'}],['d','Диаметр',100,'n',{shape:['round','rod']}],['rl','Длина прутка',60,'n',{shape:'rod'}],['rx','X левого торца прутка',-5,'c',{shape:'rod'}],['rz','Ноль Z','axis',[['axis','На оси прутка'],['top','Верх прутка']],{shape:'rod'}],['adir','Поворот A+','1',[['1','Y → Z (по правилу)'],['-1','Обратный']],{shape:'rod'}],
  ['n','Кол-во граней',6,'n',{shape:'poly'}],['sw','Под ключ SW',60,'n',{shape:'poly'}],['pts','Точки контура: X Y; X Y; …','','text',{shape:'custom'}],
- ['z','Высота Z',30,'n',o=>o.shape!='rod'],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый нижний угол']],{shape:['rect','round','poly']}],
+ ['z','Высота Z',30,'n',o=>o.shape!='rod'],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый ближний угол'],['rf','Правый ближний угол'],['lb','Левый дальний угол'],['rb','Правый дальний угол'],['cf','Середина ближней стороны'],['cb','Середина дальней стороны'],['lc','Середина левой стороны'],['rc','Середина правой стороны']],{shape:['rect','round','poly']}],
  ['wcs','Система координат','G54',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x])],['mat','Материал','','text']];
+const OXY={center:[0,0],corner:[-1,-1],rf:[1,-1],lb:[-1,1],rb:[1,1],cf:[0,-1],cb:[0,1],lc:[-1,0],rc:[1,0]};
+const ORIG={center:'центр заготовки',corner:'левый ближний угол',rf:'правый ближний угол',lb:'левый дальний угол',rb:'правый дальний угол',cf:'середина ближней стороны',cb:'середина дальней стороны',lc:'середина левой стороны',rc:'середина правой стороны'};
+const ORIGL={center:'CENTER',corner:'LOWER LEFT',rf:'RIGHT FRONT CORNER',lb:'LEFT BACK CORNER',rb:'RIGHT BACK CORNER',cf:'FRONT SIDE MIDDLE',cb:'BACK SIDE MIDDLE',lc:'LEFT SIDE MIDDLE',rc:'RIGHT SIDE MIDDLE'};
 function normStock(){const s=st.stock;SF.forEach(f=>{if(s[f[0]]==null)s[f[0]]=f[2];});if(!STK.some(x=>x[0]==s.shape))s.shape='rect';}
 function stockGeo(){const s=st.stock;let P,bad=false;const sh=s.shape||'rect';
  if(sh=='rod'){const R=Math.max(.5,+s.d||1)/2,x0=+s.rx||0,x1=x0+Math.max(1,+s.rl||1);const az=s.rz=='top'?-R:0;return{P:[[x0,-R],[x1,-R],[x1,R],[x0,R]],x0,y0:-R,x1,y1:R,w:x1-x0,h:2*R,z:R-az,rect:true,rod:true,R,az,sgn:+s.adir<0?-1:1};}
@@ -626,7 +758,7 @@ function stockGeo(){const s=st.stock;let P,bad=false;const sh=s.shape||'rect';
  else if(sh=='custom'){P=parsePts(s.pts);if(P.length<3||Math.abs(area(P))<1){bad=true;P=null;}}
  if(!P){const w=Math.max(1,+s.x||1)/2,h=Math.max(1,+s.y||1)/2;P=[[-w,-h],[w,-h],[w,h],[-w,h]];}
  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
- if(sh!='custom'&&s.origin=='corner'){P=P.map(([x,y])=>[x-x0,y-y0]);x1-=x0;y1-=y0;x0=0;y0=0;}
+ if(sh!='custom'){const[ix,iy]=OXY[s.origin]||[0,0];if(ix||iy){const tx=ix<0?x0:ix>0?x1:0,ty=iy<0?y0:iy>0?y1:0;P=P.map(([x,y])=>[x-tx,y-ty]);x0-=tx;x1-=tx;y0-=ty;y1-=ty;}}
  P=orient(P,true);return{P,x0,y0,x1,y1,w:x1-x0,h:y1-y0,z:Math.max(.1,+s.z||1),rect:sh=='rect'||(sh=='custom'&&bad)||(sh=='poly'&&Math.round(+s.n)==4&&false),bad};}
 /* несколько деталей на столе: G52 (массив от одной G54) или свои G54…G59 */
 const MPF=[['mode','Режим','off',[['off','Одна деталь'],['g52','G52 — ровный массив'],['wcs','G54…G59 — у каждой своя']]],
@@ -651,7 +783,7 @@ function stkInfo(g){const s=st.stock;if(g.rod){const hint=$('#stockHint');if(hin
 function renderProj(){{const h=$('#stockHint');if(h&&!h.dataset.t)h.dataset.t=h.innerHTML;}
  $('#progF').innerHTML=[['num','Номер O',1000,'n'],['name','Имя программы','','text'],['note','Комментарий','','text']].map(f=>fld(st.prog,f)).join('');
  const SFr=SF.filter(f=>!(easy()&&f[0]=='adir')).map(f=>f[0]=='mat'?['mat','Материал','',[...(MATS[st.stock.mat]||!st.stock.mat?[]:[[st.stock.mat,st.stock.mat]]),...Object.keys(MATS).map(k=>[k,k])]]:f);
- $('#stockF').innerHTML=SFr.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');
+ $('#stockF').innerHTML=SFr.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');{const z=$('#zPick');if(z)z.innerHTML=['rect','round','poly'].includes(st.stock.shape||'rect')?`<div class="wlbl" style="margin:0 0 6px">Ноль детали — нажми точку на рисунке</div><div class="wsk" style="margin-bottom:12px">${zeroSVG(st.stock.origin||'center','zPickSet')}</div>`:'';}
  const g=stockGeo();$('#stockInfo').innerHTML=stkInfo(g)+(g.bad?'<span style="color:var(--bad)">⚠ Мало точек контура — показан прямоугольник</span>':'');
  bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock,()=>{$('#stockInfo').innerHTML=stkInfo(stockGeo());},()=>renderProj(),true);
  const mpI=()=>{const PT=parts();$('#mpInfo').innerHTML=`<span>Деталей: <b>${PT.length}</b></span>`+(mpGet().mode=='wcs'?`<span>${PT.map(q=>q.w).join(' · ')}</span>`:'');};
@@ -698,27 +830,34 @@ function renderTools(){
  const t=st.tools.find(x=>x.id==selTool);
  if(!t){$('#toolEd').innerHTML='<div class="empty">Выберите инструмент</div>';return;}
  renderToolEd(t);}
+let TFIL='all';const TFG={all:['Все',null],mill:['Фрезы',['endmill','ball','bull','face']],drill:['Свёрла',['drill','center','reamer']],thr:['Резьба',['tap','thread']],ch:['Фаски',['chamfer']]};
+window.tFil=k=>{TFIL=k;toolListOnly();};
 function toolListOnly(){
- $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div>${toolPic(t)}<div class="m"><b>${esc(t.name||TT[t.type].n)}</b><small>Ø${t.d}${toolCR(t)>0&&t.type!='ball'?' r'+F(toolCR(t)):''} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}${FLUTED.includes(t.type)?' · z'+t.fl:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
- }
+ const f=$('#tFil');if(f)f.innerHTML=Object.entries(TFG).map(([k,[n]])=>`<button class="${k==TFIL?'on':''}" onclick="tFil('${k}')">${n}</button>`).join('');
+ const g=TFG[TFIL][1],L=st.tools.slice().sort((a,b)=>a.num-b.num).filter(t=>!g||g.includes(t.type));
+ const sub=$('#tSub');if(sub)sub.textContent=`${st.tools.length} шт. · как в магазине станка`;
+ $('#toolList').innerHTML=L.map(t=>{const us=st.ops.map((o,i)=>o.tool==t.id?i+1:0).filter(Boolean);
+  return `<div class="tc ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="tn"><b>T${t.num}</b><small>${us.length?'в опер. '+us.slice(0,4).join(', ')+(us.length>4?'…':''):'не исп.'}</small></div><div class="pic">${toolPic(t,true)}</div><b>${esc(t.name||TT[t.type].n)} Ø${nf(t.d)}${toolCR(t)>0&&t.type!='ball'?' r'+nf(toolCR(t)):''}</b><small>S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}${FLUTED.includes(t.type)?' · z'+t.fl:''}</small></div>`;}).join('')||'<div class="empty">Нет инструмента в этой группе</div>';
+ const e=$('#tedT'),t=st.tools.find(x=>x.id==selTool);if(e)e.textContent=t?`T${t.num} · ${TT[t.type].n}`:'';}
+window.tBack=()=>{$('#tplan').classList.remove('ed');$('#t-tools').classList.remove('edm');toolListOnly();$('main').scrollTop=0;};
 function renderToolEd(t){
 
- $('#toolEd').innerHTML=`<h3>T${t.num} — ${TT[t.type].n}</h3><div class="row" style="align-items:center;gap:14px;flex-wrap:nowrap"><div id="tPic">${toolPic(t,true)}</div><div class="hint" style="margin:0;flex:1">${['endmill','face'].includes(t.type)?'Для фрезы с пластинами укажите радиус пластины r (например, Ø40 r2): он учитывается в 3D и при радиусе у дна кармана.':t.type=='bull'?'Радиусная фреза: D и радиус при вершине r.':t.type=='chamfer'?'Фаскосним: угол при вершине и Ø вершины задают конус.':'Размеры инструмента — на картинке.'}</div></div><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
+ $('#toolEd').innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">T${t.num} — ${TT[t.type].n}</h3><button class="btn d s" onclick="delTool('${t.id}')">🗑 Удалить</button></div><div class="row" style="align-items:center;gap:14px;flex-wrap:nowrap"><div id="tPic">${toolPic(t,true)}</div><div class="hint" style="margin:0;flex:1">${['endmill','face'].includes(t.type)?'Для фрезы с пластинами укажите радиус пластины r (например, Ø40 r2): он учитывается в 3D и при радиусе у дна кармана.':t.type=='bull'?'Радиусная фреза: D и радиус при вершине r.':t.type=='chamfer'?'Фаскосним: угол при вершине и Ø вершины задают конус.':'Размеры инструмента — на картинке.'}</div></div><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
  <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||(PERREV.includes(t.type)?60:t.type=='tap'?10:150)}"></label>${t.type=='tap'?'':`<label>${PERREV.includes(t.type)?'f, мм/об':'fz, мм/зуб'}<input id="fz" inputmode="decimal" value="${t.fz||(PERREV.includes(t.type)?0.1:0.05)}"></label>`}<label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div><div class="row" style="margin-top:8px"><button class="btn" onclick="matTool()">По материалу «${esc(st.stock.mat||'Сталь 45')}»</button>${FLUTED.includes(t.type)&&t.type!='thread'?`<span class="chip">Шаг вбок ae, % D</span><input id="aeP" inputmode="decimal" value="50" style="width:80px" oninput="chipShow()"><span class="chip" id="chipR"></span>`:''}</div>
  <div class="hint">${t.type=='tap'?'Метчик: S = 1000·Vc / (π·D), подача F = S·P (жёсткое нарезание M29).':PERREV.includes(t.type)?'Сверло: S = 1000·Vc / (π·D), F = S·f (подача на оборот).':'Фреза: S = 1000·Vc / (π·D), F = S·fz·z.'} Вылет инструмента не задаётся — его меряет станок (корректор H).</div>`;
  bindForm($('#tf'),()=>t,()=>{toolListOnly();const tp=$('#tPic');if(tp)tp.innerHTML=toolPic(t,true);},()=>renderTools());}
 window.chipShow=()=>{const t=st.tools.find(x=>x.id==selTool),e=$('#chipR');if(!t||!e)return;const k=chipK(num($('#aeP').value)||50);e.innerHTML=k>1.001?`утончение стружки: F × ${k.toFixed(2)} = <b style="color:var(--tx)">${Math.round(t.f*k)}</b> мм/мин`:'утончения нет (ae ≥ 50% D)';};
-window.selT=id=>{selTool=id;renderTools();};
-window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);selTool=t.id;save();renderTools();};
-window.delAllTools=()=>{if(!st.tools.length)return;if(!confirm(`Удалить весь инструмент (${st.tools.length} шт.)? Операции останутся, но без инструмента.`))return;st.tools=[];selTool=null;save();renderTools();toast('Магазин очищен');};
-window.delTool=id=>{if(!confirm('Удалить инструмент?'))return;st.tools=st.tools.filter(t=>t.id!=id);save();renderTools();};
+window.selT=id=>{selTool=id;renderTools();if(narrow()){$('#tplan').classList.add('ed');$('#t-tools').classList.add('edm');$('main').scrollTop=0;}};
+window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);save();TFIL='all';selT(t.id);};
+window.delAllTools=()=>{if(!st.tools.length)return;const n=st.tools.length;st.tools=[];selTool=null;save();renderTools();snack(`Удалены все инструменты (${n})`,()=>undo());};
+window.delTool=id=>{const t=st.tools.find(x=>x.id==id);st.tools=st.tools.filter(t=>t.id!=id);if(selTool==id)selTool=st.tools[0]?.id;save();tBack();renderTools();snack(`Инструмент T${t?t.num:''} удалён`,()=>undo());};
 window.calcSF=()=>{const t=st.tools.find(x=>x.id==selTool);t.vc=num($('#vc').value);if($('#fz'))t.fz=num($('#fz').value);if(!(t.d>0))return toast('Задайте диаметр');t.s=Math.round(1000*t.vc/(Math.PI*t.d));t.f=t.type=='tap'?Math.round(t.s*t.pitch):PERREV.includes(t.type)?Math.round(t.s*t.fz):Math.round(t.s*t.fz*(t.fl||1));save();renderTools();toast(`S${t.s} F${t.f}`);};
 
 /* ---------- операции UI ---------- */
 function renderOps(){renderCyc();renderOpList();renderOpEd();}
 let cycTab='Все';try{cycTab=localStorage.getItem('fcam_ctab')||'Все';}catch(e){}
 window.cycSet=t=>{cycTab=t;try{localStorage.setItem('fcam_ctab',t);}catch(e){}renderCyc();};
-function renderCyc(){const tabs=['Все',...CYC.map(c=>c[0]),'Мои пресеты'];if(!tabs.includes(cycTab))cycTab='Все';
+function renderCyc(){if(!$('#cycG'))return;const tabs=['Все',...CYC.map(c=>c[0]),'Мои пресеты'];if(!tabs.includes(cycTab))cycTab='Все';
  const btn=k=>{const[t,pr,lb,ic,sub]=Array.isArray(k)?k:[k];const inner=`${svg(ic||t)}<span>${lb||OPS[t].s}</span>${sub?`<small>${sub}</small>`:''}`;return t[0]=='@'?`<button onclick="openMenu('${t.slice(1)}')">${inner}</button>`:`<button onclick='addOp("${t}",${JSON.stringify(pr||{})})'>${inner}</button>`;};
  let h=`<div class="ctabs">${tabs.map(t=>`<button class="${t==cycTab?'on':''}" onclick="cycSet('${t}')">${t}</button>`).join('')}</div>`;
  if(cycTab!='Мои пресеты')h+=CYC.filter(c=>cycTab=='Все'||c[0]==cycTab).map(([g,ks])=>(cycTab=='Все'?`<div class="grp">${g}</div>`:'')+`<div class="cyc">${ks.map(btn).join('')}</div>`).join('');
@@ -726,8 +865,18 @@ function renderCyc(){const tabs=['Все',...CYC.map(c=>c[0]),'Мои пресе
  $('#cycG').innerHTML=h;{const on=document.querySelector('#cycG .ctabs .on'),bar=on&&on.parentElement;if(bar)bar.scrollLeft=on.offsetLeft-bar.clientWidth/2+on.offsetWidth/2;}}
 function opInfo(o){const t=st.tools.find(x=>x.id==o.tool);return (t?`T${t.num} Ø${t.d}`:'⚠ нет инструмента')+(o.depth!=null?` · глуб. ${o.depth}`:'');}
 function renderOpList(){
- $('#opList').innerHTML=st.ops.map((o,i)=>`<div class="it ${o.id==selOp?'sel':''} ${o.on?'':'off'}" onclick="selO('${o.id}')"><div class="n" title="${i+1}">${svg(o.type=='polygon'&&o.side=='in'?'polygonIn':o.type,'style="color:var(--acc)"')}</div><div class="m" title="${OPS[o.type].n}"><b>${i+1}. ${o.type=='polygon'?(o.side=='in'?'Гнездо ':'Выступ ')+Math.round(o.n)+'-гр.':OPS[o.type].s}</b><small><select class="tsel" onclick="event.stopPropagation()" onchange="setOpTool('${o.id}',this.value)">${st.tools.find(t=>t.id==o.tool)?'':'<option selected>⚠ нет инструмента</option>'}${st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<option value="${t.id}" ${t.id==o.tool?'selected':''}>T${t.num} ${TSH[t.type]||''} Ø${t.d}</option>`).join('')}</select>${o.depth!=null?` глуб. ${o.depth}`:''}</small></div>
- <button class="ib" title="Вкл/выкл" onclick="event.stopPropagation();opAct('tog','${o.id}')">${o.on?'◉':'○'}</button><button class="ib" onclick="event.stopPropagation();opAct('up','${o.id}')">↑</button><button class="ib" onclick="event.stopPropagation();opAct('dn','${o.id}')">↓</button><button class="ib" onclick="event.stopPropagation();opAct('dup','${o.id}')">⧉</button><button class="ib" onclick="event.stopPropagation();opAct('del','${o.id}')">✕</button></div>`).join('')||'<div class="empty">Добавьте первый цикл ниже</div>';}
+ const tt=[];
+ $('#opList').innerHTML=st.ops.map((o,i)=>{const d=OPS[o.type],t=st.tools.find(x=>x.id==o.tool),c=OPC[i%OPC.length],T=opTime(o);tt.push(o.on&&T.t?T.t:0);
+  const nm=o.type=='polygon'?(o.side=='in'?'Гнездо ':'Выступ ')+Math.round(o.n)+'-гр.':d.s;
+  const w=!t?'Выбери инструмент — без него код не соберётся':!d.k.includes(t.type)?`${TT[t.type].n} не подходит для этого цикла`:T.err?T.err:'';
+  return `<div class="opc ${o.id==selOp?'sel':''} ${o.on?'':'off'}" style="--oc:${c}" onclick="selO('${o.id}')"><i></i><div class="bd"><div class="r1"><div class="ic">${svg(o.type=='polygon'&&o.side=='in'?'polygonIn':o.type)}</div><div class="m"><b>${i+1} · ${esc(nm)}</b><small>${t?`T${t.num} ${TT[t.type].n} Ø${nf(t.d)}${toolCR(t)>0&&t.type!='ball'?' r'+nf(toolCR(t)):''}`:'инструмент не выбран'}${o.depth!=null&&o.dmode!='z'?` · глуб. ${nf(o.depth)}`:o.dmode=='z'?` · до Z ${nf(o.zend)}`:''}${o.on?'':' · выключена'}</small></div><span class="tm">${T.t?tshort(T.t):'—'}</span></div>
+  ${w?`<div class="wr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff8a00" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg><span style="flex:1">${esc(w)}</span></div>`:''}
+  <div class="ac" onclick="event.stopPropagation()"><button title="${o.on?'Выключить':'Включить'}" aria-label="${o.on?'Выключить':'Включить'}" onclick="opAct('tog','${o.id}')">${o.on?'◉':'○'}</button><button title="Выше" aria-label="Выше" onclick="opAct('up','${o.id}')">↑</button><button title="Ниже" aria-label="Ниже" onclick="opAct('dn','${o.id}')">↓</button><button title="Копия" aria-label="Копия" onclick="opAct('dup','${o.id}')">⧉</button><button title="Удалить" aria-label="Удалить" onclick="opAct('del','${o.id}')">✕</button></div></div></div>`;}).join('')||`<div class="empty" style="padding:24px 12px;text-align:center">Операций пока нет.<br>Нажми <b>«＋ Операция»</b> и выбери, что сделать с деталью.</div>`;
+ const tot=tt.reduce((a,b)=>a+b,0),nT=new Set(st.ops.filter(o=>o.on&&o.tool).map(o=>o.tool)).size;
+ if($('#pName')){$('#pName').textContent=`${st.prog.name||'Деталь'} · O${st.prog.num}`;$('#pSub').textContent=`${st.ops.length} опер.`;
+  $('#pStock').innerHTML=`${stockIco(30)}<span class="m"><b>${esc(stkShort())}</b><small>${esc(zeroShort())}</small></span><em>Изменить</em>`;
+  $('#pTot').innerHTML=st.ops.length?`<span>Итого: <b>${st.ops.filter(o=>o.on).length} опер. · ${nT} инстр.</b></span><span>≈ <b>${tshort(tot)}</b> без смен</span>`:'';}
+ undoUI();}
 let prevAll=false;
 const zSum=o=>{const as=aList(o.aA),x=num(o.ox),y=num(o.oy),z=num(o.zt);return (x||y||z?`X${F(x)} Y${F(y)} Z${F(z)}`:'как у детали')+(as.length&&st.stock.shape=='rod'?` · A${as.map(F).join(' → A')}`:'');};
 function renderOpEd(){
@@ -751,7 +900,9 @@ const HINT={rodFlats:'Пруток на 4-й оси (вкладка «Проек
  pocketOval:'Овал = две полуокружности, соединённые прямыми (L — общая длина, W — ширина). Врезание наклонно вдоль оси паза, затем выборка концентрическими овалами G03.',contourOval:'Овальный выступ или контур овального окна. L — общая длина, W — ширина, угол поворачивает овал вокруг центра.',
  polygon:'Многогранник под ключ (шестигранник, квадрат, восьмигранник…). SW — размер между параллельными гранями. Выступ — как головка болта: фреза идёт снаружи граней. Шестигранник на круглом прутке/болте: укажите «Ø круглой заготовки» — съём до граней посчитается сам (для 3D выберите в «Проекте» круглую заготовку того же Ø). Если Ø = 0, используется «Съём вокруг». Гнездо — карман под гайку/головку: выборка изнутри, углы гнезда получаются скруглёнными радиусом фрезы.',
  slot:'Врезание на каждом проходе, чередование концов паза.',drill:'Канонические циклы Fanuc G81/G82/G83/G73 с G98 (возврат в начальную плоскость).',tap:'Жёсткое нарезание: M29 S.. + G84, F = S × P из шага метчика.',thread:'Винтовая интерполяция снизу вверх (попутное). Диаметр траектории = D резьбы − D фрезы.'};
-window.selO=id=>{selOp=id;renderOpList();renderOpEd();};
+window.selO=id=>{selOp=id;renderOpList();renderOpEd();edTitle();if(narrow()){$('#plan').classList.add('ed');$('#t-ops').classList.add('edm');$('main').scrollTop=0;}};
+window.edBack=()=>{$('#plan').classList.remove('ed');$('#t-ops').classList.remove('edm');renderOpList();$('main').scrollTop=0;};
+const edTitle=()=>{const i=st.ops.findIndex(x=>x.id==selOp),e=$('#edT');if(e)e.textContent=i<0?'':`${i+1} · ${OPS[st.ops[i].type].s}`;};
 const narrow=()=>innerWidth<820;
 /* подходящий инструмент для цикла: из магазина, а если нет — добавить в магазин */
 const TSH={endmill:'конц.',ball:'сфер.',bull:'радиус.',face:'торц.',drill:'сверло',center:'центр.',tap:'метчик',thread:'резьбоф.',chamfer:'фаск.',reamer:'развёрт.'};
@@ -763,14 +914,14 @@ function pickTool(o){const k=OPS[o.type].k;let T=null,want=null;
  else{T=st.tools.find(t=>t.id==o.tool&&k.includes(t.type))||st.tools.find(t=>k.includes(t.type));if(!T)want=[k[0]];}
  let msg='';if(!T){T=newTool(...want);msg=`в магазин добавлен T${T.num} — ${TT[T.type].n} Ø${T.d}`;}o.tool=T.id;return msg;}
 window.setOpTool=(id,v)=>{const o=st.ops.find(x=>x.id==id);if(!o)return;o.tool=v;save();renderOpList();if(id==selOp)renderOpEd();};
-window.delAllOps=()=>{if(!st.ops.length)return;if(!confirm(`Удалить все операции (${st.ops.length} шт.)?`))return;st.ops=[];selOp=null;save();renderOpList();renderOpEd();toast('Технология очищена');};
-window.addOp=(type,pr)=>{const o=newOp(type);if(pr)Object.assign(o,pr);if(type=='chamf'){const ci=st.ops.map(x=>x.type).lastIndexOf('contour');if(ci>=0)o.opn=ci+1;}const tm=pickTool(o);st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+OPS[type].n+(tm?' · '+tm:''));if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
+window.delAllOps=()=>{if(!st.ops.length)return;const n=st.ops.length;st.ops=[];selOp=null;save();renderOpList();renderOpEd();snack(`Удалены все операции (${n})`,()=>undo());};
+window.addOp=(type,pr)=>{const o=newOp(type);if(type=='face'&&!(pr&&'x0' in pr)){const g=stockGeo();if(!g.rod)Object.assign(o,{x0:+F(g.x0),y0:+F(g.y0),x1:+F(g.x1),y1:+F(g.y1)});}if(pr)Object.assign(o,pr);if(type=='chamf'){const ci=st.ops.map(x=>x.type).lastIndexOf('contour');if(ci>=0)o.opn=ci+1;}const tm=pickTool(o);st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+OPS[type].n+(tm?' · '+tm:''));closeMenu();if(!$('#t-ops').classList.contains('on'))show('ops');selO(o.id);};
 window.opAct=(a,id)=>{const i=st.ops.findIndex(o=>o.id==id),o=st.ops[i];
  if(a=='tog')o.on=!o.on;
  if(a=='up'&&i>0)[st.ops[i-1],st.ops[i]]=[st.ops[i],st.ops[i-1]];
  if(a=='dn'&&i<st.ops.length-1)[st.ops[i+1],st.ops[i]]=[st.ops[i],st.ops[i+1]];
  if(a=='dup'){const c={...o,id:uid()};st.ops.splice(i+1,0,c);selOp=c.id;}
- if(a=='del'){if(!confirm('Удалить операцию?'))return;st.ops.splice(i,1);}
+ if(a=='del'){st.ops.splice(i,1);if(selOp==id)selOp=st.ops[Math.min(i,st.ops.length-1)]?.id;save();renderOpList();renderOpEd();snack(`Операция «${OPS[o.type].s}» удалена`,()=>undo());return;}
  save();renderOpList();renderOpEd();};
 /* пресеты */
 window.savePreset=()=>{const o=st.ops.find(x=>x.id==selOp);if(!o)return;const name=prompt('Название пресета',OPS[o.type].s);if(!name)return;
@@ -778,7 +929,7 @@ window.savePreset=()=>{const o=st.ops.find(x=>x.id==selOp);if(!o)return;const na
  PRE.push({id:uid(),name:name.trim().slice(0,40),type:o.type,p});savePre();renderCyc();toast('Пресет сохранён');};
 window.addPreset=id=>{const P=PRE.find(x=>x.id==id);if(!P||!OPS[P.type])return;const o=newOp(P.type);pickTool(o);const def=o.tool;Object.assign(o,JSON.parse(JSON.stringify(P.p)));o.id=uid();o.on=true;
  const byNum=st.tools.find(t=>t.num==P.p._tnum&&OPS[P.type].k.includes(t.type));o.tool=byNum?byNum.id:(st.tools.find(t=>t.id==o.tool)?o.tool:def);delete o._tnum;
- st.ops.push(o);selOp=o.id;save();renderOpList();renderOpEd();toast('Добавлено: '+P.name);if(narrow())$('#opEd').scrollIntoView({behavior:'smooth'});};
+ st.ops.push(o);save();toast('Добавлено: '+P.name);closeMenu();if(!$('#t-ops').classList.contains('on'))show('ops');selO(o.id);};
 window.delPreset=id=>{const P=PRE.find(x=>x.id==id);if(!P||!confirm(`Удалить пресет «${P.name}»?`))return;PRE=PRE.filter(x=>x.id!=id);savePre();renderCyc();};
 
 /* ---------- геометрия ---------- */
@@ -1389,7 +1540,7 @@ const CRU={'PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE
  'BLANK 1=ROUND 2=SQUARE':'ЗАГОТОВКА 1=КРУГ 2=КВАДРАТ','BLANK SIZE':'ДИАМЕТР-СТОРОНА ЗАГОТОВКИ','NUMBER OF FLATS':'КОЛ-ВО ЛЫСОК','CENTER TO FLAT':'ОТ ЦЕНТРА ДО ЛЫСКИ','FIRST FLAT ANGLE':'УГОЛ ПЕРВОЙ ЛЫСКИ','ANGLE STEP 0=EVEN':'ШАГ УГЛА 0=ПОРОВНУ',
  'FLAT NUMBER':'НОМЕР ЛЫСКИ','HALF LENGTH':'ПОЛОВИНА ДЛИНЫ','PASSES':'ПРОХОДЫ','TOOL CENTER OFFSET':'СМЕЩЕНИЕ ЦЕНТРА ФРЕЗЫ','BLANK SIZE ZERO':'НЕТ РАЗМЕРА ЗАГОТОВКИ',
  'HELIX PITCH':'ШАГ ВИНТА','LAPS':'КОЛ-ВО ВИТКОВ','Z PER LAP':'Z ЗА ВИТОК','Z LAP START':'Z НАЧАЛА ВИТКА','FILLET R':'РАДИУС У ДНА','TOOL CORNER R':'РАДИУС ФРЕЗЫ ПРИ ВЕРШИНЕ','FILLET Z STEP':'ШАГ Z ПО РАДИУСУ','FILLET START Z':'Z НАЧАЛА РАДИУСА','FILLET INSET':'СУЖЕНИЕ ПО РАДИУСУ','TOOL R BIGGER THAN FILLET':'R ФРЕЗЫ БОЛЬШЕ R ДНА','FILLET TOO BIG':'R ДНА БОЛЬШЕ КАРМАНА','RADIUS':'РАДИУС','ARC FROM ANGLE':'ДУГА ОТ УГЛА','ARC TO ANGLE':'ДУГА ДО УГЛА','LEAD':'ПОДХОД','EXTRA PASSES':'ДОП. ПРОХОДЫ','TOOL PATH R':'РАДИУС ТРАЕКТОРИИ','OFFSET':'СМЕЩЕНИЕ','PASS':'ПРОХОД','HALF LENGTH X':'ПОЛОВИНА ДЛИНЫ X','HALF WIDTH Y':'ПОЛОВИНА ШИРИНЫ Y','CORNER R':'РАДИУС УГЛОВ','HALF ACROSS FLATS':'ПОЛОВИНА SW','PATH HALF X':'ПОЛУРАЗМЕР X ТРАЕКТОРИИ','PATH HALF Y':'ПОЛУРАЗМЕР Y ТРАЕКТОРИИ','CORNER ARC R':'РАДИУС ОБХОДА УГЛА','VERTEX ANGLE':'УГОЛ ВЕРШИНЫ','HALF SIDE':'ПОЛОВИНА ГРАНИ','CORNER R LESS THAN TOOL R':'R УГЛОВ МЕНЬШЕ R ФРЕЗЫ','TOOL TOO BIG':'ФРЕЗА БОЛЬШЕ ЭЛЕМЕНТА','L LESS THAN W':'L МЕНЬШЕ W','SW IS ZERO':'SW = 0'};
-const CPH=[['STOCK','ЗАГОТОВКА'],['Z0 = TOP','Z0 = ВЕРХ'],['XY0 = LOWER LEFT','XY0 = ЛЕВЫЙ НИЖНИЙ УГОЛ'],['XY0 = CENTER','XY0 = ЦЕНТР'],['XY0 = PART','XY0 = ПО ДЕТАЛИ'],['CONTOUR','КОНТУР'],['POLY','МНОГОГРАННИК'],
+const CPH=[['STOCK','ЗАГОТОВКА'],['Z0 = TOP','Z0 = ВЕРХ'],['XY0 = LOWER LEFT','XY0 = ЛЕВЫЙ НИЖНИЙ УГОЛ'],['XY0 = RIGHT FRONT CORNER','XY0 = ПРАВЫЙ БЛИЖНИЙ УГОЛ'],['XY0 = LEFT BACK CORNER','XY0 = ЛЕВЫЙ ДАЛЬНИЙ УГОЛ'],['XY0 = RIGHT BACK CORNER','XY0 = ПРАВЫЙ ДАЛЬНИЙ УГОЛ'],['XY0 = FRONT SIDE MIDDLE','XY0 = СЕРЕДИНА БЛИЖНЕЙ СТОРОНЫ'],['XY0 = BACK SIDE MIDDLE','XY0 = СЕРЕДИНА ДАЛЬНЕЙ СТОРОНЫ'],['XY0 = LEFT SIDE MIDDLE','XY0 = СЕРЕДИНА ЛЕВОЙ СТОРОНЫ'],['XY0 = RIGHT SIDE MIDDLE','XY0 = СЕРЕДИНА ПРАВОЙ СТОРОНЫ'],['XY0 = CENTER','XY0 = ЦЕНТР'],['XY0 = PART','XY0 = ПО ДЕТАЛИ'],['CONTOUR','КОНТУР'],['POLY','МНОГОГРАННИК'],
  ['TOOL RADIUS IN OFFSET','РАДИУС ФРЕЗЫ В КОРРЕКТОРЕ'],['PATH FOR TOOL','ТРАЕКТОРИЯ ДЛЯ ФРЕЗЫ'],['SIDE','СТОРОНА'],['ERROR','ОШИБКА'],['NO TOOL','НЕТ ИНСТРУМЕНТА'],...Object.values(TT).map(v=>[v.c,v.n.toUpperCase()]),...Object.values(OPS).map(v=>[v.c,v.n.toUpperCase()]),['OP','ОП'],['PARTS','ДЕТАЛЕЙ'],['PART','ДЕТАЛЬ'],['STEP','ШАГ']].sort((a,b)=>b[0].length-a[0].length);
 function trC(t,lang){if(lang=='en')return t;let r=CRU[t];if(r==null){r=t;for(const[a,b]of CPH)r=r.replace(new RegExp('(^|[^A-Z])'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[^A-Z]|$)','g'),(m,p)=>p+b);}
  return lang=='cyr'?r.toUpperCase():lat(r);}
@@ -1400,7 +1551,7 @@ function gen(){
  L.push('%',`O${String(Math.round(s.prog.num)).padStart(4,'0')} (${lat(s.prog.name)})`);
  if(s.prog.note)L.push(`(${lat(s.prog.note)})`);
  {const k=s.stock,sh=k.shape||'rect',g=stockGeo(),d=sh=='rod'?`ROD D${F(k.d)} L${F(k.rl)}`:sh=='round'?`D${F(k.d)}`:sh=='poly'?`POLY N${Math.round(k.n)} SW${F(k.sw)}`:sh=='custom'?`CONTOUR ${F(g.w)}X${F(g.h)}`:`X${F(k.x)} Y${F(k.y)}`;
- L.push(`(STOCK ${d} Z${F(k.z)} ${lat(k.mat)})`,(sh=='rod'?'(Z0 Y0 = AXIS A)':`(Z0 = TOP, XY0 = ${sh=='custom'?'PART':k.origin=='center'?'CENTER':'LOWER LEFT'})`));}
+ L.push(`(STOCK ${d} Z${F(k.z)} ${lat(k.mat)})`,(sh=='rod'?'(Z0 Y0 = AXIS A)':`(Z0 = TOP, XY0 = ${sh=='custom'?'PART':(ORIGL[k.origin]||'CENTER')})`));}
  const used=[...new Set(s.ops.filter(o=>o.on).map(o=>o.tool))];
  s.tools.filter(t=>used.includes(t.id)).forEach(t=>L.push(`(T${t.num} ${TT[t.type].c} D${F(t.d)}${t.name?' '+lat(t.name):''})`));
  {const PT=parts(),m=mpGet();if(PT.length>1)L.push(m.mode=='g52'?`(PARTS ${PT.length}: G52 ${Math.round(m.nx)}X${Math.round(m.ny)} STEP X${F(m.dx)} Y${F(m.dy)})`:`(PARTS ${PT.length}: ${PT.map(q=>q.w).join(' ')})`);}
@@ -1601,7 +1752,7 @@ const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+((r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'')+(r.warn?`<span style="color:var(--acc)">⚠ ${esc(r.warn)}</span>`:''));
  clearTimeout(window.__chkT);window.__chkT=setTimeout(()=>{const L=checkProgram($('#code').value),b=$('#chkBox');if(b)b.innerHTML=`<details ${L.some(x=>x.sev=='err')?'open':''}><summary style="cursor:pointer;margin:4px 0 8px;color:${L.some(x=>x.sev=='err')?'var(--bad)':L.some(x=>x.sev=='warn')?'var(--acc)':'var(--ok)'}">Проверка программы: ${L[0].sev=='ok'?'✓ замечаний нет':L.length+' замеч.'}</summary>${chkHTML(L)}</details>`;},350);
- $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';}
+ $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';if(!CV.edit)cvRender();fmtSegUI();}
 $('#code').addEventListener('input',()=>{manual=true;updCodeInfo();});
 const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
 window.downloadCode=e=>{if(saveNative(fname(e),$('#code').value.replace(/\n/g,'\r\n')))return;const b=new Blob([$('#code').value.replace(/\n/g,'\r\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname(e);document.body.appendChild(a);a.click();a.remove();toast('Файл '+fname(e)+' сохранён');};
@@ -1716,7 +1867,7 @@ function build(){
  pathObj=pathLines(data.segs,showStock?.55:1);pathObj.visible=$('#showPath').checked||!showStock;SC.add(pathObj);
  sim={i:0,t:0,play:false,tm:0};$('#playB').textContent='▶';
  const p0=data.segs[0]?.a||{x:0,y:0,z:50};setTool(p0,data.segs[0]?.tool);fitCam();hud(p0);
- data.marks=simMarks($('#code').value,data.segs);const so=$('#simOp');if(so){const m0=data.marks.filter(m=>m.i==0).map(m=>m.label).join(' · ');so.innerHTML=`<option value="0">▶ С начала${m0?' · '+esc(m0):''}</option>`+data.marks.filter(m=>m.i>0).map(m=>`<option value="${m.i}">${esc(m.label)}</option>`).join('');}}
+ data.marks=simMarks($('#code').value,data.segs);const so=$('#simOp');if(so){const m0=data.marks.filter(m=>m.i==0).map(m=>m.label).join(' · ');so.innerHTML=`<option value="0">▶ С начала${m0?' · '+esc(m0):''}</option>`+data.marks.filter(m=>m.i>0).map(m=>`<option value="${m.i}">${esc(m.label)}</option>`).join('');}tlBuild();}
 /* где начинается каждая операция: (OP3 …) в своих программах, смена инструмента и заголовки-комментарии — в чужих */
 function simMarks(code,segs){const L=code.split('\n'),M=[];
  L.forEach((l,ln)=>{const m=/^\s*\((?:OP|ОП)\s*(\d+)\s+([^)]*)\)/i.exec(l);if(m){const o=st.ops[+m[1]-1];M.push({ln,label:`Операция ${m[1]}: ${o&&OPS[o.type]?OPS[o.type].s:m[2]}`});}});
@@ -1744,7 +1895,7 @@ function step(budget,stopAt){const S=data.segs,lim=Math.min(S.length,stopAt??S.l
  if(sim.i>=S.length){sim.play=false;$('#playB').textContent='▶';}}
 function hud(p){const S=data.segs,s=S[Math.min(sim.i,S.length-1)],line=s?$('#code').value.split('\n')[s.ln]:'';
  if(data.err){$('#hud').innerHTML=`<div class="ln" style="color:var(--bad)">⚠ ${esc(data.err)}</div>`;return;}
- const mm=m=>`${Math.floor(m)}:${String(Math.floor((m%1)*60)).padStart(2,'0')}`;$('#hud').innerHTML=`<div class="ln">${esc(line||'—')}</div>X ${F(p.x)}  Y ${F(p.y)}  Z ${F(p.z)}<br>T${toolNum??'-'} · ⏱ ${mm(sim.tm||0)} / ${mm(data.time||0)}`;}
+ tlUpd();const mm=m=>`${Math.floor(m)}:${String(Math.floor((m%1)*60)).padStart(2,'0')}`;$('#hud').innerHTML=`<div class="ln">${esc(line||'—')}</div>X ${F(p.x)}  Y ${F(p.y)}  Z ${F(p.z)}<br>T${toolNum??'-'} · ⏱ ${mm(sim.tm||0)} / ${mm(data.time||0)}`;}
 const SPDS=[1,1.25,1.5,2,5,10,25,50,100];let spd=10,lastT=0;try{spd=+localStorage.getItem('fcam_spd')||10;}catch(e){}if(!SPDS.includes(spd))spd=10;
 function spdUI(){$('#spd').innerHTML=SPDS.map(v=>`<button class="${v==spd?'on':''}" onclick="setSpd(${v})">${String(v).replace('.',',')}×</button>`).join('');}
 window.setSpd=v=>{spd=v;try{localStorage.setItem('fcam_spd',v);}catch(e){}spdUI();};spdUI();
@@ -1842,19 +1993,20 @@ function checkProgram(code){const out=[],add=(sev,msg,ln)=>{if(out.length<40)out
  if(!out.length)add('ok','Замечаний нет: ускоренные ходы не задевают материал, шпиндель включён, корректоры совпадают');
  return out;}
 function chkHTML(list){return list.map(c=>`<div class="chk ${c.sev}">${c.ln!=null?`<button class="btn s" onclick="gotoLine(${c.ln})">стр. ${c.ln+1}</button>`:''}${c.sev=='err'?'⛔ ':c.sev=='warn'?'⚠ ':'✓ '}${esc(c.msg)}</div>`).join('');}
-window.gotoLine=n=>{closeMenu();show('code');const ta=$('#code'),L=ta.value.split('\n');let p=0;for(let i=0;i<n&&i<L.length;i++)p+=L[i].length+1;ta.focus();ta.setSelectionRange(p,p+(L[n]||'').length);
+window.gotoLine=n=>{closeMenu();show('code');if(!CV.edit){cvGo(n);return;}const ta=$('#code'),L=ta.value.split('\n');let p=0;for(let i=0;i<n&&i<L.length;i++)p+=L[i].length+1;ta.focus();ta.setSelectionRange(p,p+(L[n]||'').length);
  const lh=parseFloat(getComputedStyle(ta).lineHeight)||20;ta.scrollTop=Math.max(0,n*lh-ta.clientHeight/3);};
 
 /* ---------- меню ☰ ---------- */
 const MENU=[['mode','🎚','Режим работы','Новичок — подсказки и шаги · Опытный — все параметры'],['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['ocr','📷','Программа с фото','Сфотографировать программу — распознать и перевести в параметрию'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
  ['check','✅','Проверка программы','Столкновения G0, шпиндель, корректоры, режимы'],['calc','🧮','Калькулятор режимов','По материалу и инструменту, утончение стружки'],
- ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14'],['about','ℹ️','О программе','Версия, соглашение, политика конфиденциальности, связь']];
-const MENUX={thrw:['thrw','🔩','Отверстие под резьбу',''],ocr:['ocr','📷','Программа с фото','']};
-window.openMenu=v=>{$('#sheet').classList.add('on');const T=MENU.find(m=>m[0]==v)||MENUX[v];$('#shTitle').textContent=T?T[2]:'Меню';$('#shBack').style.visibility=T?'visible':'hidden';
+ ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14'],['upd','⟳','Обновления','Проверить и установить новую версию'],['about','ℹ️','О программе','Версия, соглашение, политика конфиденциальности, связь']];
+const MENUX={cyc:['cyc','＋','Добавить операцию',''],thrw:['thrw','🔩','Отверстие под резьбу',''],ocr:['ocr','📷','Программа с фото','']};
+window.openMenu=v=>{if(v=='upd'){closeMenu();show('upd');return;}$('#sheet').classList.add('on');const T=MENU.find(m=>m[0]==v)||MENUX[v];$('#shTitle').textContent=T?T[2]:'Меню';$('#shBack').style.visibility=T&&v!='cyc'?'visible':'hidden';
  const B=$('#shBody');if(!T){B.innerHTML=MENU.map(([k,i,t,d])=>`<button class="mi" onclick="openMenu('${k}')"><i>${i}</i><span><b>${t}</b><small>${d}</small></span></button>`).join('');return;}
  B.innerHTML=VIEWS[v]();if(VIEW_AFTER[v])VIEW_AFTER[v]();B.scrollTop=0;};
 window.closeMenu=()=>$('#sheet').classList.remove('on');
 const VIEW_AFTER={};
+VIEW_AFTER.cyc=()=>renderCyc();
 VIEW_AFTER.ocr=()=>{const ta=$('#ocrT');if(ta)ta.oninput=()=>{ocrText=ta.value;};};
 /* мастер: отверстие под резьбу → центровка (+фаска), сверление, метчик или резьбофреза */
 const WZ={thr:'M8',depth:12,thru:'0',how:'tap',ch:'1',pat:'pcd'};PAT.forEach(f=>{if(WZ[f[0]]==null)WZ[f[0]]=f[2];});WZ.pat='pcd';
@@ -1882,6 +2034,7 @@ window.wzAdd=()=>{const c=wzCalc();if(!c.n)return toast('Нет точек от�
  st.ops.push(...add);selOp=add[0].id;save();closeMenu();show('ops');toast(`Добавлено переходов: ${add.length}`+(newT.length?' · в магазин: '+newT.join(', '):''));};
 const VIEWS={
  mode:()=>modeHTML(),
+ cyc:()=>(easy()?'<div class="hint" style="margin:0 0 12px">Обычный порядок: <b>Торцовка → Контур или Карман → Отверстия → Фаска</b>. Нажми цикл — откроются его размеры.</div>':'')+'<div id="cycG"></div>',
  sheet:()=>`<div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="printSheet()">🖨 Печать / PDF</button><button class="btn" onclick="saveSheet()">⬇ Сохранить HTML</button></div><div id="ssWrap">${sheetHTML()}</div>`,
  lib:()=>{const L=libGet();return `<div class="row" style="margin-bottom:10px"><button class="btn p" onclick="libSave()">💾 Сохранить текущий проект</button><button class="btn" onclick="exportProj()">⬇ Экспорт .nc</button></div>`+
   (L.length?L.map(p=>`<div class="it"><div class="m" onclick="libOpen('${p.id}')"><b>${esc(p.name)}</b><small>${new Date(p.date).toLocaleString('ru')} · операций: ${(p.data.ops||[]).length}</small></div><button class="ib" title="Открыть" onclick="libOpen('${p.id}')">📂</button><button class="ib" title="Удалить" onclick="libDel('${p.id}')">✕</button></div>`).join(''):'<div class="empty">Пока нет сохранённых деталей</div>')+
@@ -1948,11 +2101,11 @@ const libGet=()=>{try{return JSON.parse(localStorage.getItem('fcam_lib'))||[]}ca
 const libPut=L=>{try{localStorage.setItem('fcam_lib',JSON.stringify(L));return true}catch(e){toast('Нет места для сохранения');return false}};
 window.libSave=()=>{const def=`${st.prog.name||'Деталь'} O${st.prog.num}`,name=prompt('Название детали',def);if(!name)return;const L=libGet(),ex=L.find(p=>p.name==name.trim());
  if(ex&&!confirm(`«${name}» уже есть. Заменить?`))return;const item={id:ex?ex.id:uid(),name:name.trim(),date:Date.now(),data:JSON.parse(JSON.stringify(st)),code:manual?$('#code').value:null,src:SRC||null};
- const L2=ex?L.map(p=>p.id==ex.id?item:p):[item,...L];if(libPut(L2)){toast('Деталь сохранена');openMenu('lib');}};
+ const L2=ex?L.map(p=>p.id==ex.id?item:p):[item,...L];if(libPut(L2)){toast('Деталь сохранена');libRefresh();}};
 window.libOpen=id=>{const p=libGet().find(x=>x.id==id);if(!p)return;if(!confirm(`Открыть «${p.name}»? Текущий проект будет заменён (сохраните его, если нужно).`))return;
  st=JSON.parse(JSON.stringify(p.data));normStock();st.ops=st.ops.filter(o=>OPS[o.type]);selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;manual=false;save();if(p.src&&p.src.t)srcSet(p.src.t,p.src.n);renderAll();closeMenu();
  if(p.code){$('#code').value=p.code;manual=true;codeDirty=false;updCodeInfo();show('code');}else show('ops');toast('Открыт: '+p.name);};
-window.libDel=id=>{const L=libGet(),p=L.find(x=>x.id==id);if(!p||!confirm(`Удалить «${p.name}»?`))return;libPut(L.filter(x=>x.id!=id));openMenu('lib');};
+window.libDel=id=>{const L=libGet(),p=L.find(x=>x.id==id);if(!p||!confirm(`Удалить «${p.name}»?`))return;libPut(L.filter(x=>x.id!=id));libRefresh();};
 
 /* ---------- лист наладки ---------- */
 const SSCSS=`.ss{background:#fff;color:#111;border-radius:10px;padding:16px;font:12px/1.35 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
@@ -1983,7 +2136,7 @@ function sheetHTML(){regen();const code=$('#code').value,P=parse(code),g=stockSi
  const now=new Date().toLocaleString('ru');
  return `<div class="ss"><h2>Лист наладки — O${String(Math.round(st.prog.num)).padStart(4,'0')} ${esc(st.prog.name||'')}</h2><div class="sub">${esc(st.prog.note||'')} · сформирован ${now} · Fresa v${APP_VERSION}</div>
   <div class="kv"><div>Станок <b>Fanuc 0i-MF Plus</b></div><div>Материал <b>${esc(s.mat||'—')}</b></div><div>Заготовка <b>${shp} × ${FS(s.z)}</b></div><div>Система координат <b>${mpGet().mode=='wcs'?PT.map(q=>q.w).join(', '):s.wcs}</b></div>${PT.length>1?`<div>Деталей на столе <b>${PT.length}${mpGet().mode=='g52'?` (G52, шаг X${FS(mpGet().dx)} Y${FS(mpGet().dy)})`:''}</b></div>`:''}
-   <div>Ноль XY <b>${s.shape=='custom'?'по детали':s.origin=='center'?'центр заготовки':'левый нижний угол'}</b></div><div>Ноль Z <b>верх заготовки</b></div>
+   <div>Ноль XY <b>${s.shape=='custom'?'по детали':(ORIG[s.origin]||'центр заготовки')}</b></div><div>Ноль Z <b>верх заготовки</b></div>
    <div>Операций <b>${ops.length}</b></div><div>Время цикла ≈ <b>${tfmt(P.time)}</b></div><div>Формат G-кода <b>${st.prog.fmt=='plain'?'обычный':'параметрический (макро B)'}</b></div><div>Строк программы <b>${code.split('\n').length}</b></div></div>
   <h4>Схема (вид сверху, траектории по инструментам)</h4>${svg}
   <h4>Инструмент</h4><table><tr><th>T / H</th><th>Тип</th><th>Ø, мм</th><th>z</th><th>S, об/мин</th><th>F, мм/мин</th><th>Вылет</th></tr>
@@ -1996,29 +2149,223 @@ window.printSheet=()=>{if(NATIVE=='android'){saveSheet();return;}document.body.c
 window.saveSheet=()=>{const n=`naladka_O${String(Math.round(st.prog.num)).padStart(4,'0')}.html`,html=`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Лист наладки O${st.prog.num}</title><style>body{margin:12px;background:#fff}${SSCSS}@media print{body{margin:0}}</style></head><body>${sheetHTML()}</body></html>`;
  if(saveNative(n,html))return;const b=new Blob([html],{type:'text/html'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();a.remove();toast('Файл '+n+' сохранён');};
 
+/* ===================== v2.2: новый интерфейс ===================== */
+const tshort=m=>{const S=Math.round((+m||0)*60);return S<60?`${S} с`:`${Math.floor(S/60)}:${String(S%60).padStart(2,'0')}`;};
+/* время одной операции (кэш) */
+const OTC=new Map();
+function opTime(o){const t=st.tools.find(x=>x.id==o.tool),k=JSON.stringify([o,t,st.stock,st.prog.fmt,st.prog.mp]);if(OTC.has(k))return OTC.get(k);let r;
+ try{const{code}=opCode(o),P=parse(code);r={t:P.time||0,err:P.err?(ERR[P.err]||P.err):''};}catch(e){r={t:0,err:ERR[e.message]||e.message};}
+ if(OTC.size>400)OTC.clear();OTC.set(k,r);return r;}
+function stkShort(s=st.stock){const sh=s.shape||'rect',m=s.mat?` · ${s.mat}`:'';
+ return (sh=='rod'?`Пруток Ø${nf(s.d)} × ${nf(s.rl)}`:sh=='round'?`Диск Ø${nf(s.d)} × ${nf(s.z)}`:sh=='poly'?`Многогранник SW${nf(s.sw)} × ${nf(s.z)}`:sh=='custom'?`Заготовка по контуру × ${nf(s.z)}`:`Плита ${nf(s.x)}×${nf(s.y)}×${nf(s.z)}`)+m;}
+function zeroShort(s=st.stock){return s.shape=='rod'?`Ноль: Z0 ${s.rz=='top'?'верх прутка':'на оси A'} · ${s.wcs||'G54'}`:`Ноль: ${s.shape=='custom'?'по детали':ORIG[s.origin]||'центр заготовки'} · Z0 верх · ${s.wcs||'G54'}`;}
+function stockIco(sz=26,s=st.stock){const sh=s.shape||'rect';return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">${sh=='rod'?'<ellipse cx="5" cy="12" rx="2.5" ry="6"/><path d="M5 6h14c1.5 0 2.5 2.7 2.5 6s-1 6-2.5 6H5"/>':sh=='round'?'<ellipse cx="12" cy="9" rx="9" ry="4"/><path d="M3 9v5c0 2.2 4 4 9 4s9-1.8 9-4V9"/>':'<path d="M3 9l9-4 9 4-9 4z"/><path d="M3 9v6l9 4 9-4V9"/>'}</svg>`;}
+/* всплывашка с «Отменить» */
+function snack(msg,fn){let d=$('#snack');if(d)d.remove();d=document.createElement('div');d.id='snack';d.className='snack';d.setAttribute('role','status');d.innerHTML=`<span>${esc(msg)}</span><button>ОТМЕНИТЬ</button>`;
+ d.querySelector('button').onclick=()=>{d.remove();fn&&fn();};document.body.appendChild(d);clearTimeout(snack.t);snack.t=setTimeout(()=>d.remove(),6000);}
+
+/* ---------- отмена / повтор ---------- */
+function hCommit(){clearTimeout(H.t);H.t=0;const j=JSON.stringify(st);if(H.cur==null){H.cur=j;return;}if(j===H.cur){undoUI();return;}H.u.push(H.cur);if(H.u.length>80)H.u.shift();H.cur=j;H.r=[];undoUI();}
+function undoUI(){const u=$('#uB'),r=$('#rB');if(u)u.disabled=!H.u.length&&!H.t;if(r)r.disabled=!H.r.length;}
+function hApply(){st=JSON.parse(H.cur);normStock();st.ops=st.ops.filter(o=>OPS[o.type]);if(!st.ops.find(o=>o.id==selOp))selOp=st.ops[0]?.id;if(!st.tools.find(t=>t.id==selTool))selTool=st.tools[0]?.id;
+ H.mute=true;save(true);H.mute=false;OTC.clear();renderAll();const cur=(document.querySelector('.tab.on')?.id||'t-ops').slice(2);show(cur);undoUI();}
+window.undo=()=>{hCommit();if(!H.u.length)return toast('Нечего отменять');H.r.push(H.cur);H.cur=H.u.pop();hApply();toast('Отменено');};
+window.redo=()=>{hCommit();if(!H.r.length)return toast('Нечего возвращать');H.u.push(H.cur);H.cur=H.r.pop();hApply();toast('Возвращено');};
+
+/* ---------- главный экран ---------- */
+const HIC={file:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h10l6 6v10H4z"/><path d="M14 4v6h6"/></svg>',
+ cam:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="4"/><path d="M8 6l2-3h4l2 3"/></svg>',
+ plus:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'};
+function libRefresh(){if($('#sheet').classList.contains('on'))openMenu('lib');else renderHome();}
+function renderHome(){const h=$('#home');if(!h)return;const L=libGet(),tot=st.ops.filter(o=>o.on).reduce((a,o)=>a+(opTime(o).t||0),0);
+ h.innerHTML=`<button class="hnew" onclick="wizOpen()"><span class="pl">${HIC.plus}</span><span class="m"><b>Новая деталь</b><small>Заготовка → ноль → операции</small></span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+ <div class="h2"><button class="hb" onclick="document.getElementById('impF').click()">${HIC.file}Открыть файл .nc</button><button class="hb" onclick="openMenu('ocr')">${HIC.cam}Код с фото</button></div>
+ <div class="hh"><b>Сейчас открыта</b></div>
+ <button class="pc cur" onclick="show('ops')"><span class="pi">${stockIco(26)}</span><span class="m"><b>${esc(st.prog.name||'Деталь')} · O${st.prog.num}</b><small>${esc(stkShort())} · ${st.ops.length} опер.${tot?' · ≈ '+tshort(tot):''}</small></span><em>Открыть →</em></button>
+ <div class="hh"><b>Начать с шаблона</b><small>поменяешь только размеры</small></div>
+ <div class="tpls">${TPL.map((t,i)=>`<button class="tpl" onclick="tplUse(${i})">${t.svg}<b>${t.n}</b><small>${t.d}</small></button>`).join('')}</div>
+ <div class="hh"><b>Мои проекты</b><button class="btn s" onclick="libSave()">💾 Сохранить текущий</button></div>
+ ${L.length?L.slice(0,40).map(p=>`<div class="pc" role="button" tabindex="0" onclick="libOpen('${p.id}')"><span class="pi">${stockIco(26,p.data.stock||{})}</span><span class="m"><b>${esc(p.name)}</b><small>${new Date(p.date).toLocaleDateString('ru')} · ${esc(stkShort(p.data.stock||{}))} · операций: ${(p.data.ops||[]).length}</small></span><button class="ib" aria-label="Удалить" onclick="event.stopPropagation();libDel('${p.id}')">✕</button></div>`).join(''):'<div class="empty" style="text-align:center;padding:18px">Здесь будут твои детали. Нажми «Сохранить текущий», чтобы не потерять.</div>'}
+ <div class="row" style="justify-content:center;margin-top:6px"><button class="btn s" onclick="exportProj()">⬇ Экспорт текущей файлом .nc</button></div>`;}
+/* сохранить текущую перед заменой */
+function keepAsk(){if(!st.ops.length)return;const nm=`${st.prog.name||'Деталь'} O${st.prog.num}`,L=libGet(),ex=L.find(p=>p.name==nm);
+ if(ex&&JSON.stringify(ex.data)===JSON.stringify(st))return;
+ if(!confirm(`Сохранить текущую деталь «${nm}» в «Мои проекты»?\n\nОК — сохранить, Отмена — не сохранять.`))return;
+ const item={id:ex?ex.id:uid(),name:nm,date:Date.now(),data:JSON.parse(JSON.stringify(st)),code:manual?$('#code').value:null,src:SRC||null};libPut(ex?L.map(p=>p.id==ex.id?item:p):[item,...L]);toast('Сохранено: '+nm);}
+
+/* ---------- шаблоны деталей ---------- */
+const TPLSVG={plate:'<svg viewBox="0 0 108 64" fill="none" aria-hidden="true"><path d="M10 22l40-14 48 14-40 16z" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M10 22v20l48 16V38M98 22v20L58 58" stroke="#8b93a3" stroke-width="1.5"/><path d="M38 22l14-5 18 5-14 6z" fill="#0f1115" stroke="#ffc400" stroke-width="1.5"/></svg>',
+ flange:'<svg viewBox="0 0 108 64" fill="none" aria-hidden="true"><ellipse cx="54" cy="30" rx="44" ry="20" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><ellipse cx="54" cy="30" rx="12" ry="6" fill="#0f1115" stroke="#8b93a3" stroke-width="1.5"/><g stroke="#ffc400" stroke-width="1.5"><circle cx="24" cy="30" r="3.5"/><circle cx="84" cy="30" r="3.5"/><circle cx="39" cy="17" r="3.5"/><circle cx="69" cy="17" r="3.5"/><circle cx="39" cy="43" r="3.5"/><circle cx="69" cy="43" r="3.5"/></g></svg>',
+ body:'<svg viewBox="0 0 108 64" fill="none" aria-hidden="true"><path d="M8 26l44-16 48 16-44 18z" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M8 26v16l48 18V44M100 26v16L56 60" stroke="#8b93a3" stroke-width="1.5"/><path d="M22 26l30-11 32 11-30 12z" stroke="#ffc400" stroke-width="1.5"/><g stroke="#ffc400" stroke-width="1.5"><circle cx="34" cy="26" r="2.5"/><circle cx="72" cy="26" r="2.5"/><circle cx="52" cy="19" r="2.5"/><circle cx="54" cy="33" r="2.5"/></g></svg>',
+ rod:'<svg viewBox="0 0 108 64" fill="none" aria-hidden="true"><path d="M14 18h80M14 46h80" stroke="#8b93a3" stroke-width="1.5"/><ellipse cx="14" cy="32" rx="6" ry="14" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M94 18c4 0 6 6 6 14s-2 14-6 14" stroke="#8b93a3" stroke-width="1.5"/><path d="M14 23h40M14 41h40" stroke="#ffc400" stroke-width="2"/><circle cx="36" cy="32" r="4" stroke="#ffc400" stroke-width="1.5"/></svg>'};
+const tplBase=(name,stock)=>({prog:{num:st.prog.num||1000,name,note:'',fmt:st.prog.fmt,cmt:st.prog.cmt,mp:{mode:'off'}},stock:{origin:'center',wcs:'G54',mat:st.stock.mat||'Д16Т',...stock},tools:JSON.parse(JSON.stringify(st.tools)),ops:[]});
+function tNeed(s,type,q={}){let t=s.tools.find(x=>x.type==type&&(q.d==null||Math.abs(x.d-q.d)<0.011)&&(q.max==null||x.d<=q.max)&&(q.pitch==null||Math.abs((+x.pitch||0)-q.pitch)<1e-6));
+ if(!t){const n=Math.max(0,...s.tools.map(x=>x.num))+1;t={id:uid(),num:n,type,name:'',d:q.d??q.def??10,fl:type=='face'?5:4,s:1000,f:200,pitch:q.pitch??1.25};if(type=='chamfer'){t.ang=90;t.tip=0;}if(type=='center')t.ang=90;if(type=='drill')t.ang=118;applyMat(t,s.stock.mat);s.tools.push(t);}return t;}
+function tOp(s,type,t,o){const op=newOp(type,s);Object.assign(op,o);op.tool=t.id;s.ops.push(op);return op;}
+const TPL=[
+ {n:'Плита с карманом',d:'торцовка · карман · фаска',svg:TPLSVG.plate,mk(){const s=tplBase('PLITA',{shape:'rect',x:120,y:80,z:30});
+  tOp(s,'face',tNeed(s,'face',{def:50}),{x0:-60,y0:-40,x1:60,y1:40,depth:1});
+  tOp(s,'pocketRect',tNeed(s,'endmill',{max:16,def:10}),{cx:0,cy:0,w:60,h:40,depth:8,step:1});
+  tOp(s,'chamf',tNeed(s,'chamfer',{def:12}),{src:'rect',side:'in',cx:0,cy:0,w:60,h:40,rc:5,c:0.5});return s;}},
+ {n:'Фланец, 6 отверстий',d:'центровка · сверление по кругу',svg:TPLSVG.flange,mk(){const s=tplBase('FLANEC',{shape:'round',d:100,z:20,x:100,y:100});
+  tOp(s,'face',tNeed(s,'face',{def:50}),{x0:-50,y0:-50,x1:50,y1:50,depth:1});
+  const P={pat:'pcd',cx:0,cy:0,pr:35,cnt:6,ang:0};
+  tOp(s,'drill',tNeed(s,'center',{def:10}),{cycle:'G81',depth:2,...P});
+  tOp(s,'drill',tNeed(s,'drill',{d:9}),{cycle:'G83',depth:24,q:4,...P});return s;}},
+ {n:'Корпус с резьбой M8',d:'контур · 4 отверстия · метчик',svg:TPLSVG.body,mk(){const s=tplBase('KORPUS',{shape:'rect',x:100,y:60,z:25});
+  tOp(s,'face',tNeed(s,'face',{def:50}),{x0:-50,y0:-30,x1:50,y1:30,depth:1});
+  tOp(s,'contourRect',tNeed(s,'endmill',{max:16,def:10}),{cx:0,cy:0,w:90,h:50,side:'out',depth:10,step:2,wall:5});
+  const P={pat:'grid',gx:-35,gy:-15,nx:2,ny:2,dx:70,dy:30};
+  tOp(s,'drill',tNeed(s,'center',{def:10}),{cycle:'G81',depth:2.5,...P});
+  tOp(s,'drill',tNeed(s,'drill',{d:6.8}),{cycle:'G83',depth:18,q:3,...P});
+  tOp(s,'tap',tNeed(s,'tap',{d:8,pitch:1.25}),{depth:12,rp:5,...P});return s;}},
+ {n:'Ушко на прутке',d:'4-я ось: 2 лыски + отверстие',svg:TPLSVG.rod,mk(){const s=tplBase('USHKO',{shape:'rod',d:32,rl:84,rx:-4,rz:'axis',adir:'1',z:30});
+  tOp(s,'rodFlats',tNeed(s,'endmill',{max:20,def:16}),{th:12,len:25,from:'l',cnt:'2',a0:0,step:1});
+  tOp(s,'drill',tNeed(s,'drill',{d:8.5}),{pat:'list',list:'12 0',cycle:'G83',depth:14,q:3,aA:'0',zt:6});return s;}}];
+window.tplUse=i=>{const T=TPL[i];keepAsk();loadProj(JSON.parse(JSON.stringify(T.mk())),T.n);OTC.clear();show('ops');toast(`Шаблон «${T.n}» — поменяй размеры под свою деталь`);};
+
+/* ---------- выбор нуля на рисунке ---------- */
+function zeroSVG(cur,fn){const L=[30,130],B=[180,85],Fp=[180,175];
+ const pt=(ix,iy)=>{const a=(ix+1)/2,b=(iy+1)/2;return[L[0]+a*(Fp[0]-L[0])+b*(B[0]-L[0]),L[1]+a*(Fp[1]-L[1])+b*(B[1]-L[1])];};
+ const[cx,cy]=OXY[cur]||[0,0],[px,py]=pt(cx,cy),nv=(v,k)=>{const l=Math.hypot(v[0],v[1]);return[v[0]/l*k,v[1]/l*k];},ax=nv([Fp[0]-L[0],Fp[1]-L[1]],44),ay=nv([B[0]-L[0],B[1]-L[1]],44);
+ let h=`<svg class="zp" viewBox="-14 -6 390 256" role="img" aria-label="Заготовка: нажми точку, где ноль детали"><path d="M30 130l150-45 150 45-150 45z" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M30 130v60l150 45v-60M330 130v60l-150 45" stroke="#8b93a3" stroke-width="1.5" fill="none"/><path d="M30 190l150 45 150-45v-60l-150 45z" fill="#171a21" opacity=".6"/>
+  <text x="60" y="236" fill="#8b93a3" font-size="12" font-family="inherit">ближняя сторона (к тебе)</text>`;
+ Object.entries(OXY).forEach(([k,[ix,iy]])=>{if(k==cur)return;const[x,y]=pt(ix,iy);h+=`<g class="pt" onclick="${fn}('${k}')"><circle cx="${x}" cy="${y}" r="18" fill="transparent"/><circle cx="${x}" cy="${y}" r="${ix&&iy?7:6}" fill="#0f1115" stroke="#c9ced8" stroke-width="2"/></g>`;});
+ const ar=(dx,dy,c,lbl,lx,ly)=>`<path d="M${px} ${py}l${dx} ${dy}" stroke="${c}" stroke-width="3"/><circle cx="${px+dx}" cy="${py+dy}" r="3.5" fill="${c}"/><text x="${Math.min(px+dx+lx,350)}" y="${Math.max(py+dy+ly,12)}" fill="${c}" font-size="14" font-weight="700" font-family="ui-monospace,monospace">${lbl}</text>`;
+ h+=ar(ax[0],ax[1],'#ff5c5c','X+',4,16)+ar(ay[0],ay[1],'#2ecc71','Y+',4,-6)+ar(0,-50,'#4da3ff','Z+',8,4)+`<circle cx="${px}" cy="${py}" r="14" fill="#ffc400" opacity=".25"/><circle cx="${px}" cy="${py}" r="8" fill="#ffc400" stroke="#141414" stroke-width="2"/></svg>`;return h;}
+window.zPickSet=k=>{st.stock.origin=k;save();OTC.clear();renderProj();toast('Ноль: '+ORIG[k]);};
+
+/* ---------- мастер «Новая деталь» ---------- */
+let W={};
+const WMATS=['Д16Т','Сталь 45','Ст3 / сталь 20','12Х18Н10Т','Чугун СЧ20','Латунь ЛС59','Капролон / ПОМ'];
+window.wizOpen=()=>{W={step:1,shape:'rect',x:120,y:80,z:30,d:60,dz:20,rl:100,mat:MATS[st.stock.mat]?st.stock.mat:'Д16Т',name:'',origin:'center',rz:'axis',rend:'l',wcs:'G54',face:true};wizRender();$('#wiz').hidden=false;};
+window.wizClose=()=>{$('#wiz').hidden=true;};
+window.wzSet=(k,v,re)=>{W[k]=['x','y','z','d','dz','rl'].includes(k)?num(v):v;if(re)wizRender();else{const sk=$('#wzSk');if(sk)sk.innerHTML=wzSketch();}};
+window.wzGo=d=>{if(d>0&&W.step==1){const bad=W.shape=='rect'?!(W.x>0&&W.y>0&&W.z>0):W.shape=='round'?!(W.d>0&&W.dz>0):!(W.d>0&&W.rl>0);if(bad)return toast('Впиши все размеры заготовки');}
+ if(d>0&&W.step==3)return wizDone();W.step=Math.max(1,Math.min(3,W.step+d));wizRender();const b=$('#wiz .wz-b');if(b)b.scrollTop=0;};
+const dimT=(x,y,t)=>`<text x="${x}" y="${y}" fill="#ffc400" font-size="13" font-weight="700" font-family="ui-monospace,monospace">${t}</text>`;
+function wzSketch(){const Y='#ffc400';
+ if(W.shape=='round')return `<svg viewBox="0 0 320 160" role="img" aria-label="Диск Ø${nf(W.d)} высотой ${nf(W.dz)}"><ellipse cx="160" cy="60" rx="110" ry="34" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/><path d="M50 60v40c0 19 49 34 110 34s110-15 110-34V60" stroke="#e6e8ec" stroke-width="1.6" fill="none"/><path d="M50 60h220" stroke="${Y}" stroke-width="1.4"/>${dimT(132,54,'Ø '+nf(W.d))}<path d="M290 60v40M285 60h10M285 100h10" stroke="${Y}" stroke-width="1.4"/>${dimT(276,124,'Z '+nf(W.dz))}</svg>`;
+ if(W.shape=='rod')return `<svg viewBox="0 0 320 150" role="img" aria-label="Пруток Ø${nf(W.d)} длиной ${nf(W.rl)}"><path d="M60 40h210M60 110h210" stroke="#e6e8ec" stroke-width="1.6"/><ellipse cx="60" cy="75" rx="14" ry="35" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/><path d="M270 40c8 0 14 16 14 35s-6 35-14 35" stroke="#e6e8ec" stroke-width="1.6" fill="none"/><path d="M14 75h292" stroke="#8b93a3" stroke-dasharray="8 4 2 4"/><path d="M60 130h210M60 124v12M270 124v12" stroke="${Y}" stroke-width="1.4"/>${dimT(140,146,'L '+nf(W.rl))}<path d="M32 40v70M27 40h10M27 110h10" stroke="${Y}" stroke-width="1.4"/>${dimT(2,30,'Ø '+nf(W.d))}<text x="230" y="30" fill="#8b93a3" font-size="11" font-family="inherit">ось A</text></svg>`;
+ return `<svg viewBox="0 0 320 150" role="img" aria-label="Плита ${nf(W.x)} на ${nf(W.y)} на ${nf(W.z)}"><path d="M60 60l110-32 100 32-110 32z" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/><path d="M60 60v38l100 32V92M270 60v38L160 130" stroke="#e6e8ec" stroke-width="1.6" fill="none"/><path d="M54 104l100 32M54 100v8M154 132v8" stroke="${Y}" stroke-width="1.4"/>${dimT(80,134,'X '+nf(W.x))}<path d="M166 136l110-32M166 132v8M276 100v8" stroke="${Y}" stroke-width="1.4"/>${dimT(222,136,'Y '+nf(W.y))}<path d="M48 60v38M44 60h8M44 98h8" stroke="${Y}" stroke-width="1.4"/>${dimT(2,84,'Z '+nf(W.z))}</svg>`;}
+const winp=(k,l,v)=>`<label>${l}<input type="text" inputmode="decimal" value="${v}" oninput="wzSet('${k}',this.value)"></label>`;
+function wizRender(){const S=W.step,names=['Заготовка','Ноль','Старт'];let b='';
+ if(S==1){b=`<h2>Что зажато в станке?</h2>
+  <div class="chc">${[['rect','Плита, брусок','3 оси, тиски',TPLSVG.plate],['round','Диск, круг','фланец, крышка',TPLSVG.flange],['rod','Пруток','4-я ось A',TPLSVG.rod]].map(([k,n,d,sv])=>`<button class="${W.shape==k?'on':''}" onclick="wzSet('shape','${k}',1)" aria-pressed="${W.shape==k}">${sv}<b>${n}</b><small>${d}</small></button>`).join('')}</div>
+  <div class="wsk" id="wzSk">${wzSketch()}</div>
+  <div class="grid">${W.shape=='rect'?winp('x','Длина X, мм',W.x)+winp('y','Ширина Y, мм',W.y)+winp('z','Высота Z, мм',W.z):W.shape=='round'?winp('d','Диаметр, мм',W.d)+winp('dz','Высота, мм',W.dz):winp('d','Диаметр прутка, мм',W.d)+winp('rl','Длина из патрона, мм',W.rl)}</div>
+  <label>Название детали<input value="${esc(W.name)}" placeholder="например, KRYSHKA" oninput="wzSet('name',this.value)"></label>
+  <div class="wlbl">Материал — от него зависят обороты и подачи</div>
+  <div class="mchips">${WMATS.map(m=>`<button class="${W.mat==m?'on':''}" onclick="wzSet('mat','${m}',1)">${esc(m)}</button>`).join('')}<select style="width:auto;min-height:38px" onchange="wzSet('mat',this.value,1)" aria-label="Другой материал"><option value="">Другой…</option>${Object.keys(MATS).filter(m=>!WMATS.includes(m)).map(m=>`<option ${W.mat==m?'selected':''}>${esc(m)}</option>`).join('')}</select></div>`;}
+ else if(S==2){
+  if(W.shape=='rect')b=`<h2>Где ты снимаешь ноль?</h2><p>Нажми точку на заготовке — так же, как щупом на станке.</p><div class="wsk">${zeroSVG(W.origin,'wzZero')}</div>`;
+  else if(W.shape=='round')b=`<h2>Ноль детали</h2><p>У диска ноль по X и Y — в центре: его находят щупом по окружности.</p><div class="wsk"><svg viewBox="0 0 320 170" role="img" aria-label="Ноль в центре диска"><ellipse cx="160" cy="70" rx="110" ry="40" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M50 70v40c0 22 49 40 110 40s110-18 110-40V70" stroke="#8b93a3" stroke-width="1.5" fill="none"/><path d="M160 70l50 18" stroke="#ff5c5c" stroke-width="3"/><path d="M160 70l50-14" stroke="#2ecc71" stroke-width="3"/><path d="M160 70V14" stroke="#4da3ff" stroke-width="3"/><circle cx="160" cy="70" r="8" fill="#ffc400" stroke="#141414" stroke-width="2"/></svg></div>`;
+  else b=`<h2>Ноль прутка</h2><p>Пруток лежит вдоль оси X, вращается осью A.</p><div class="wsk"><svg viewBox="0 0 320 150" role="img" aria-label="Пруток и ноль"><path d="M60 40h210M60 110h210" stroke="#8b93a3" stroke-width="1.5"/><ellipse cx="60" cy="75" rx="14" ry="35" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M270 40c8 0 14 16 14 35s-6 35-14 35" stroke="#8b93a3" stroke-width="1.5" fill="none"/><path d="M14 75h292" stroke="#8b93a3" stroke-dasharray="8 4 2 4"/><circle cx="${W.rend=='r'?270:60}" cy="${W.rz=='top'?40:75}" r="8" fill="#ffc400" stroke="#141414" stroke-width="2"/></svg></div>
+   <div class="wlbl">X0 — какой торец</div><div class="seg"><button class="${W.rend=='l'?'on':''}" onclick="wzSet('rend','l',1)">Левый торец</button><button class="${W.rend=='r'?'on':''}" onclick="wzSet('rend','r',1)">Правый торец</button></div>
+   <div class="wlbl">Z0 — где по высоте</div><div class="seg"><button class="${W.rz=='axis'?'on':''}" onclick="wzSet('rz','axis',1)">На оси прутка</button><button class="${W.rz=='top'?'on':''}" onclick="wzSet('rz','top',1)">Верх прутка</button></div>`;
+  b+=`<div class="zres">✓ ${W.shape=='rect'?`X0 Y0 — <b>${ORIG[W.origin]}</b>`:W.shape=='round'?'X0 Y0 — <b>центр диска</b>':`X0 — <b>${W.rend=='r'?'правый':'левый'} торец</b>, Y0 — ось прутка`}<br>✓ Z0 — ${W.shape=='rod'?(W.rz=='top'?'<b>верх прутка</b>':'<b>ось прутка</b>'):'<b>верх заготовки</b>: все глубины считаются вниз от него'}</div>
+  <div class="wlbl">Ячейка нуля на станке</div><div class="seg">${['G54','G55','G56','G57'].map(w=>`<button class="${W.wcs==w?'on':''}" onclick="wzSet('wcs','${w}',1)">${w}</button>`).join('')}</div>`;}
+ else{b=`<h2>С чего начнём?</h2><p>Дальше откроется план — туда добавляешь операции кнопкой «＋ Операция».</p>
+  ${W.shape!='rod'?`<label class="wck"><input type="checkbox" ${W.face?'checked':''} onchange="wzSet('face',this.checked)"><span>Сразу добавить торцовку верха<small>Снять 0.5 мм, чтобы верх стал ровным — обычно первая операция</small></span></label>`:''}
+  <div class="zres">Заготовка: <b>${esc(stkShort({shape:W.shape,x:W.x,y:W.y,z:W.shape=='round'?W.dz:W.z,d:W.d,rl:W.rl,mat:W.mat}))}</b><br>${W.shape=='rod'?`X0 — ${W.rend=='r'?'правый':'левый'} торец, Z0 — ${W.rz=='top'?'верх прутка':'ось'}`:`Ноль: ${W.shape=='rect'?ORIG[W.origin]:'центр диска'}, Z0 — верх`} · ${W.wcs}<br>Инструмент: берём из твоего магазина (${st.tools.length} шт.)</div>
+  ${st.ops.length?`<div class="hint">Текущая деталь «${esc(st.prog.name||'')}» будет заменена — перед этим предложу сохранить её в «Мои проекты».</div>`:''}`;}
+ $('#wiz').innerHTML=`<div class="wz-h"><button class="ib" style="font-size:20px" onclick="wizClose()" aria-label="Закрыть">✕</button><b>Новая деталь</b><small>Шаг ${S} из 3</small></div>
+ <div class="wz-st">${names.map((n,i)=>`<div class="${i<S?'on':''} ${i+1==S?'cur':''}"><i></i>${n}${i+1<S?' ✓':''}</div>`).join('')}</div>
+ <div class="wz-b"><div class="wz-in">${b}</div></div>
+ <div class="wz-f"><div class="row">${S>1?'<button class="btn" onclick="wzGo(-1)">← Назад</button>':'<button class="btn" onclick="wizClose()">Отмена</button>'}<button class="btn p" onclick="wzGo(1)">${S==1?'Далее: где ноль →':S==2?'Далее →':'Создать деталь'}</button></div></div>`;}
+window.wzZero=k=>{W.origin=k;wizRender();};
+function wizDone(){keepAsk();const rod=W.shape=='rod';
+ const s={prog:{num:st.prog.num||1000,name:(W.name||'DETAL').trim().slice(0,30),note:'',fmt:st.prog.fmt,cmt:st.prog.cmt,mp:{mode:'off'}},
+  stock:{shape:W.shape,x:W.shape=='round'?W.d:W.x,y:W.shape=='round'?W.d:W.y,z:W.shape=='round'?W.dz:rod?Math.max(1,W.d):W.z,d:W.d,rl:W.rl,rx:rod?(W.rend=='r'?-W.rl:0):-5,rz:W.rz,adir:'1',origin:W.shape=='rect'?W.origin:'center',wcs:W.wcs,mat:W.mat},
+  tools:JSON.parse(JSON.stringify(st.tools)),ops:[]};
+ if(W.mat!=st.stock.mat)s.tools.forEach(t=>applyMat(t,W.mat));
+ loadProj(s,s.prog.name);
+ if(W.face&&!rod){const g=stockGeo(),o=newOp('face');Object.assign(o,{x0:+nf(g.x0),y0:+nf(g.y0),x1:+nf(g.x1),y1:+nf(g.y1),depth:0.5});pickTool(o);st.ops.push(o);selOp=o.id;save();renderAll();}
+ OTC.clear();wizClose();show('ops');toast('Деталь создана — добавь операции');}
+
+/* ---------- галерея циклов в листе ---------- */
+window.cycOpen=()=>openMenu('cyc');
+
+/* ---------- 3D: шкала времени по операциям ---------- */
+function tlBuild(){const S=data.segs||[],cum=[0];S.forEach(s=>cum.push(cum[cum.length-1]+(s.v>0&&s.len>0?s.len/s.v:0)));data.cum=cum;const tot=cum[cum.length-1]||0;
+ const M=(data.marks||[]).slice().sort((a,b)=>a.i-b.i);if(!M.length||M[0].i>0)M.unshift({i:0,label:'Начало'});
+ data.tl=M.map((m,k)=>{const to=M[k+1]?M[k+1].i:S.length,n=/Операция (\d+)/.exec(m.label);return{from:m.i,to,t:cum[to]-cum[m.i],c:n?OPC[(+n[1]-1)%OPC.length]:'#5c6475',label:m.label.replace(/^Операция (\d+): /,'$1 · ')};}).filter(x=>x.to>x.from);
+ const B=$('#tlB'),Lb=$('#tlL');if(!B)return;const w=x=>Math.max(x.t,tot*0.006,1e-6);
+ B.innerHTML=data.tl.map(x=>`<i style="flex:${w(x)} 1 0;background:${x.c}" title="${esc(x.label)}"></i>`).join('');
+ Lb.innerHTML=data.tl.map(x=>`<span style="flex:${w(x)} 1 0;color:${x.c}">${esc(x.label)}</span>`).join('');
+ $('#tlA').textContent=tshort(tot);tlUpd();}
+function tlUpd(){const P=$('#tlP');if(!P||!data.cum)return;const tot=data.cum[data.cum.length-1]||1e-9,f=Math.min(1,(sim.tm||0)/tot);P.style.left=(f*100)+'%';$('#tlC').textContent=tshort(sim.tm||0);
+ const T=data.tl||[],k=T.findIndex(x=>sim.i>=x.from&&sim.i<x.to),n=$('#tlN');if(n)n.textContent=k>=0?T[k].label:sim.i>=(data.segs||[]).length&&sim.i>0?'Готово':'—';}
+function tlSeek(idx,play){build();let g=0;while(sim.i<idx&&g++<400)step(1e12,idx);sim.play=!!play;$('#playB').textContent=sim.play?'⏸':'▶';tlUpd();}
+window.simOpJ=d=>{const T=data.tl||[];if(!T.length)return;let k=T.findIndex(x=>sim.i>=x.from&&sim.i<x.to);if(k<0)k=T.length;
+ let to=d<0?(k<T.length&&sim.i-T[k].from>2?k:k-1):k+1;to=Math.max(0,to);if(to>=T.length){simFinish();return;}tlSeek(T[to].from,true);toast(T[to].label);};
+(()=>{const el=$('#tl');if(!el)return;let drag=false;const fr=e=>{const r=el.getBoundingClientRect();return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));};
+ el.addEventListener('pointerdown',e=>{drag=true;try{el.setPointerCapture(e.pointerId);}catch(_){}$('#tlP').style.left=fr(e)*100+'%';});
+ el.addEventListener('pointermove',e=>{if(drag)$('#tlP').style.left=fr(e)*100+'%';});
+ const up=e=>{if(!drag)return;drag=false;const C=data.cum||[0],n=(data.segs||[]).length,T=fr(e)*(C[C.length-1]||0);let i=0;while(i<n&&C[i+1]<=T)i++;tlSeek(i);};
+ el.addEventListener('pointerup',up);el.addEventListener('pointercancel',()=>{drag=false;tlUpd();});})();
+
+/* ---------- G-код: просмотр по операциям с пояснением строк ---------- */
+function fmtSegUI(){document.querySelectorAll('#fmtSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f==(st.prog.fmt=='plain'?'plain':'macro')));}
+window.setFmtB=v=>{setFmt(v);fmtSegUI();};
+window.cvToggle=()=>{CV.edit=!CV.edit;$('#code').hidden=!CV.edit;$('#cv').hidden=CV.edit;$('#cvEd').textContent=CV.edit?'👁 Просмотр с пояснениями':'✏ Править вручную';if(CV.edit)$('#code').focus();else cvRender();};
+const OPX=/^\s*\((?:OP|ОП)\s*(\d+)\s*([^)]*)\)/i;
+function cvSecs(L){const S=[{s:0,n:0,label:'Начало программы'}];L.forEach((l,i)=>{const m=OPX.exec(l);if(m){const n=+m[1],o=st.ops[n-1];S.push({s:i,n,label:`${n} · ${o&&OPS[o.type]?OPS[o.type].s:m[2]}`});}});
+ S.forEach((x,k)=>x.e=S[k+1]?S[k+1].s:L.length);return S.filter(x=>x.e>x.s);}
+function cvHl(l){return l.split(/(\([^)]*\))/).map((p,k)=>k%2?`<span class="c">${esc(p)}</span>`:esc(p).replace(/(#\d+|#\[[^\]]*\])/g,'<span class="v">$1</span>').replace(/\b(G\d+(?:\.\d)?)/gi,'<span class="g">$1</span>').replace(/\b(M\d+)/gi,'<span class="mm">$1</span>')).join('');}
+function cvRender(){const v=$('#cv');if(!v)return;const code=$('#code').value,L=code.split('\n'),S=cvSecs(L);
+ if(CV.key!==code){CV.open=new Set(L.length>400?[]:S.map((_,k)=>k));CV.key=code;CV.sel=-1;}
+ v.innerHTML=S.map((x,k)=>{const c=x.n?OPC[(x.n-1)%OPC.length]:'#8b93a3',op=CV.open.has(k);
+  return `<div class="sh ${op?'op':''}" style="--oc:${c}" onclick="cvSec(${k})"><span class="ar">▸</span>${esc(x.label)}<small>${x.e-x.s} стр.</small></div>`+(op?L.slice(x.s,x.e).map((l,j)=>{const i=x.s+j;return `<div class="ln ${i==CV.sel?'on':''}" data-i="${i}" onclick="cvLn(${i})"><u>${i+1}</u><span>${cvHl(l)||' '}</span></div>`+(i==CV.sel?cvX(l):'');}).join(''):'');}).join('')||'<div class="empty" style="padding:12px">Программа пуста</div>';}
+window.cvSec=k=>{CV.open.has(k)?CV.open.delete(k):CV.open.add(k);const v=$('#cv'),y=v.scrollTop;cvRender();v.scrollTop=y;};
+window.cvLn=i=>{CV.sel=CV.sel==i?-1:i;const v=$('#cv'),y=v.scrollTop;cvRender();v.scrollTop=y;};
+function cvGo(n){cvRender();const S=cvSecs($('#code').value.split('\n')),k=S.findIndex(x=>n>=x.s&&n<x.e);if(k>=0)CV.open.add(k);CV.sel=n;cvRender();const el=document.querySelector(`#cv .ln[data-i="${n}"]`);if(el)el.scrollIntoView({block:'center'});}
+const LETX={X:'Координата X, мм',Y:'Координата Y, мм',Z:'Координата Z (высота), мм',A:'Поворот оси A, градусы',B:'Поворот оси B, градусы',F:'Подача, мм/мин',S:'Обороты шпинделя, об/мин',T:'Номер инструмента в магазине',H:'Номер корректора длины инструмента',D:'Номер корректора радиуса',R:'Плоскость R (в цикле) или радиус дуги',Q:'Глубина одного клевка сверла',P:'Пауза (мс) или номер подпрограммы',I:'Центр дуги по X — от начальной точки',J:'Центр дуги по Y — от начальной точки',K:'Центр дуги по Z / число повторов',N:'Номер кадра',O:'Номер программы',L:'Число повторов'};
+let REFM=null;function refMap(){if(REFM)return REFM;REFM={};REF.forEach(([k,v])=>{String(k).split(/\s*\/\s*/).forEach(c=>{const m=/^([GM])0*(\d+(?:\.\d+)?)$/i.exec(c.trim());if(m)REFM[m[1].toUpperCase()+m[2]]=v;});});return REFM;}
+function cvX(l){const R=refMap(),rows=[],cm=[...l.matchAll(/\(([^)]*)\)/g)].map(m=>m[1]).join(' · '),b=l.replace(/\([^)]*\)/g,'').trim();
+ if(b=='%')rows.push(['%','Начало / конец файла программы']);
+ else if(/^#\d+\s*=/.test(b)){const m=/^(#\d+)\s*=\s*(.*)$/.exec(b);rows.push([m[1],`Переменная = ${m[2]}. Это число можно поменять прямо на стойке — проходы пересчитаются.`]);}
+ else if(/^(N\d+\s*)?(WHILE|IF|GOTO|END\s*\d)/i.test(b))rows.push([b.replace(/^N\d+\s*/i,'').split(/[\s[]/)[0],/WHILE/i.test(b)?'Цикл: повторять, пока условие верно (например, проходы по глубине)':/^(N\d+\s*)?IF/i.test(b)?'Условие: если верно — переход к другому кадру':/GOTO/i.test(b)?'Переход к кадру N…':'Конец цикла']);
+ else{(b.toUpperCase().match(/[A-Z]\s*(?:-?[\d.]+|#\d+|#?\[[^\]]*\])/g)||[]).forEach(w=>{const c=w[0],v=w.slice(1).trim();if(c=='G'||c=='M'){const k=c+String(parseFloat(v));rows.push([w,R[k]||(c=='M'?'Вспомогательная команда (M-код станка)':'Подготовительная команда')]);}else rows.push([w,(LETX[c]||'Адрес '+c)+(/[#[]/.test(v)?' — значение из переменной':'')]);});}
+ if(cm)rows.push(['( )','Комментарий: '+cm]);if(!rows.length)rows.push(['—','Пустая строка']);
+ return `<div class="cx">${rows.map(([a,d])=>`<code>${esc(a)}</code><span>${esc(d)}</span>`).join('')}</div>`;}
+
+/* ---------- чек-лист перед первым сохранением программы ---------- */
+function safeAsk(then){let ok=false;try{ok=!!localStorage.getItem('fcam_safe1');}catch(e){}if(ok)return then();
+ const items=['Посмотрел обработку в 3D: фреза не режет лишнего, быстрые ходы (красные) не проходят сквозь деталь',`Ноль на станке снят в той же точке, что в программе (${esc(zeroShort())})`,'Длины инструментов (H) измерены, номера T в станке совпадают с программой','Первый прогон — в графике стойки, затем «по воздуху» (ноль Z поднят) и на пониженной подаче, рука на STOP'];
+ const d=document.createElement('div');d.id='safeM';d.innerHTML=`<div class="wb"><h2>Перед запуском на станке</h2><p style="color:var(--mut);font-size:13px;margin:0">Отметь, что всё сделано. Это окно покажется один раз.</p>
+ <ul>${items.map(t=>`<li><label class="wck"><input type="checkbox" onchange="safeChk()"><span>${t}</span></label></li>`).join('')}</ul>
+ <div class="hint" style="border-left-color:var(--bad);text-align:left;color:var(--tx);margin-top:4px">Fresa не видит твой станок, тиски и зажимы. <b>Ответственность за запуск программы — на тебе.</b></div>
+ <div class="row" style="margin-top:12px;flex-wrap:nowrap"><button class="btn" id="sfNo" style="flex:1">Отмена</button><button class="btn p" id="sfOk" style="flex:2" disabled>Всё проверено, сохранить</button></div></div>`;
+ document.body.appendChild(d);$('#sfNo').onclick=()=>d.remove();$('#sfOk').onclick=()=>{try{localStorage.setItem('fcam_safe1',String(Date.now()));}catch(e){}d.remove();then();};}
+window.safeChk=()=>{const all=[...document.querySelectorAll('#safeM input')].every(x=>x.checked);$('#sfOk').disabled=!all;};
+window.dlSafe=e=>safeAsk(()=>downloadCode(e));
+window.shareSafe=()=>safeAsk(()=>shareCode());
+
 /* ---------- вкладки ---------- */
-function show(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
+function show(t){const nt={proj:'ops',upd:'home'}[t]||t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==nt));const mn=$('main');if(mn)mn.scrollTop=0;document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
  visible=t=='sim';if(PV)PV.on=t=='ops';
- if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code'){$('#fmtSel').value=st.prog.fmt=='plain'?'plain':'macro';$('#cmtSel').value=st.prog.cmt||'lat';regen();}
+ if(t=='home')renderHome();if(t=='proj')renderProj();if(t=='tools')renderTools();if(t=='ops')renderOps();if(t=='code'){$('#fmtSel').value=st.prog.fmt=='plain'?'plain':'macro';$('#cmtSel').value=st.prog.cmt||'lat';regen();}
  if(t=='sim'){regen();if(!R3)init3d();resize();build();}
  guideUI(t);}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
-['proj','tools','ops','sim','code'].forEach(t=>{const sc=$('#t-'+t);if(sc&&!$('#gd-'+t)){const g=document.createElement('div');g.className='guide';g.id='gd-'+t;g.hidden=true;sc.prepend(g);}});
-function renderAll(){renderProj();renderTools();renderOps();codeDirty=true;}
+window.show=show;
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{const p={ops:'plan',tools:'tplan'}[b.dataset.t];if(p){$('#'+p).classList.remove('ed');$('#t-'+b.dataset.t).classList.remove('edm');}show(b.dataset.t);});
+['home','proj','tools','ops','sim','code'].forEach(t=>{const sc=$('#t-'+t);if(sc&&!$('#gd-'+t)){const g=document.createElement('div');g.className='guide';g.id='gd-'+t;g.hidden=true;sc.prepend(g);}});
+function renderAll(){renderHome();renderProj();renderTools();renderOps();codeDirty=true;}
 document.querySelectorAll('.stkChk').forEach(c=>c.checked=showStock);
 normStock();
 st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.find(o=>o.id==selOp))selOp=st.ops[0]?.id;
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
 if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
-renderAll();modeUI();guideUI('proj');
+H.cur=JSON.stringify(st);renderAll();modeUI();show('home');
 /* первый запуск: короткое предупреждение и согласие с соглашением */
-(()=>{let ok=false;try{ok=!!localStorage.getItem('fcam_terms1');}catch(e){ok=true;}if(navigator.webdriver)return;if(ok){if(!MODE)modeModal();return;}
+(()=>{let ok=false;try{ok=!!localStorage.getItem('fcam_terms2');}catch(e){ok=true;}if(navigator.webdriver)return;if(ok){if(!MODE)modeModal();return;}
  const d=document.createElement('div');d.id='welcome';d.innerHTML=`<div class="wb"><img src="icons/icon-192.png" alt=""><h2>Fresa — G-код для ЧПУ</h2>
  <p>Программы для фрезерных станков с ЧПУ: циклы, 3D-проверка, параметрия, 4-я ось, программа с фото.</p>
- <div class="hint" style="border-left-color:var(--bad);text-align:left"><b>Важно.</b> Каждую программу перед запуском проверяйте на станке — в графике стойки, «по воздуху», на пониженной подаче. Ответственность за запуск программы — на пользователе.</div>
+ <div class="hint" style="border-left-color:var(--bad);text-align:left;color:var(--tx)"><b style="color:var(--bad)">Ответственность.</b> Fresa помогает написать программу, но не видит твой станок, тиски, зажимы и инструмент. Каждую программу перед запуском проверяй на станке: <b>графика стойки → «по воздуху» → пониженная подача</b>, рука на STOP. Ответственность за запуск программы и за результат — на пользователе.</div>
  <p style="font-size:13px;color:var(--mut)">Данные не собираются: проекты и фото остаются на этом устройстве.<br><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика конфиденциальности</a></p>
  <button class="btn p" id="wOk" style="width:100%;padding:13px">Понятно, принимаю</button></div>`;document.body.appendChild(d);
- $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms1',String(Date.now()));}catch(e){}d.remove();if(!MODE)modeModal();};})();
+ $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms2',String(Date.now()));}catch(e){}d.remove();if(!MODE)modeModal();};})();
 window.__fcam={ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
