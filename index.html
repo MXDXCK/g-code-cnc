@@ -257,7 +257,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.22.0';
+const APP_VERSION='1.22.1';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -289,7 +289,7 @@ const PAT=[['pat','Расположение отверстий','list',[['list',
  ['lx','Старт X',-40,'c',{pat:'line'}],['ly','Старт Y',0,'c',{pat:'line'}],['la','Угол ряда°',0,'c',{pat:'line'}],['lc','Кол-во',5,'n',{pat:'line'}],['lp','Шаг',20,'n',{pat:'line'}],
  ['gx','Старт X',-40,'c',{pat:['grid','frame']}],['gy','Старт Y',-25,'c',{pat:['grid','frame']}],['nx','Кол-во по X',3,'n',{pat:['grid','frame']}],['ny','Кол-во по Y',2,'n',{pat:['grid','frame']}],['dx','Шаг X',40,'c',{pat:['grid','frame']}],['dy','Шаг Y',50,'c',{pat:['grid','frame']}]];
 const OPS={
- face:{n:'Торцевание',s:'Торцовка',c:'FACING',k:['face','endmill'],f:[['x0','X от',-60,'c'],['y0','Y от',-40,'c'],['x1','X до',60,'c'],['y1','Y до',40,'c'],['depth','Съём, мм',1,'n'],['step','Шаг по Z',0.5,'n'],['over','Перекрытие, % D',70,'n'],['strat','Как идти','zz',[['zz','Зигзагом (туда-обратно)'],['one','В одну сторону (попутно, возврат над деталью)']]]]},
+ face:{n:'Торцевание',s:'Торцовка',c:'FACING',k:['face','endmill'],f:[['x0','X от',-60,'c'],['y0','Y от',-40,'c'],['x1','X до',60,'c'],['y1','Y до',40,'c'],['depth','Съём, мм',1,'n'],['step','Шаг по Z',0.5,'n'],['over','Перекрытие, % D',70,'n'],['strat','Как идти','one',[['one','Прямыми: проход → подъём → возврат → проход'],['zz','Зигзагом (туда-обратно)']]],['fdir','Направление проходов','x-',[['x-','Вдоль X ← (справа налево)'],['x+','Вдоль X → (слева направо)'],['y-','Вдоль Y ↓ (сверху вниз)'],['y+','Вдоль Y ↑ (снизу вверх)']]]]},
  pocketRect:{n:'Карман прямоугольный',s:'Карман прямоуг.',c:'RECT POCKET',k:['endmill','bull','ball'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['w','Длина X',50,'n'],['h','Ширина Y',30,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n'],['rf','Радиус у дна R (0 — нет)',0,'n'],['fs','Шаг Z по радиусу',0.3,'n',o=>+o.rf>0]]},
  pocketCircle:{n:'Карман круглый',s:'Карман круглый',c:'CIRC POCKET',k:['endmill','bull','ball'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['d','Диаметр',30,'n'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n'],['rf','Радиус у дна R (0 — нет)',0,'n'],['fs','Шаг Z по радиусу',0.3,'n',o=>+o.rf>0]]},
  pocketOval:{n:'Карман овальный (продольный паз)',s:'Карман овальный',c:'OVAL POCKET',k:['endmill','bull','ball'],f:[['cx','Центр X',0,'c'],['cy','Центр Y',0,'c'],['l','Длина L',50,'n'],['w','Ширина W',16,'n'],['ang','Угол°',0,'c'],['depth','Глубина',5,'n'],['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',45,'n'],['rf','Радиус у дна R (0 — нет)',0,'n'],['fs','Шаг Z по радиусу',0.3,'n',o=>+o.rf>0]]},
@@ -326,7 +326,7 @@ const OPS={
   ['depth','Глубина',0.2,'n'],['step','Шаг по Z',0.2,'n']]},
  rodFlats:{n:'Лыски на прутке (4 ось)',s:'Лыски на прутке',c:'ROD FLATS',rodNo:true,k:['endmill','face'],f:[['th','Размер между лысками (толщина), мм',12,'n'],['xe','X свободного торца',0,'c'],['xs','X уступа (до куда лыска)',25,'c'],
   ['cnt','Сколько сторон','2',[['1','1 — только A нач.'],['2','2 — A и A+180°'],['4','4 — квадрат (через 90°)'],['6','6 — шестигранник (через 60°)']]],['a0','A первой стороны, °',0,'c'],
-  ['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',60,'n'],['strat','Как идти','one',[['one','В одну сторону'],['zz','Зигзагом']]],['aend','После операции повернуть A на, °','','text']]}
+  ['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',60,'n'],['strat','Как идти','one',[['one','Прямыми: проход → подъём → возврат'],['zz','Зигзагом']]],['fdir','Направление проходов','x',[['x','Вдоль прутка (по X)'],['y','Поперёк прутка (по Y)']]],['aend','После операции повернуть A на, °','','text']]}
 };
 const ROD_F=[['aA','Поворот A перед операцией, ° (пусто — не поворачивать)','','text',()=>st.stock.shape=='rod'],['zt','Z0 операции = верх материала',0,'c',()=>st.stock.shape=='rod']];
 Object.values(OPS).forEach(d=>{if(!d.rodNo)d.f.push(...ROD_F);});
@@ -834,10 +834,12 @@ function oval(R,a,q,ccw){const c=[],h=a>1e-4;
  if(ccw){if(h)c.push(`G1 ${XY(R.p(a,-q))}`);c.push(`G3 ${XY(R.p(a,q))} ${IJ(R.v(0,q))}`);if(h)c.push(`G1 ${XY(R.p(-a,q))}`);c.push(`G3 ${XY(R.p(-a,-q))} ${IJ(R.v(0,-q))}`);return{s:R.p(-a,-q),c};}
  if(h)c.push(`G1 ${XY(R.p(a,q))}`);c.push(`G2 ${XY(R.p(a,-q))} ${IJ(R.v(0,-q))}`);if(h)c.push(`G1 ${XY(R.p(-a,-q))}`);c.push(`G2 ${XY(R.p(-a,q))} ${IJ(R.v(0,q))}`);return{s:R.p(-a,q),c};}
 const G={
- face(c){const{o,t,r,L}=c,x0=Math.min(o.x0,o.x1)-r-2,x1=Math.max(o.x0,o.x1)+r+2,y0=Math.min(o.y0,o.y1),y1=Math.max(o.y0,o.y1),so=Math.max(0.1,t.d*o.over/100);
-  if(o.strat=='one'){c.start(x1,y0);levels(o.depth,o.step).forEach(z=>{let y=y0;for(;;){L.push(`G0 X${F(x1)} Y${F(y)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(x0)} F${t.f}`,'G0 Z1.');if(y>=y1-1e-6)break;y=Math.min(y+so,y1);}});L.push(`G0 Z${F(c.safe)}`);return;}
-  c.start(x0,y0);levels(o.depth,o.step).forEach(z=>{L.push(`G0 X${F(x0)} Y${F(y0)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(x1)} F${t.f}`);let y=y0,R=true;
-   while(y<y1-1e-6){y=Math.min(y+so,y1);R=!R;L.push(`G1 Y${F(y)}`,`G1 X${F(R?x1:x0)}`);}L.push(`G0 Z${F(c.safe)}`);});},
+ face(c){const{o,t,r,L}=c,fd=o.fdir||(o.strat=='one'?'x-':'x+'),ax=fd[0],sg=fd[1]=='-'?-1:1,[p0,p1,q0,q1]=ax=='x'?[+o.x0,+o.x1,+o.y0,+o.y1]:[+o.y0,+o.y1,+o.x0,+o.x1],
+  a0=Math.min(p0,p1)-r-2,a1=Math.max(p0,p1)+r+2,b0=Math.min(q0,q1),b1=Math.max(q0,q1),S=sg>0?a0:a1,E=sg>0?a1:a0,so=Math.max(0.1,t.d*o.over/100),
+  P=(u,v)=>ax=='x'?`X${F(u)} Y${F(v)}`:`X${F(v)} Y${F(u)}`,U=ax=='x'?'X':'Y',V=ax=='x'?'Y':'X',s0=ax=='x'?[S,b0]:[b0,S];
+  if(o.strat=='one'){c.start(...s0);levels(o.depth,o.step).forEach(z=>{let v=b0;for(;;){L.push(`G0 ${P(S,v)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 ${U}${F(E)} F${t.f}`,'G0 Z1.');if(v>=b1-1e-6)break;v=Math.min(v+so,b1);}});L.push(`G0 Z${F(c.safe)}`);return;}
+  c.start(...s0);levels(o.depth,o.step).forEach(z=>{L.push(`G0 ${P(S,b0)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 ${U}${F(E)} F${t.f}`);let v=b0,R=true;
+   while(v<b1-1e-6){v=Math.min(v+so,b1);R=!R;L.push(`G1 ${V}${F(v)}`,`G1 ${U}${F(R?E:S)}`);}L.push(`G0 Z${F(c.safe)}`);});},
  pocketRect(c){const{o,t,r,L}=c,hx=o.w/2-r,hy=o.h/2-r;if(hx<0||hy<0)throw Error('TOOL TOO BIG');
   const so=Math.max(0.1,t.d*o.over/100),n=Math.max(1,Math.ceil(Math.max(hx,hy)/so)),LV=lvF(c);filChk(c,o,Math.min(hx,hy));c.start(o.cx,o.cy);L.push('G0 Z1.');
   LV.forEach(({z,ins})=>{L.push(`G1 Z${F(z)} F${c.fp}`);for(let i=1;i<=n;i++){const ax=(hx-ins)*i/n,ay=(hy-ins)*i/n,X=v=>F(o.cx+v),Y=v=>F(o.cy+v);
@@ -924,6 +926,9 @@ const G={
   const so=Math.max(0.1,t.d*(+o.over||60)/100),n=Math.max(1,Math.round(+o.cnt||2)),A0=+o.a0||0,LV=levels(top-zf,o.step).map(z=>top+z),rows=[];for(let y=-R;;y=Math.min(y+so,R)){rows.push(y);if(y>=R-1e-6)break;}
   L.push(`G0 G90 ${c.w} X${F(xa)} Y${F(rows[0])}`,`S${Math.round(t.s)} M03`,`G43 H${t.num} Z${F(safe)}`,'M08');
   for(let k=0;k<n;k++){const a=A0+k*360/n;if(k)L.push(`G0 Z${F(safe)}`,`G0 A${F(a)}`);L.push(`(SIDE ${k+1} A${F(a)})`);
+   if(o.fdir=='y'){const ya=-(R+r+2),yb=R+r+2,cols=[];for(let x=xb;;x-=dir*so){cols.unshift(x);if((x-xe)*dir<=r-1)break;}
+    LV.forEach(z=>{if(o.strat=='zz'){L.push(`G0 X${F(cols[0])} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`);let fw=true;cols.forEach((x,i)=>{if(i)L.push(`G1 X${F(x)}`);L.push(`G1 Y${F(fw?yb:ya)}`+(i?'':` F${t.f}`));fw=!fw;});L.push(`G0 Z${F(top+1)}`);}
+     else cols.forEach(x=>{L.push(`G0 X${F(x)} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 Y${F(yb)} F${t.f}`,`G0 Z${F(top+1)}`);});});continue;}
    LV.forEach(z=>{if(o.strat=='zz'){L.push(`G0 X${F(xa)} Y${F(rows[0])}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`);let fw=true;rows.forEach((y,i)=>{if(i)L.push(`G1 Y${F(y)}`);L.push(`G1 X${F(fw?xb:xa)}`+(i?'':` F${t.f}`));fw=!fw;});L.push(`G0 Z${F(top+1)}`);}
     else rows.forEach(y=>{L.push(`G0 X${F(xa)} Y${F(y)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(xb)} F${t.f}`,`G0 Z${F(top+1)}`);});});}
   L.push(`G0 Z${F(safe)}`);const ae=String(o.aend??'').trim();if(ae!=='')L.push(`G0 A${F(num(ae))}`);},
@@ -962,12 +967,14 @@ const RP=(sa,sq,A,Q)=>`X[#1${sa}${A}*#30${sq=='+'?'-':'+'}${Q}*#31] Y[#2${sa}${A
 const RIJ=(sq,Q)=>`I[0${sq=='+'?'-':'+'}${Q}*#31] J[0${sq}${Q}*#30]`;
 const SDN=o=>o.side=='out'?1:-1;
 const M={
- face(c){const{o,L}=c;MV(L,1,Math.min(o.x0,o.x1),'X FROM');MV(L,2,Math.min(o.y0,o.y1),'Y FROM');MV(L,3,Math.max(o.x0,o.x1),'X TO');MV(L,4,Math.max(o.y0,o.y1),'Y TO');
+ face(c){const{o,L}=c,fd=o.fdir||(o.strat=='one'?'x-':'x+'),ax=fd[0],sg=fd[1]=='-'?-1:1;MV(L,1,Math.min(o.x0,o.x1),'X FROM');MV(L,2,Math.min(o.y0,o.y1),'Y FROM');MV(L,3,Math.max(o.x0,o.x1),'X TO');MV(L,4,Math.max(o.y0,o.y1),'Y TO');
   MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');MV(L,7,o.over,'STEPOVER PCT D');mTool(c);
-  L.push('#10=#1-#25-2. (X START)','#11=#3+#25+2. (X END)','#12=#20*#7/100 (STEPOVER)');
-  if(o.strat=='one'){mStart(c,'#11','#2');mLv(c,5,6);L.push('#13=#2','#14=1','WHILE[#14EQ1]DO2','G0 X#11 Y#13','G0 Z[#26+1.]','G1 Z#26 F#23','G1 X#10 F#22','G0 Z1.','IF[[#4-#13]LE0.001]THEN#14=0','#13=#13+#12','IF[#13GT#4]THEN#13=#4','END2','END1','G0 Z#24');return;}
-  mStart(c,'#10','#2');mLv(c,5,6);
-  L.push('G0 X#10 Y#2','G0 Z[#26+1.]','G1 Z#26 F#23','G1 X#11 F#22','#13=#2','#14=1','WHILE[[#4-#13]GT0.001]DO2','#13=#13+#12','IF[#13GT#4]THEN#13=#4','#14=0-#14','G1 Y#13','#15=#11','IF[#14LT0]THEN#15=#10','G1 X#15','END2','G0 Z#24','END1');},
+  const[ua,ub,va,vb]=ax=='x'?['#1','#3','#2','#4']:['#2','#4','#1','#3'],U=ax=='x'?'X':'Y',V=ax=='x'?'Y':'X',XY=(u,v)=>ax=='x'?`X${u} Y${v}`:`X${v} Y${u}`;
+  L.push(sg>0?`#10=${ua}-#25-2. (${U} START)`:`#10=${ub}+#25+2. (${U} START)`,sg>0?`#11=${ub}+#25+2. (${U} END)`:`#11=${ua}-#25-2. (${U} END)`,'#12=#20*#7/100 (STEPOVER)');
+  const st0=ax=='x'?['#10',va]:[va,'#10'];
+  if(o.strat=='one'){mStart(c,...st0);mLv(c,5,6);L.push(`#13=${va}`,'#14=1','WHILE[#14EQ1]DO2',`G0 ${XY('#10','#13')}`,'G0 Z[#26+1.]','G1 Z#26 F#23',`G1 ${U}#11 F#22`,'G0 Z1.',`IF[[${vb}-#13]LE0.001]THEN#14=0`,'#13=#13+#12',`IF[#13GT${vb}]THEN#13=${vb}`,'END2','END1','G0 Z#24');return;}
+  mStart(c,...st0);mLv(c,5,6);
+  L.push(`G0 ${XY('#10',va)}`,'G0 Z[#26+1.]','G1 Z#26 F#23',`G1 ${U}#11 F#22`,`#13=${va}`,'#14=1',`WHILE[[${vb}-#13]GT0.001]DO2`,'#13=#13+#12',`IF[#13GT${vb}]THEN#13=${vb}`,'#14=0-#14',`G1 ${V}#13`,'#15=#11','IF[#14LT0]THEN#15=#10',`G1 ${U}#15`,'END2','G0 Z#24','END1');},
  pocketRect(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.w,'LENGTH X');MV(L,4,o.h,'WIDTH Y');MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');MV(L,7,o.over,'STEPOVER PCT D');mTool(c);
   L.push('#10=#3/2-#25','#11=#4/2-#25');mAlarm(c,'#10GE0','TOOL TOO BIG');mAlarm(c,'#11GE0','TOOL TOO BIG');const fil=mFil(c,5,['#10','#11']);
   L.push('#12=#20*#7/100 (STEPOVER)','#13=#10','IF[#11GT#13]THEN#13=#11','#13=FUP[#13/#12] (RINGS)','IF[#13LT1]THEN#13=1');
@@ -1128,7 +1135,7 @@ function expand(code){const raw=code.split('\n');if(!/#|WHILE|GOTO/i.test(code))
 /* ---------- пояснения в скобках: транслит / кириллица / English ---------- */
 const CRU={'PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE Z':'ПАРАМЕТРЫ: #1.. РАЗМЕРЫ, #20 D ФРЕЗЫ, #21 ОБОРОТЫ, #22 ПОДАЧА, #23 ВРЕЗАНИЕ, #24 БЕЗОП. Z',
  'X FROM':'X ОТ','Y FROM':'Y ОТ','X TO':'X ДО','Y TO':'Y ДО','DEPTH':'ГЛУБИНА','STEP Z':'ШАГ ПО Z','STEPOVER PCT D':'ШАГ ВБОК % ОТ D','TOOL D':'ДИАМЕТР ФРЕЗЫ','SPINDLE S':'ОБОРОТЫ',
- 'FEED F':'ПОДАЧА','PLUNGE F':'ПОДАЧА ВРЕЗАНИЯ','SAFE Z':'БЕЗОПАСНАЯ Z','TOOL R':'РАДИУС ФРЕЗЫ','X START':'X НАЧАЛА','X END':'X КОНЦА','STEPOVER':'ШАГ ВБОК','CENTER X':'ЦЕНТР X','CENTER Y':'ЦЕНТР Y',
+ 'FEED F':'ПОДАЧА','Y START':'Y НАЧАЛА','Y END':'Y КОНЦА','PLUNGE F':'ПОДАЧА ВРЕЗАНИЯ','SAFE Z':'БЕЗОПАСНАЯ Z','TOOL R':'РАДИУС ФРЕЗЫ','X START':'X НАЧАЛА','X END':'X КОНЦА','STEPOVER':'ШАГ ВБОК','CENTER X':'ЦЕНТР X','CENTER Y':'ЦЕНТР Y',
  'LENGTH X':'ДЛИНА X','WIDTH Y':'ШИРИНА Y','RINGS':'КОЛ-ВО ПРОХОДОВ','DIAMETER':'ДИАМЕТР','PATH R':'РАДИУС ТРАЕКТОРИИ','SIDE 1=OUT -1=IN':'1=СНАРУЖИ -1=ВНУТРИ','WALL AROUND':'СЪЕМ ВОКРУГ',
  'G2 OUT G3 IN':'G2 СНАРУЖИ G3 ВНУТРИ','LENGTH L':'ДЛИНА L','WIDTH W':'ШИРИНА W','ANGLE':'УГОЛ','HALF STRAIGHT':'ПОЛОВИНА ПРЯМОЙ','PATH Q':'ПОЛУШИРИНА ТРАЕКТОРИИ','NUMBER OF FACES':'КОЛ-ВО ГРАНЕЙ',
  'ACROSS FLATS SW':'ПОД КЛЮЧ SW','VERTEX R':'РАДИУС ВЕРШИНЫ','PATH APOTHEM':'ПОЛУРАЗМЕР ТРАЕКТОРИИ','PCD CENTER X':'ЦЕНТР ОКРУЖНОСТИ X','PCD CENTER Y':'ЦЕНТР ОКРУЖНОСТИ Y','PCD RADIUS':'РАДИУС ОКРУЖНОСТИ',
