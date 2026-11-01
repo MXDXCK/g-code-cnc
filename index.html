@@ -262,7 +262,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.27.0';
+const APP_VERSION='1.28.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -972,14 +972,17 @@ const G={
  rodFlats(c){const{o,t,r,L}=c,g=stockGeo();if(!g.rod)throw Error('Нужна заготовка «Пруток на 4-й оси A» (вкладка «Проект»)');
   const R=g.R,za=g.az||0,top=za+R,th=Math.abs(+o.th||0),zf=za+th/2;if(!(th>0)||zf>=top-1e-6)throw Error('Размер между лысками должен быть меньше диаметра прутка');
   const RF=rfGeo(o,g),safe=top+Math.max(3,+o.safe||10),xe=RF.xe,xs=RF.xs,dir=RF.dir,xa=xe-dir*(r+2),xb=xs-dir*r;if((xb-xa)*dir<=0)throw Error('Участок лыски короче радиуса фрезы');
-  const so=Math.max(0.1,t.d*(+o.over||60)/100),n=Math.max(1,Math.round(+o.cnt||2)),A0=+o.a0||0,LV=levels(top-zf,o.step).map(z=>top+z),rows=[];for(let y=-R;;y=Math.min(y+so,R)){rows.push(y);if(y>=R-1e-6)break;}
-  L.push(`G0 G90 ${c.w} X${F(xa)} Y${F(rows[0])}`,`S${Math.round(t.s)} M03`,`G43 H${t.num} Z${F(safe)}`,'M08');
+  const so=Math.max(0.1,t.d*(+o.over||60)/100),n=Math.max(1,Math.round(+o.cnt||2)),A0=+o.a0||0,LV=levels(top-zf,o.step).map(z=>top+z),HW=z=>Math.sqrt(Math.max(0,R*R-(z-za)**2));
+  const nc=Math.max(0,Math.ceil(((xb-xe)*dir-(r-1))/so-1e-6)),cols=[...Array(nc+1)].map((_,i)=>xb-dir*so*(nc-i));
+  L.push(`G0 G90 ${c.w} X${F(xa)} Y0.`,`S${Math.round(t.s)} M03`,`G43 H${t.num} Z${F(safe)}`,'M08');
   for(let k=0;k<n;k++){const a=A0+k*360/n;if(k)L.push(`G0 Z${F(safe)}`,`G0 A${F(a)}`);L.push(`(SIDE ${k+1} A${F(a)})`);
-   if(o.fdir=='y'){const ya=-(R+r+2),yb=R+r+2,cols=[];for(let x=xb;;x-=dir*so){cols.unshift(x);if((x-xe)*dir<=r-1)break;}
-    LV.forEach(z=>{if(o.strat=='zz'){L.push(`G0 X${F(cols[0])} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`);let fw=true;cols.forEach((x,i)=>{if(i)L.push(`G1 X${F(x)}`);L.push(`G1 Y${F(fw?yb:ya)}`+(i?'':` F${t.f}`));fw=!fw;});L.push(`G0 Z${F(top+1)}`);}
-     else cols.forEach(x=>{L.push(`G0 X${F(x)} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 Y${F(yb)} F${t.f}`,`G0 Z${F(top+1)}`);});});continue;}
-   LV.forEach(z=>{if(o.strat=='zz'){L.push(`G0 X${F(xa)} Y${F(rows[0])}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`);let fw=true;rows.forEach((y,i)=>{if(i)L.push(`G1 Y${F(y)}`);L.push(`G1 X${F(fw?xb:xa)}`+(i?'':` F${t.f}`));fw=!fw;});L.push(`G0 Z${F(top+1)}`);}
-    else rows.forEach(y=>{L.push(`G0 X${F(xa)} Y${F(y)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(xb)} F${t.f}`,`G0 Z${F(top+1)}`);});});}
+   LV.forEach(z=>{const hw=HW(z);
+    if(o.fdir=='y'){const yb=hw+r+2,ya=-yb;
+     if(o.strat=='zz'){L.push(`G0 X${F(cols[0])} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 Y${F(yb)} F${t.f}`);let fw=1;cols.slice(1).forEach(x=>{fw=-fw;L.push(`G1 X${F(x)}`,`G1 Y${F(fw*yb)}`);});L.push(`G0 Z${F(top+1)}`);}
+     else cols.forEach(x=>{L.push(`G0 X${F(x)} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 Y${F(yb)} F${t.f}`,`G0 Z${F(top+1)}`);});return;}
+    const y0=-Math.max(0,hw-r*0.5),y1=-y0;let y=y0;
+    if(o.strat=='zz'){L.push(`G0 X${F(xa)} Y${F(y)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(xb)} F${t.f}`);let fw=1;while(y<y1-1e-6){y=Math.min(y+so,y1);fw=-fw;L.push(`G1 Y${F(y)}`,`G1 X${F(fw>0?xb:xa)}`);}L.push(`G0 Z${F(top+1)}`);}
+    else for(;;){L.push(`G0 X${F(xa)} Y${F(y)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 X${F(xb)} F${t.f}`,`G0 Z${F(top+1)}`);if(y>=y1-1e-6)break;y=Math.min(y+so,y1);}});}
   L.push(`G0 Z${F(safe)}`);const ae=String(o.aend??'').trim();if(ae!=='')L.push(`G0 A${F(num(ae))}`);},
  pocketIsl(c){const{o,t,L}=c,{seq}=islPaths(o,t),LV=levels(o.depth,o.step),P0=l=>l.P?l.P[0]:l.E[0].a;c.start(...P0(seq[0]));L.push('G0 Z1.');let top=true;
   LV.forEach((z,zi)=>{const zp=zi?LV[zi-1]:0;seq.forEach((l,i)=>{let nf=false;
@@ -1024,6 +1027,23 @@ const M={
   if(o.strat=='one'){mStart(c,...st0);mLv(c,5,6);L.push(`#13=${va}`,'#14=1','WHILE[#14EQ1]DO2',`G0 ${XY('#10','#13')}`,'G0 Z[#26+1.]','G1 Z#26 F#23',`G1 ${U}#11 F#22`,'G0 Z1.',`IF[[${vb}-#13]LE0.001]THEN#14=0`,'#13=#13+#12',`IF[#13GT${vb}]THEN#13=${vb}`,'END2','END1','G0 Z#24');return;}
   mStart(c,...st0);mLv(c,5,6);
   L.push(`G0 ${XY('#10',va)}`,'G0 Z[#26+1.]','G1 Z#26 F#23',`G1 ${U}#11 F#22`,`#13=${va}`,'#14=1',`WHILE[[${vb}-#13]GT0.001]DO2`,'#13=#13+#12',`IF[#13GT${vb}]THEN#13=${vb}`,'#14=0-#14',`G1 ${V}#13`,'#15=#11','IF[#14LT0]THEN#15=#10',`G1 ${U}#15`,'END2','G0 Z#24','END1');},
+ rodFlats(c){const{o,t,L}=c,g=stockGeo();if(!g.rod)throw Error('Нужна заготовка «Пруток на 4-й оси A» (вкладка «Проект»)');const RF=rfGeo(o,g);
+  MV(L,1,Math.abs(+o.th||0),'THICKNESS T');MV(L,2,RF.L,'FLAT LENGTH L');MV(L,3,RF.xe,'BAR END X');MV(L,4,RF.dir,'1=FROM LEFT -1=FROM RIGHT');MV(L,5,g.R,'BAR RADIUS');MV(L,6,g.az||0,'AXIS Z');
+  MV(L,7,o.step,'STEP Z');MV(L,8,+o.over||60,'STEPOVER PCT D');MV(L,9,+o.a0||0,'FIRST A');MV(L,10,Math.max(1,Math.round(+o.cnt||2)),'SIDES');
+  MV(L,20,t.d,'TOOL D');MV(L,21,Math.round(t.s),'SPINDLE S');MV(L,22,Math.round(t.f),'FEED F');MV(L,23,c.fp,'PLUNGE F');L.push(`#24=#6+#5+${F(Math.max(3,+o.safe||10))} (SAFE Z)`,'#25=#20/2 (TOOL R)');
+  L.push('#11=#6+#5 (TOP Z)','#12=#6+#1/2 (FLAT Z)','#13=#20*#8/100 (STEPOVER)','#14=#3-#4*[#25+2.] (X START)','#15=#3+#4*[#2-#25] (X END)');
+  mAlarm(c,'#12LT[#11-0.000001]','T BIGGER THAN BAR');mAlarm(c,'[[#15-#14]*#4]GT0','FLAT SHORTER THAN TOOL R');
+  const Y=o.fdir=='y',ZZ=o.strat=='zz';if(Y)L.push('#17=FUP[[[#15-#3]*#4-[#25-1.]]/#13-0.000001] (COLUMNS)','IF[#17LT0]THEN#17=0');
+  mStart(c,'#14','0');const l1=c.n(),l2=c.n();
+  L.push('#18=0 (SIDE NO)',`N${l1}`,`IF[#18EQ0]GOTO${l2}`,'G0 Z#24','G0 A[#9+#18*360/#10]',`N${l2}`,
+   '#27=0','WHILE[[#11+#27-#12]GT0.001]DO1','#27=#27-#7','IF[[#11+#27]LT#12]THEN#27=#12-#11','#26=#11+#27 (Z)','#29=SQRT[ABS[#5*#5-[#26-#6]*[#26-#6]]] (HALF WIDTH)');
+  if(Y){L.push('#28=#29+#25+2. (Y END)');
+   if(ZZ)L.push('G0 X[#15-#4*#13*#17] Y[0-#28]','G0 Z[#26+1.]','G1 Z#26 F#23','G1 Y#28 F#22','#30=1','#19=1','WHILE[#19LE#17]DO2','#31=#15-#4*#13*[#17-#19]','#30=0-#30','G1 X#31','G1 Y[#30*#28]','#19=#19+1','END2','G0 Z[#11+1.]');
+   else L.push('#19=0','WHILE[#19LE#17]DO2','#31=#15-#4*#13*[#17-#19]','G0 X#31 Y[0-#28]','G0 Z[#26+1.]','G1 Z#26 F#23','G1 Y#28 F#22','G0 Z[#11+1.]','#19=#19+1','END2');}
+  else{L.push('#16=0-[#29-#25*0.5]','IF[#16GT0]THEN#16=0','#28=0-#16 (Y END)');
+   if(ZZ)L.push('G0 X#14 Y#16','G0 Z[#26+1.]','G1 Z#26 F#23','G1 X#15 F#22','#30=1','WHILE[#16LT[#28-0.000001]]DO2','#16=#16+#13','IF[#16GT#28]THEN#16=#28','#30=0-#30','G1 Y#16','#31=#15','IF[#30LT0]THEN#31=#14','G1 X#31','END2','G0 Z[#11+1.]');
+   else L.push('G0 X#14 Y#16','G0 Z[#26+1.]','G1 Z#26 F#23','G1 X#15 F#22','G0 Z[#11+1.]','WHILE[#16LT[#28-0.000001]]DO2','#16=#16+#13','IF[#16GT#28]THEN#16=#28','G0 X#14 Y#16','G0 Z[#26+1.]','G1 Z#26 F#23','G1 X#15 F#22','G0 Z[#11+1.]','END2');}
+  L.push('END1','#18=#18+1',`IF[#18LT#10]GOTO${l1}`,'G0 Z#24');const ae=String(o.aend??'').trim();if(ae!=='')L.push(`G0 A${F(num(ae))}`);},
  pocketRect(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.w,'LENGTH X');MV(L,4,o.h,'WIDTH Y');MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');MV(L,7,o.over,'STEPOVER PCT D');mTool(c);
   L.push('#10=#3/2-#25','#11=#4/2-#25');mAlarm(c,'#10GE0','TOOL TOO BIG');mAlarm(c,'#11GE0','TOOL TOO BIG');const fil=mFil(c,5,['#10','#11']);
   L.push('#12=#20*#7/100 (STEPOVER)','#13=#10','IF[#11GT#13]THEN#13=#11','#13=FUP[#13/#12] (RINGS)','IF[#13LT1]THEN#13=1');
@@ -1184,7 +1204,7 @@ function expand(code){const raw=code.split('\n');if(!/#|WHILE|GOTO/i.test(code))
 /* ---------- пояснения в скобках: транслит / кириллица / English ---------- */
 const CRU={'PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE Z':'ПАРАМЕТРЫ: #1.. РАЗМЕРЫ, #20 D ФРЕЗЫ, #21 ОБОРОТЫ, #22 ПОДАЧА, #23 ВРЕЗАНИЕ, #24 БЕЗОП. Z',
  'X FROM':'X ОТ','Y FROM':'Y ОТ','X TO':'X ДО','Y TO':'Y ДО','DEPTH':'ГЛУБИНА','STEP Z':'ШАГ ПО Z','STEPOVER PCT D':'ШАГ ВБОК % ОТ D','TOOL D':'ДИАМЕТР ФРЕЗЫ','SPINDLE S':'ОБОРОТЫ',
- 'FEED F':'ПОДАЧА','Y START':'Y НАЧАЛА','Y END':'Y КОНЦА','PLUNGE F':'ПОДАЧА ВРЕЗАНИЯ','SAFE Z':'БЕЗОПАСНАЯ Z','TOOL R':'РАДИУС ФРЕЗЫ','X START':'X НАЧАЛА','X END':'X КОНЦА','STEPOVER':'ШАГ ВБОК','CENTER X':'ЦЕНТР X','CENTER Y':'ЦЕНТР Y',
+ 'FEED F':'ПОДАЧА','THICKNESS T':'ТОЛЩИНА T','FLAT LENGTH L':'ДЛИНА ЛЫСКИ L','BAR END X':'X ТОРЦА ПРУТКА','1=FROM LEFT -1=FROM RIGHT':'1=ОТ ЛЕВОГО -1=ОТ ПРАВОГО','BAR RADIUS':'РАДИУС ПРУТКА','AXIS Z':'Z ОСИ','FIRST A':'A ПЕРВОЙ СТОРОНЫ','SIDES':'КОЛ-ВО СТОРОН','TOP Z':'Z ВЕРХА ПРУТКА','FLAT Z':'Z ЛЫСКИ','X START':'X НАЧАЛА','X END':'X КОНЦА','Y END':'Y КОНЦА','COLUMNS':'КОЛ-ВО ПРОХОДОВ','SIDE NO':'НОМЕР СТОРОНЫ','HALF WIDTH':'ПОЛУШИРИНА ПРУТКА НА ЭТОЙ Z','T BIGGER THAN BAR':'ТОЛЩИНА БОЛЬШЕ ПРУТКА','FLAT SHORTER THAN TOOL R':'ЛЫСКА КОРОЧЕ РАДИУСА ФРЕЗЫ','Y START':'Y НАЧАЛА','Y END':'Y КОНЦА','PLUNGE F':'ПОДАЧА ВРЕЗАНИЯ','SAFE Z':'БЕЗОПАСНАЯ Z','TOOL R':'РАДИУС ФРЕЗЫ','X START':'X НАЧАЛА','X END':'X КОНЦА','STEPOVER':'ШАГ ВБОК','CENTER X':'ЦЕНТР X','CENTER Y':'ЦЕНТР Y',
  'LENGTH X':'ДЛИНА X','WIDTH Y':'ШИРИНА Y','RINGS':'КОЛ-ВО ПРОХОДОВ','DIAMETER':'ДИАМЕТР','PATH R':'РАДИУС ТРАЕКТОРИИ','SIDE 1=OUT -1=IN':'1=СНАРУЖИ -1=ВНУТРИ','WALL AROUND':'СЪЕМ ВОКРУГ',
  'G2 OUT G3 IN':'G2 СНАРУЖИ G3 ВНУТРИ','LENGTH L':'ДЛИНА L','WIDTH W':'ШИРИНА W','ANGLE':'УГОЛ','HALF STRAIGHT':'ПОЛОВИНА ПРЯМОЙ','PATH Q':'ПОЛУШИРИНА ТРАЕКТОРИИ','NUMBER OF FACES':'КОЛ-ВО ГРАНЕЙ',
  'ACROSS FLATS SW':'ПОД КЛЮЧ SW','VERTEX R':'РАДИУС ВЕРШИНЫ','PATH APOTHEM':'ПОЛУРАЗМЕР ТРАЕКТОРИИ','PCD CENTER X':'ЦЕНТР ОКРУЖНОСТИ X','PCD CENTER Y':'ЦЕНТР ОКРУЖНОСТИ Y','PCD RADIUS':'РАДИУС ОКРУЖНОСТИ',
@@ -1808,7 +1828,7 @@ st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.f
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
 if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderAll();
-window.__fcam={ocrClean,ocrPrep,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
+window.__fcam={ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
 </html>
