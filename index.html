@@ -418,7 +418,7 @@ nav button svg{width:22px;height:22px;display:block}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.3.0';
+const APP_VERSION='2.4.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -679,7 +679,7 @@ const HELP={
  'stock.d':'Диаметр заготовки.','stock.origin':'Где ноль детали по X и Y — точка, от которой считаются все размеры. «Центр» — если находишь центр щупом, «угол» — если касаешься двух сторон. Должен совпадать с тем, как ты снимаешь ноль на станке.',
  'stock.wcs':'Ячейка станка, куда записан ноль детали. Почти всегда G54.','stock.mat':'Из чего деталь: по материалу считаются обороты и подачи.',
  'stock.rl':'Длина прутка, которая выступает из патрона.','stock.rx':'Где левый торец прутка по X относительно нуля детали.','stock.rz':'Где ноль Z: на оси (в центре) прутка или на его верхней точке.',
- 'stock.adir':'Направление вращения оси A. Меняй, только если на станке ось крутится наоборот.','stock.n':'Сколько граней у заготовки.','stock.sw':'Размер заготовки под ключ.','stock.pts':'Контур заготовки точками «X Y» через «;».',
+ 'stock.adir':'Направление вращения оси A. Меняй, только если на станке ось крутится наоборот.','stock.n':'Сколько граней у заготовки.','stock.sw':'Размер заготовки под ключ.','stock.pts':'Контур заготовки точками «X Y» через «;».','stock.rr':'Если углы заготовки скруглены — радиус скругления. 0 — острые углы.','stock.rch':'Если на углах заготовки срезаны фаски — размер фаски. 0 — нет.',
  'tool.num':'Номер гнезда в магазине станка (T). Под этим же номером станок хранит длину инструмента (H).','tool.type':'Что это за инструмент: фреза, сверло, метчик…',
  'tool.d':'Диаметр — написан на хвостовике или на коробке.','tool.ri':'Радиус на углу пластины, если фреза с пластинами (например, r0.8 или r2). 0 — острый угол.',
  'tool.cr':'Радиус скругления на кончике фрезы.','tool.ang':'Угол при вершине: у сверла обычно 118–140°, у фаскоснима 90°.','tool.tip':'Диаметр плоского кончика фаскоснима. 0 — острый.',
@@ -745,7 +745,7 @@ function bindForm(el,getObj,after,rer,keep){
 const STK=[['rect','Прямоугольная'],['round','Круглая (диск)'],['poly','Многогранник'],['custom','Произвольный контур'],['rod','Пруток на 4-й оси A (вдоль X)']];
 const SF=[['shape','Форма','rect',STK],['x','Длина X',120,'n',{shape:'rect'}],['y','Ширина Y',80,'n',{shape:'rect'}],['d','Диаметр',100,'n',{shape:['round','rod']}],['rl','Длина прутка',60,'n',{shape:'rod'}],['rx','X левого торца прутка',-5,'c',{shape:'rod'}],['rz','Ноль Z','axis',[['axis','На оси прутка'],['top','Верх прутка']],{shape:'rod'}],['adir','Поворот A+','1',[['1','Y → Z (по правилу)'],['-1','Обратный']],{shape:'rod'}],
  ['n','Кол-во граней',6,'n',{shape:'poly'}],['sw','Под ключ SW',60,'n',{shape:'poly'}],['pts','Точки контура: X Y; X Y; …','','text',{shape:'custom'}],
- ['z','Высота Z',30,'n',o=>o.shape!='rod'],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый ближний угол'],['rf','Правый ближний угол'],['lb','Левый дальний угол'],['rb','Правый дальний угол'],['cf','Середина ближней стороны'],['cb','Середина дальней стороны'],['lc','Середина левой стороны'],['rc','Середина правой стороны']],{shape:['rect','round','poly']}],
+ ['z','Высота Z',30,'n',o=>o.shape!='rod'],['rr','Скругление углов R',0,'n',{shape:'rect'}],['rch','Фаска на углах C',0,'n',{shape:'rect'}],['origin','Ноль XY','center',[['center','Центр заготовки'],['corner','Левый ближний угол'],['rf','Правый ближний угол'],['lb','Левый дальний угол'],['rb','Правый дальний угол'],['cf','Середина ближней стороны'],['cb','Середина дальней стороны'],['lc','Середина левой стороны'],['rc','Середина правой стороны']],{shape:['rect','round','poly']}],
  ['wcs','Система координат','G54',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x])],['mat','Материал','','text']];
 const OXY={center:[0,0],corner:[-1,-1],rf:[1,-1],lb:[-1,1],rb:[1,1],cf:[0,-1],cb:[0,1],lc:[-1,0],rc:[1,0]};
 const ORIG={center:'центр заготовки',corner:'левый ближний угол',rf:'правый ближний угол',lb:'левый дальний угол',rb:'правый дальний угол',cf:'середина ближней стороны',cb:'середина дальней стороны',lc:'середина левой стороны',rc:'середина правой стороны'};
@@ -755,8 +755,11 @@ function stockGeo(){const s=st.stock;let P,bad=false;const sh=s.shape||'rect';
  if(sh=='rod'){const R=Math.max(.5,+s.d||1)/2,x0=+s.rx||0,x1=x0+Math.max(1,+s.rl||1);const az=s.rz=='top'?-R:0;return{P:[[x0,-R],[x1,-R],[x1,R],[x0,R]],x0,y0:-R,x1,y1:R,w:x1-x0,h:2*R,z:R-az,rect:true,rod:true,R,az,sgn:+s.adir<0?-1:1};}
  if(sh=='round'){const R=Math.max(1,+s.d||1)/2,n=96;P=[...Array(n)].map((_,i)=>[R*Math.cos(2*Math.PI*i/n),R*Math.sin(2*Math.PI*i/n)]);}
  else if(sh=='poly'){const N=Math.max(3,Math.round(+s.n||6)),Rv=Math.max(1,+s.sw||1)/2/Math.cos(Math.PI/N);P=[...Array(N)].map((_,k)=>{const t=(k+.5)*2*Math.PI/N;return[Rv*Math.cos(t),Rv*Math.sin(t)];});}
- else if(sh=='custom'){P=parsePts(s.pts);if(P.length<3||Math.abs(area(P))<1){bad=true;P=null;}}
- if(!P){const w=Math.max(1,+s.x||1)/2,h=Math.max(1,+s.y||1)/2;P=[[-w,-h],[w,-h],[w,h],[-w,h]];}
+ else if(sh=='custom'){P=scPoly(s);if(P.length<3||Math.abs(area(P))<1){bad=true;P=null;}}
+ if(!P){const w=Math.max(1,+s.x||1)/2,h=Math.max(1,+s.y||1)/2,rr=sh=='rect'?Math.max(0,Math.min(+s.rr||0,w,h)):0,rc=sh=='rect'&&!rr?Math.max(0,Math.min(+s.rch||0,w,h)):0;
+  if(rr>0){P=[];[[w-rr,h-rr,0],[-w+rr,h-rr,90],[-w+rr,-h+rr,180],[w-rr,-h+rr,270]].forEach(([cx,cy,a0])=>{for(let k=0;k<=10;k++){const a=(a0+9*k)*Math.PI/180;P.push([cx+rr*Math.cos(a),cy+rr*Math.sin(a)]);}});}
+  else if(rc>0)P=[[w-rc,-h],[w,-h+rc],[w,h-rc],[w-rc,h],[-w+rc,h],[-w,h-rc],[-w,-h+rc],[-w+rc,-h]];
+  else P=[[-w,-h],[w,-h],[w,h],[-w,h]];}
  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
  if(sh!='custom'){const[ix,iy]=OXY[s.origin]||[0,0];if(ix||iy){const tx=ix<0?x0:ix>0?x1:0,ty=iy<0?y0:iy>0?y1:0;P=P.map(([x,y])=>[x-tx,y-ty]);x0-=tx;x1-=tx;y0-=ty;y1-=ty;}}
  P=orient(P,true);return{P,x0,y0,x1,y1,w:x1-x0,h:y1-y0,z:Math.max(.1,+s.z||1),rect:sh=='rect'||(sh=='custom'&&bad)||(sh=='poly'&&Math.round(+s.n)==4&&false),bad};}
@@ -782,8 +785,8 @@ function stkInfo(g){const s=st.stock;if(g.rod){const hint=$('#stockHint');if(hin
  const hint=$('#stockHint');if(hint&&hint.dataset.t)hint.innerHTML=hint.dataset.t;return `<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+s.z).toFixed(2)} мм</b></span>`;}
 function renderProj(){{const h=$('#stockHint');if(h&&!h.dataset.t)h.dataset.t=h.innerHTML;}
  $('#progF').innerHTML=[['num','Номер O',1000,'n'],['name','Имя программы','','text'],['note','Комментарий','','text']].map(f=>fld(st.prog,f)).join('');
- const SFr=SF.filter(f=>!(easy()&&f[0]=='adir')).map(f=>f[0]=='mat'?['mat','Материал','',[...(MATS[st.stock.mat]||!st.stock.mat?[]:[[st.stock.mat,st.stock.mat]]),...Object.keys(MATS).map(k=>[k,k])]]:f);
- $('#stockF').innerHTML=SFr.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');{const z=$('#zPick');if(z)z.innerHTML=['rect','round','poly'].includes(st.stock.shape||'rect')?`<div class="wlbl" style="margin:0 0 6px">Ноль детали — нажми точку на рисунке</div><div class="wsk" style="margin-bottom:12px">${zeroSVG(st.stock.origin||'center','zPickSet')}</div>`:'';}
+ const SFr=SF.filter(f=>!(easy()&&f[0]=='adir')&&f[0]!='pts').map(f=>f[0]=='mat'?['mat','Материал','',[...(MATS[st.stock.mat]||!st.stock.mat?[]:[[st.stock.mat,st.stock.mat]]),...Object.keys(MATS).map(k=>[k,k])]]:f);
+ $('#stockF').innerHTML=SFr.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');{const z=$('#zPick');if(z&&st.stock.shape=='custom'){z.innerHTML=`<div class="wlbl" style="margin:0 0 6px">Контур заготовки</div>${scEditor(st.stock)}<div style="height:12px"></div>`;}else if(z)z.innerHTML=['rect','round','poly'].includes(st.stock.shape||'rect')?`<div class="wlbl" style="margin:0 0 6px">Ноль детали — нажми точку на рисунке</div><div class="wsk" style="margin-bottom:12px">${zeroSVG(st.stock.origin||'center','zPickSet')}</div>`:'';}
  const g=stockGeo();$('#stockInfo').innerHTML=stkInfo(g)+(g.bad?'<span style="color:var(--bad)">⚠ Мало точек контура — показан прямоугольник</span>':'');
  bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock,()=>{$('#stockInfo').innerHTML=stkInfo(stockGeo());},()=>renderProj(),true);
  const mpI=()=>{const PT=parts();$('#mpInfo').innerHTML=`<span>Деталей: <b>${PT.length}</b></span>`+(mpGet().mode=='wcs'?`<span>${PT.map(q=>q.w).join(' · ')}</span>`:'');};
@@ -2157,7 +2160,7 @@ function opTime(o){const t=st.tools.find(x=>x.id==o.tool),k=JSON.stringify([o,t,
  try{const{code}=opCode(o),P=parse(code);r={t:P.time||0,err:P.err?(ERR[P.err]||P.err):''};}catch(e){r={t:0,err:ERR[e.message]||e.message};}
  if(OTC.size>400)OTC.clear();OTC.set(k,r);return r;}
 function stkShort(s=st.stock){const sh=s.shape||'rect',m=s.mat?` · ${s.mat}`:'';
- return (sh=='rod'?`Пруток Ø${nf(s.d)} × ${nf(s.rl)}`:sh=='round'?`Диск Ø${nf(s.d)} × ${nf(s.z)}`:sh=='poly'?`Многогранник SW${nf(s.sw)} × ${nf(s.z)}`:sh=='custom'?`Заготовка по контуру × ${nf(s.z)}`:`Плита ${nf(s.x)}×${nf(s.y)}×${nf(s.z)}`)+m;}
+ return (sh=='rod'?`Пруток Ø${nf(s.d)} × ${nf(s.rl)}`:sh=='round'?`Диск Ø${nf(s.d)} × ${nf(s.z)}`:sh=='poly'?`Многогранник SW${nf(s.sw)} × ${nf(s.z)}`:sh=='custom'?`Заготовка по контуру × ${nf(s.z)}`:`Плита ${nf(s.x)}×${nf(s.y)}×${nf(s.z)}${+s.rr>0?' R'+nf(s.rr):+s.rch>0?' C'+nf(s.rch):''}`)+m;}
 function zeroShort(s=st.stock){return s.shape=='rod'?`Ноль: Z0 ${s.rz=='top'?'верх прутка':'на оси A'} · ${s.wcs||'G54'}`:`Ноль: ${s.shape=='custom'?'по детали':ORIG[s.origin]||'центр заготовки'} · Z0 верх · ${s.wcs||'G54'}`;}
 function stockIco(sz=26,s=st.stock){const sh=s.shape||'rect';return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">${sh=='rod'?'<ellipse cx="5" cy="12" rx="2.5" ry="6"/><path d="M5 6h14c1.5 0 2.5 2.7 2.5 6s-1 6-2.5 6H5"/>':sh=='round'?'<ellipse cx="12" cy="9" rx="9" ry="4"/><path d="M3 9v5c0 2.2 4 4 9 4s9-1.8 9-4V9"/>':'<path d="M3 9l9-4 9 4-9 4z"/><path d="M3 9v6l9 4 9-4V9"/>'}</svg>`;}
 /* всплывашка с «Отменить» */
@@ -2311,10 +2314,10 @@ window.zPickSet=k=>{st.stock.origin=k;save();OTC.clear();renderProj();toast('Н�
 /* ---------- мастер «Новая деталь» ---------- */
 let W={};
 const WMATS=['Д16Т','Сталь 45','Ст3 / сталь 20','12Х18Н10Т','Чугун СЧ20','Латунь ЛС59','Капролон / ПОМ'];
-window.wizOpen=()=>{W={step:1,shape:'rect',x:120,y:80,z:30,d:60,dz:20,rl:100,n:6,sw:36,pz:30,pts:'-50 -30; 50 -30; 50 10; 20 30; -50 30',cz:20,fd:0.5,mat:MATS[st.stock.mat]?st.stock.mat:'Д16Т',name:'',origin:'center',rz:'axis',rend:'l',wcs:'G54',face:true};wizRender();$('#wiz').hidden=false;};
+window.wizOpen=()=>{W={step:1,shape:'rect',x:120,y:80,z:30,d:60,dz:20,rl:100,n:6,sw:36,pz:30,pts:'-50 -30; 50 -30; 50 10; 20 30; -50 30',cin:'pts',cz:20,rr:0,rch:0,fd:0.5,mat:MATS[st.stock.mat]?st.stock.mat:'Д16Т',name:'',origin:'center',rz:'axis',rend:'l',wcs:'G54',face:true};wizRender();$('#wiz').hidden=false;};
 window.wizClose=()=>{$('#wiz').hidden=true;};
-window.wzSet=(k,v,re)=>{W[k]=['x','y','z','d','dz','rl','n','sw','pz','cz','fd'].includes(k)?num(v):v;if(re)wizRender();else{const sk=$('#wzSk');if(sk)sk.innerHTML=wzSketch();}};
-window.wzGo=d=>{if(d>0&&W.step==1){const bad=W.shape=='rect'?!(W.x>0&&W.y>0&&W.z>0):W.shape=='round'?!(W.d>0&&W.dz>0):W.shape=='poly'?!(W.n>=3&&W.sw>0&&W.pz>0):W.shape=='custom'?!(parsePts(W.pts).length>=3&&W.cz>0):!(W.d>0&&W.rl>0);if(bad)return toast(W.shape=='custom'?'Нужно минимум 3 точки контура и высота':'Впиши все размеры заготовки');}
+window.wzSet=(k,v,re)=>{W[k]=['x','y','z','d','dz','rl','n','sw','pz','cz','fd','rr','rch'].includes(k)?num(v):v;if(re)wizRender();else{const sk=$('#wzSk');if(sk)sk.innerHTML=wzSketch();}};
+window.wzGo=d=>{if(d>0&&W.step==1){const bad=W.shape=='rect'?!(W.x>0&&W.y>0&&W.z>0):W.shape=='round'?!(W.d>0&&W.dz>0):W.shape=='poly'?!(W.n>=3&&W.sw>0&&W.pz>0):W.shape=='custom'?!(scPoly(W).length>=3&&!scErr(W)&&W.cz>0):!(W.d>0&&W.rl>0);if(bad)return toast(W.shape=='custom'?'Нужно минимум 3 точки контура и высота':'Впиши все размеры заготовки');}
  if(d>0&&W.step==3)return wizDone();W.step=Math.max(1,Math.min(3,W.step+d));wizRender();const b=$('#wiz .wz-b');if(b)b.scrollTop=0;};
 const dimT=(x,y,t)=>`<text x="${x}" y="${y}" fill="#ffc400" font-size="13" font-weight="700" font-family="ui-monospace,monospace">${t}</text>`;
 function wzSketch(){const Y='#ffc400';
@@ -2327,20 +2330,20 @@ function wzSketch(){const Y='#ffc400';
   return `<svg viewBox="0 0 320 150" role="img" aria-label="Контур заготовки из ${P.length} точек"><path d="M${P.map(([x,y])=>mx(x)+' '+my(y)).join(' L')}Z" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/>${P.map(([x,y],i)=>`<circle cx="${mx(x)}" cy="${my(y)}" r="3.5" fill="${Y}"/><text x="${+mx(x)+5}" y="${+my(y)-5}" fill="#8b93a3" font-size="10" font-family="ui-monospace,monospace">${i+1}</text>`).join('')}${0>=x0&&0<=x1&&0>=y0&&0<=y1?`<circle cx="${mx(0)}" cy="${my(0)}" r="5" fill="none" stroke="#ff5c5c" stroke-width="2"/>`:''}</svg>`;}
  if(W.shape=='round')return `<svg viewBox="0 0 320 160" role="img" aria-label="Диск Ø${nf(W.d)} высотой ${nf(W.dz)}"><ellipse cx="160" cy="60" rx="110" ry="34" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/><path d="M50 60v40c0 19 49 34 110 34s110-15 110-34V60" stroke="#e6e8ec" stroke-width="1.6" fill="none"/><path d="M50 60h220" stroke="${Y}" stroke-width="1.4"/>${dimT(132,54,'Ø '+nf(W.d))}<path d="M290 60v40M285 60h10M285 100h10" stroke="${Y}" stroke-width="1.4"/>${dimT(276,124,'Z '+nf(W.dz))}</svg>`;
  if(W.shape=='rod')return `<svg viewBox="0 0 320 150" role="img" aria-label="Пруток Ø${nf(W.d)} длиной ${nf(W.rl)}"><path d="M60 40h210M60 110h210" stroke="#e6e8ec" stroke-width="1.6"/><ellipse cx="60" cy="75" rx="14" ry="35" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/><path d="M270 40c8 0 14 16 14 35s-6 35-14 35" stroke="#e6e8ec" stroke-width="1.6" fill="none"/><path d="M14 75h292" stroke="#8b93a3" stroke-dasharray="8 4 2 4"/><path d="M60 130h210M60 124v12M270 124v12" stroke="${Y}" stroke-width="1.4"/>${dimT(140,146,'L '+nf(W.rl))}<path d="M32 40v70M27 40h10M27 110h10" stroke="${Y}" stroke-width="1.4"/>${dimT(2,30,'Ø '+nf(W.d))}<text x="230" y="30" fill="#8b93a3" font-size="11" font-family="inherit">ось A</text></svg>`;
- return `<svg viewBox="0 0 320 150" role="img" aria-label="Плита ${nf(W.x)} на ${nf(W.y)} на ${nf(W.z)}"><path d="M60 60l110-32 100 32-110 32z" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/><path d="M60 60v38l100 32V92M270 60v38L160 130" stroke="#e6e8ec" stroke-width="1.6" fill="none"/><path d="M54 104l100 32M54 100v8M154 132v8" stroke="${Y}" stroke-width="1.4"/>${dimT(80,134,'X '+nf(W.x))}<path d="M166 136l110-32M166 132v8M276 100v8" stroke="${Y}" stroke-width="1.4"/>${dimT(222,136,'Y '+nf(W.y))}<path d="M48 60v38M44 60h8M44 98h8" stroke="${Y}" stroke-width="1.4"/>${dimT(2,84,'Z '+nf(W.z))}</svg>`;}
+ return `<svg viewBox="0 0 320 150" role="img" aria-label="Плита ${nf(W.x)} на ${nf(W.y)} на ${nf(W.z)}">${W.rr>0||W.rch>0?`<text x="200" y="20" fill="#ffc400" font-size="12" font-family="inherit">углы: ${W.rr>0?'R'+nf(W.rr):'C'+nf(W.rch)}</text>`:''}<path d="M60 60l110-32 100 32-110 32z" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/><path d="M60 60v38l100 32V92M270 60v38L160 130" stroke="#e6e8ec" stroke-width="1.6" fill="none"/><path d="M54 104l100 32M54 100v8M154 132v8" stroke="${Y}" stroke-width="1.4"/>${dimT(80,134,'X '+nf(W.x))}<path d="M166 136l110-32M166 132v8M276 100v8" stroke="${Y}" stroke-width="1.4"/>${dimT(222,136,'Y '+nf(W.y))}<path d="M48 60v38M44 60h8M44 98h8" stroke="${Y}" stroke-width="1.4"/>${dimT(2,84,'Z '+nf(W.z))}</svg>`;}
 const winp=(k,l,v)=>`<label>${l}<input type="text" inputmode="decimal" value="${v}" oninput="wzSet('${k}',this.value)"></label>`;
 function wizRender(){const S=W.step,names=['Заготовка','Ноль','Старт'];let b='';
  if(S==1){b=`<h2>Что зажато в станке?</h2>
   <div class="chc">${[['rect','Плита, брусок','3 оси, тиски',TPLSVG.plate],['round','Диск, круг','фланец, крышка',TPLSVG.cover],['poly','Шестигранник','многогранник под ключ',TPLSVG.hex],['rod','Пруток','4-я ось A',TPLSVG.rod],['custom','По контуру','своя форма по точкам',TPLSVG.window]].map(([k,n,d,sv])=>`<button class="${W.shape==k?'on':''}" onclick="wzSet('shape','${k}',1)" aria-pressed="${W.shape==k}">${sv}<b>${n}</b><small>${d}</small></button>`).join('')}</div>
-  <div class="wsk" id="wzSk">${wzSketch()}</div>
-  <div class="grid">${W.shape=='rect'?winp('x','Длина X, мм',W.x)+winp('y','Ширина Y, мм',W.y)+winp('z','Высота Z, мм',W.z):W.shape=='round'?winp('d','Диаметр, мм',W.d)+winp('dz','Высота, мм',W.dz):W.shape=='poly'?winp('n','Сколько граней',W.n)+winp('sw','Под ключ SW, мм',W.sw)+winp('pz','Высота, мм',W.pz):W.shape=='custom'?winp('cz','Высота, мм',W.cz):winp('d','Диаметр прутка, мм',W.d)+winp('rl','Длина из патрона, мм',W.rl)}</div>
-  ${W.shape=='custom'?`<label>Точки контура: X Y; X Y; … (по порядку, от нуля детали)<textarea rows="3" style="font-family:ui-monospace,monospace" oninput="wzSet('pts',this.value)">${esc(W.pts)}</textarea></label><div class="hint" style="margin:0">Обходи контур по порядку — по часовой или против. Красный кружок на рисунке — ноль детали (X0 Y0).</div>`:''}
+  ${W.shape=='custom'?scEditor(W):`<div class="wsk" id="wzSk">${wzSketch()}</div>`}
+  <div class="grid">${W.shape=='rect'?winp('x','Длина X, мм',W.x)+winp('y','Ширина Y, мм',W.y)+winp('z','Высота Z, мм',W.z)+winp('rr','Скругление углов R, мм',W.rr)+winp('rch','или фаска на углах C, мм',W.rch):W.shape=='round'?winp('d','Диаметр, мм',W.d)+winp('dz','Высота, мм',W.dz):W.shape=='poly'?winp('n','Сколько граней',W.n)+winp('sw','Под ключ SW, мм',W.sw)+winp('pz','Высота, мм',W.pz):W.shape=='custom'?winp('cz','Высота, мм',W.cz):winp('d','Диаметр прутка, мм',W.d)+winp('rl','Длина из патрона, мм',W.rl)}</div>
+
   <label>Название детали<input value="${esc(W.name)}" placeholder="например, KRYSHKA" oninput="wzSet('name',this.value)"></label>
   <div class="wlbl">Материал — от него зависят обороты и подачи</div>
   <div class="mchips">${WMATS.map(m=>`<button class="${W.mat==m?'on':''}" onclick="wzSet('mat','${m}',1)">${esc(m)}</button>`).join('')}<select style="width:auto;min-height:38px" onchange="wzSet('mat',this.value,1)" aria-label="Другой материал"><option value="">Другой…</option>${Object.keys(MATS).filter(m=>!WMATS.includes(m)).map(m=>`<option ${W.mat==m?'selected':''}>${esc(m)}</option>`).join('')}</select></div>`;}
  else if(S==2){
   if(W.shape=='rect')b=`<h2>Где ты снимаешь ноль?</h2><p>Нажми точку на заготовке — так же, как щупом на станке.</p><div class="wsk">${zeroSVG(W.origin,'wzZero')}</div>`;
-  else if(W.shape=='custom')b=`<h2>Ноль детали</h2><p>У заготовки по контуру ноль X0 Y0 — там, откуда считаются точки контура (красный кружок).</p><div class="wsk">${wzSketch()}</div>`;
+  else if(W.shape=='custom')b=`<h2>Ноль детали</h2><p>У заготовки по контуру ноль X0 Y0 — там, откуда считаются точки контура (жёлтая точка со стрелками).</p><div class="wsk">${scSvg(W)}</div>`;
   else if(W.shape=='round'||W.shape=='poly')b=`<h2>Ноль детали</h2><p>${W.shape=='poly'?'У многогранника ноль по X и Y — в центре (по граням щупом)':'У диска ноль по X и Y — в центре: его находят щупом по окружности'}.</p><div class="wsk"><svg viewBox="0 0 320 170" role="img" aria-label="Ноль в центре диска"><ellipse cx="160" cy="70" rx="110" ry="40" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M50 70v40c0 22 49 40 110 40s110-18 110-40V70" stroke="#8b93a3" stroke-width="1.5" fill="none"/><path d="M160 70l50 18" stroke="#ff5c5c" stroke-width="3"/><path d="M160 70l50-14" stroke="#2ecc71" stroke-width="3"/><path d="M160 70V14" stroke="#4da3ff" stroke-width="3"/><circle cx="160" cy="70" r="8" fill="#ffc400" stroke="#141414" stroke-width="2"/></svg></div>`;
   else b=`<h2>Ноль прутка</h2><p>Пруток лежит вдоль оси X, вращается осью A.</p><div class="wsk"><svg viewBox="0 0 320 150" role="img" aria-label="Пруток и ноль"><path d="M60 40h210M60 110h210" stroke="#8b93a3" stroke-width="1.5"/><ellipse cx="60" cy="75" rx="14" ry="35" fill="#1f232c" stroke="#8b93a3" stroke-width="1.5"/><path d="M270 40c8 0 14 16 14 35s-6 35-14 35" stroke="#8b93a3" stroke-width="1.5" fill="none"/><path d="M14 75h292" stroke="#8b93a3" stroke-dasharray="8 4 2 4"/><circle cx="${W.rend=='r'?270:60}" cy="${W.rz=='top'?40:75}" r="8" fill="#ffc400" stroke="#141414" stroke-width="2"/></svg></div>
    <div class="wlbl">X0 — какой торец</div><div class="seg"><button class="${W.rend=='l'?'on':''}" onclick="wzSet('rend','l',1)">Левый торец</button><button class="${W.rend=='r'?'on':''}" onclick="wzSet('rend','r',1)">Правый торец</button></div>
@@ -2358,7 +2361,7 @@ function wizRender(){const S=W.step,names=['Заготовка','Ноль','Ст
 window.wzZero=k=>{W.origin=k;wizRender();};
 function wizDone(){keepAsk();const rod=W.shape=='rod';
  const s={prog:{num:st.prog.num||1000,name:(W.name||'DETAL').trim().slice(0,30),note:'',fmt:st.prog.fmt,cmt:st.prog.cmt,mp:{mode:'off'}},
-  stock:{shape:W.shape,x:W.shape=='round'?W.d:W.x,y:W.shape=='round'?W.d:W.y,z:W.shape=='round'?W.dz:W.shape=='poly'?W.pz:W.shape=='custom'?W.cz:rod?Math.max(1,W.d):W.z,d:W.d,rl:W.rl,n:Math.round(W.n),sw:W.sw,pts:W.pts,rx:rod?(W.rend=='r'?-W.rl:0):-5,rz:W.rz,adir:'1',origin:W.shape=='rect'?W.origin:'center',wcs:W.wcs,mat:W.mat},
+  stock:{shape:W.shape,x:W.shape=='round'?W.d:W.x,y:W.shape=='round'?W.d:W.y,z:W.shape=='round'?W.dz:W.shape=='poly'?W.pz:W.shape=='custom'?W.cz:rod?Math.max(1,W.d):W.z,d:W.d,rl:W.rl,n:Math.round(W.n),sw:W.sw,pts:W.pts,cin:W.cin,sx:W.sx,sy:W.sy,els:JSON.parse(JSON.stringify(W.els||[])),rr:W.rr,rch:W.rch,rx:rod?(W.rend=='r'?-W.rl:0):-5,rz:W.rz,adir:'1',origin:W.shape=='rect'?W.origin:'center',wcs:W.wcs,mat:W.mat},
   tools:JSON.parse(JSON.stringify(st.tools)),ops:[]};
  if(W.mat!=st.stock.mat)s.tools.forEach(t=>applyMat(t,W.mat));
  loadProj(s,s.prog.name);
@@ -2423,6 +2426,49 @@ function safeAsk(then){let ok=false;try{ok=!!localStorage.getItem('fcam_safe1');
 window.safeChk=()=>{const all=[...document.querySelectorAll('#safeM input')].every(x=>x.checked);$('#sfOk').disabled=!all;};
 window.dlSafe=e=>safeAsk(()=>downloadCode(e));
 window.shareSafe=()=>safeAsk(()=>shareCode());
+
+
+/* ===================== контур заготовки: точки, прямые и дуги, DXF ===================== */
+function scPoly(o){if(o.cin=='els'){try{const{E}=ctrEls({sx:o.sx,sy:o.sy,els:o.els||[],closed:'1'});return E.length?elPoly(E,0.05):[];}catch(e){return[];}}return parsePts(o.pts);}
+function scErr(o){if(o.cin!='els')return parsePts(o.pts).length<3?'Нужно минимум 3 точки':'';try{const{E}=ctrEls({sx:o.sx,sy:o.sy,els:o.els||[],closed:'1'});return E.length<2?'Добавь элементы контура':'';}catch(e){return e.message;}}
+let SCT=null,SCD=null;
+const SCDEF={sx:-50,sy:-30,els:[{t:'L',x:50,y:-30,r:0},{t:'L',x:50,y:10,r:0},{t:'CCW',x:30,y:30,r:20},{t:'L',x:-50,y:30,r:0}]};
+function scInit(o){if(!o.cin)o.cin='pts';if(!Array.isArray(o.els)||!o.els.length){o.sx=SCDEF.sx;o.sy=SCDEF.sy;o.els=JSON.parse(JSON.stringify(SCDEF.els));}if(o.sx==null)o.sx=0;if(o.sy==null)o.sy=0;}
+function scSvg(o){const P=scPoly(o),er=scErr(o),Y='#ffc400';if(P.length<3)return `<svg viewBox="0 0 320 170" role="img" aria-label="Контур не задан"><text x="160" y="88" text-anchor="middle" fill="#ff8a80" font-size="13" font-family="inherit">${esc(er||'Контур не задан')}</text></svg>`;
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;P.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
+ const k=Math.min(270/Math.max(1,x1-x0),130/Math.max(1,y1-y0)),ox=160-(x0+x1)/2*k,oy=85+(y0+y1)/2*k,mx=x=>(ox+x*k).toFixed(1),my=y=>(oy-y*k).toFixed(1);
+ const V=o.cin=='els'?[[o.sx,o.sy],...(o.els||[]).map(q=>[q.x,q.y])]:P;
+ return `<svg viewBox="0 0 320 170" role="img" aria-label="Контур заготовки ${+(x1-x0).toFixed(1)} на ${+(y1-y0).toFixed(1)} мм"><path d="M${P.map(([x,y])=>mx(x)+' '+my(y)).join(' L')}Z" fill="#1f232c" stroke="#e6e8ec" stroke-width="1.6"/>
+  ${V.map(([x,y],i)=>`<circle cx="${mx(+x||0)}" cy="${my(+y||0)}" r="3.5" fill="${i?Y:'#2ecc71'}"/><text x="${+mx(+x||0)+5}" y="${+my(+y||0)-5}" fill="#8b93a3" font-size="10" font-family="ui-monospace,monospace">${i?i:'старт'}</text>`).join('')}
+  <path d="M${mx(0)} ${my(0)}h16" stroke="#ff5c5c" stroke-width="2"/><path d="M${mx(0)} ${my(0)}v-16" stroke="#2ecc71" stroke-width="2"/><circle cx="${mx(0)}" cy="${my(0)}" r="4" fill="#ffc400" stroke="#141414" stroke-width="1.5"/>
+  <text x="6" y="164" fill="#8b93a3" font-size="11" font-family="inherit">${+(x1-x0).toFixed(1)} × ${+(y1-y0).toFixed(1)} мм${er?' · ⚠ '+esc(er):''}</text></svg>`;}
+function scEditor(o){scInit(o);SCT=o;const m=o.cin;const T=[['L','Прямая'],['CW','↻ Дуга'],['CCW','↺ Дуга']];
+ let b=`<div class="seg" role="group" aria-label="Как задать контур"><button class="${m=='pts'?'on':''}" onclick="scMode('pts')">Точками</button><button class="${m=='els'?'on':''}" onclick="scMode('els')">Прямые и дуги</button><button onclick="document.getElementById('scF').click()">📂 Из DXF</button></div><input type="file" id="scF" accept=".dxf,.DXF" hidden onchange="scDxf(this)">
+ <div class="wsk" id="scPv">${scSvg(o)}</div>`;
+ if(SCD&&SCD.ch.length>1)b+=`<div class="grid"><label>Контур из DXF<select onchange="scPick(+this.value)">${SCD.ch.map((c,i)=>`<option value="${i}" ${i==SCD.i?'selected':''}>${i+1}: ${c.length} эл. · ${SCD.sz[i]}${SCD.cl[i]?'':' · открытый'}</option>`).join('')}</select></label><label>Ноль детали<select onchange="SCD.org=this.value;scPick(SCD.i)"><option value="c" ${SCD.org=='c'?'selected':''}>Центр контура</option><option value="o" ${SCD.org=='o'?'selected':''}>Как в DXF</option></select></label></div>`;
+ if(m=='pts')b+=`<label>Точки: X Y; X Y; … (по порядку, от нуля детали)<textarea rows="3" style="font-family:ui-monospace,monospace" oninput="scSet('pts',null,this.value)">${esc(o.pts||'')}</textarea></label><div class="hint" style="margin:0">Обходи контур по порядку — по часовой или против. Нужны дуги — переключись на «Прямые и дуги».</div>`;
+ else b+=`<div class="elh" style="grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(0,1fr)) 32px"><span>Элемент</span><span>X</span><span>Y</span><span>R</span><span></span></div>
+ <div class="elr" style="grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(0,1fr)) 32px"><b style="font-size:13px;color:#2ecc71">Старт</b><input inputmode="decimal" value="${o.sx}" oninput="scSet('sx',null,this.value)"><input inputmode="decimal" value="${o.sy}" oninput="scSet('sy',null,this.value)"><span></span><span></span></div>
+ ${o.els.map((q,i)=>`<div class="elr" style="grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(0,1fr)) 32px"><select onchange="scSet('t',${i},this.value,1)" aria-label="Элемент ${i+1}">${T.map(([v,l])=>`<option value="${v}" ${q.t==v?'selected':''}>${l}</option>`).join('')}</select><input inputmode="decimal" value="${q.x}" oninput="scSet('x',${i},this.value)" aria-label="X ${i+1}"><input inputmode="decimal" value="${q.y}" oninput="scSet('y',${i},this.value)" aria-label="Y ${i+1}"><input inputmode="decimal" value="${q.t=='L'?'':q.r}" ${q.t=='L'?'disabled':''} oninput="scSet('r',${i},this.value)" aria-label="R ${i+1}"><button class="ib" aria-label="Удалить элемент ${i+1}" onclick="scDel(${i})">✕</button></div>`).join('')}
+ <div class="row" style="margin-top:8px;gap:6px"><button class="btn s" onclick="scAdd('L')">+ Прямая</button><button class="btn s" onclick="scAdd('CW')">+ Дуга ↻</button><button class="btn s" onclick="scAdd('CCW')">+ Дуга ↺</button><button class="btn s" onclick="scRev()">⇄ Развернуть</button></div>
+ <div class="hint" style="margin:0">Как с чертежа: старт → до какой точки X Y идёт прямая или дуга. Дуга: R — радиус (минус, если дуга больше половины круга), ↻ по часовой, ↺ против. Последняя точка сама соединится со стартом.</div>`;
+ return `<div id="scBox" style="display:flex;flex-direction:column;gap:10px">${b}</div>`;}
+function scChanged(full){const o=SCT;if(!o)return;if(o===st.stock){save();OTC.clear();const si=$('#stockInfo');if(si)si.innerHTML=stkInfo(stockGeo());}
+ if(full){const box=$('#scBox');if(box)box.outerHTML=scEditor(o);}else{const pv=$('#scPv');if(pv)pv.innerHTML=scSvg(o);}}
+window.scSet=(f,i,v,full)=>{const o=SCT;if(!o)return;if(i==null)o[f]=f=='pts'?v:num(v);else{const q=o.els[i];if(f=='t'){q.t=v;if(v!='L'&&!q.r)q.r=10;}else q[f]=num(v);}scChanged(full);};
+window.scMode=m=>{const o=SCT;if(!o)return;if(m=='els'&&o.cin!='els'){const P=parsePts(o.pts);if(P.length>=3&&!o._elsUser){o.sx=P[0][0];o.sy=P[0][1];o.els=P.slice(1).map(([x,y])=>({t:'L',x,y,r:0}));}}o.cin=m;scChanged(true);};
+window.scAdd=t=>{const o=SCT;const L=o.els.length?o.els[o.els.length-1]:{x:o.sx,y:o.sy};o.els.push({t,x:+(+L.x+10).toFixed(3),y:+L.y,r:t=='L'?0:10});o._elsUser=1;scChanged(true);};
+window.scDel=i=>{const o=SCT;if(o.els.length<=2)return toast('В контуре нужно минимум 2 элемента');o.els.splice(i,1);o._elsUser=1;scChanged(true);};
+window.scRev=()=>{const o=SCT,pts=[{x:o.sx,y:o.sy},...o.els],n=o.els.length;if(!n)return;const fl={L:'L',CW:'CCW',CCW:'CW'},E=[];
+ for(let i=n-1;i>=0;i--)E.push({t:fl[o.els[i].t],x:pts[i].x,y:pts[i].y,r:o.els[i].r});o.sx=pts[n].x;o.sy=pts[n].y;o.els=E;scChanged(true);toast('Направление развёрнуто');};
+window.scDxf=inp=>{const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const{P}=dxfPrims(String(rd.result));if(!P.length)throw Error('нет линий и дуг');
+  const ch=chainPrims(P),box=c=>{let a=1e9,b=1e9,cc=-1e9,d=-1e9;c.forEach(e=>[e.a,e.b].forEach(([x,y])=>{a=Math.min(a,x);b=Math.min(b,y);cc=Math.max(cc,x);d=Math.max(d,y);}));return[a,b,cc,d];};
+  ch.sort((p,q)=>{const A=box(p),B=box(q);return (B[2]-B[0])*(B[3]-B[1])-(A[2]-A[0])*(A[3]-A[1]);});
+  SCD={ch,i:0,org:'c',sz:ch.map(c=>{const b=box(c);return `${+(b[2]-b[0]).toFixed(1)}×${+(b[3]-b[1]).toFixed(1)}`;}),cl:ch.map(c=>c.length>1&&V2.dist(c[c.length-1].b,c[0].a)<0.02),box};
+  const k=SCD.cl.findIndex(Boolean);scPick(k<0?0:k);toast(`DXF: найдено контуров ${ch.length} — взят самый большой замкнутый`);}catch(e){toast('DXF: '+e.message);}};rd.readAsText(f);inp.value='';};
+window.scPick=i=>{const o=SCT;if(!o||!SCD)return;SCD.i=i;const c=SCD.ch[i],b=SCD.box(c),sh=SCD.org=='o'?[0,0]:[(b[0]+b[2])/2,(b[1]+b[3])/2];const r=chainEls(c,sh);
+ o.sx=r.sx;o.sy=r.sy;o.els=r.els;o.cin='els';o._elsUser=1;
+ if(!SCD.cl[i])toast('Этот контур не замкнут — он будет замкнут прямой');scChanged(true);};
 
 /* ---------- вкладки ---------- */
 function show(t){const nt={proj:'ops',upd:'home'}[t]||t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==nt));const mn=$('main');if(mn)mn.scrollTop=0;document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
