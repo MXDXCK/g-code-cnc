@@ -472,7 +472,7 @@ nav button svg{width:22px;height:22px;display:block}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.6.0';
+const APP_VERSION='2.7.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -2750,6 +2750,11 @@ function skPanel(){const p=$('#dPan');if(!p)return;const D=skD(),T=SK.tool;let h
   <div class="row"><button class="btn p" onclick="document.getElementById('dImg').click()">📷 ${m&&SK.img?'Другое фото':'Выбрать фото'}</button>${m&&SK.img?`<button class="btn" onclick="skImgShow()">${m.show===false?'Показать':'Скрыть'}</button><button class="btn d" onclick="skImgDel()">Убрать</button>`:''}</div>
   ${m&&SK.img?`<label>Прозрачность<input type="range" min="0.1" max="1" step="0.05" value="${m.op??0.5}" oninput="skImgOp(this.value)"></label>
   <div class="row"><button class="btn ${T=='cal'?'p':''}" onclick="skTool('cal')">📏 1. Указать размер</button><button class="btn ${T=='zero'?'p':''}" onclick="skTool('zero')">⌖ 2. Поставить ноль</button></div>
+  <div class="dcl"><b>🪄 3. Обвести автоматически</b><div class="seg"><button class="${SK.at.mode=='sil'?'on':''}" onclick="skAt('mode','sil')">Силуэт детали</button><button class="${SK.at.mode=='lines'?'on':''}" onclick="skAt('mode','lines')">Линии чертежа</button></div>
+   ${tip(SK.at.mode=='sil'?'Деталь лежит на контрастном фоне (светлая на тёмном или наоборот), снято сверху. Найдёт наружный контур и отверстия.':'Чёткий чертёж на белой бумаге. Найдёт линии и окружности; размерные линии и текст тоже могут попасть — убери их «Удалить».')}
+   <label>Чувствительность<input type="range" min="0" max="100" value="${SK.at.sens}" oninput="skAt('sens',+this.value)"></label>
+   <div class="grid"><label>Не брать мельче, мм<input type="text" inputmode="decimal" value="${SK.at.min}" oninput="skAt('min',num(this.value))"></label><label>&nbsp;<button class="btn p" onclick="skTrace()">🪄 Обвести</button></label></div>
+   ${tip('Работает без интернета, прямо в телефоне. Результат — обычные линии: их можно править, усекать, удалять.')}</div>
   ${T=='cal'?(SK.cal&&SK.cal.length==2?`<div class="grid"><label>A–B на чертеже, мм<input id="dcl" type="text" inputmode="decimal" value="${nf(r3(V2.dist(SK.cal[0],SK.cal[1])))}"></label><label class="wck" style="align-self:end"><input type="checkbox" id="dch">Это горизонталь — выровнять</label></div><button class="btn p" onclick="skCal()">Применить масштаб</button>`:tip(SK.cal&&SK.cal.length?'Коснись точки B.':'Коснись точки A — начала известного размера.')):''}`:''}`;}
  else if(T=='file')h=`<b>DXF и настройки</b><div class="row"><button class="btn" onclick="document.getElementById('dDxf').click()">📂 Открыть DXF</button><button class="btn" onclick="skDxfOut()">⬇ Сохранить DXF</button><button class="btn" onclick="skFromStock()">⬅ Контур заготовки</button></div>${tip('DXF открывается в КОМПАС, AutoCAD и любом CAD.')}
   <div class="grid"><label>Шаг сетки, мм<select onchange="skGrid(this.value)">${[0.1,0.5,1,2,5,10].map(g=>`<option ${g==(+D.grid||1)?'selected':''}>${g}</option>`).join('')}</select></label><label class="wck" style="align-self:end"><input type="checkbox" ${SK.dim?'checked':''} onchange="SK.dim=this.checked;renderSk()">Размеры на чертеже</label></div>
@@ -2781,7 +2786,7 @@ window.skImgDel=()=>{skD().img=null;SK.img=null;try{localStorage.removeItem('fca
 window.skCal=()=>{const m=skD().img,A=SK.cal[0],B=SK.cal[1],L=gv('dcl'),d=V2.dist(A,B);if(!m||!(L>0)||!(d>0))return toast('Впиши размер в мм');const k=L/d;
  m.x=A[0]+(m.x-A[0])*k;m.y=A[1]+(m.y-A[1])*k;m.w*=k;
  if($('#dch')?.checked){const B2=[A[0]+(B[0]-A[0])*k,A[1]+(B[1]-A[1])*k];let a=Math.atan2(B2[1]-A[1],B2[0]-A[0]);if(Math.abs(a)>Math.PI/2)a+=a>0?-Math.PI:Math.PI;const c=Math.cos(-a),s=Math.sin(-a),dx=m.x-A[0],dy=m.y-A[1];m.x=A[0]+dx*c-dy*s;m.y=A[1]+dx*s+dy*c;m.rot=(m.rot||0)-a*180/Math.PI;}
- ['x','y','w','rot'].forEach(q=>m[q]=Math.round(m[q]*1e4)/1e4);SK.cal=null;save();skTool('zero');skFit();toast('Масштаб задан — теперь поставь ноль');};
+ ['x','y','w','rot'].forEach(q=>m[q]=Math.round(m[q]*1e4)/1e4);m.cal=true;SK.cal=null;save();skTool('zero');skFit();toast('Масштаб задан — теперь поставь ноль');};
 /* ---------- DXF ---------- */
 window.skDxfIn=inp=>{const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const{P}=dxfPrims(String(rd.result));if(!P.length)throw Error('нет линий и дуг');const D=skD();P.forEach(e=>D.ps.push(e2p(e)));skMergeCircles();save();skFit();skPanel();toast(`Из DXF добавлено объектов: ${P.length}`);}catch(e){toast('DXF: '+e.message);}};rd.readAsText(f);inp.value='';};
 function skMergeCircles(){const D=skD(),A=D.ps;for(let i=0;i<A.length;i++)for(let j=i+1;j<A.length;j++){const a=A[i],b=A[j];if(a.t=='A'&&b.t=='A'&&Math.abs(a.cx-b.cx)<1e-3&&Math.abs(a.cy-b.cy)<1e-3&&Math.abs(a.r-b.r)<1e-3&&Math.abs(arcSw(a)+arcSw(b)-360)<1e-3&&Math.abs(angN(a.a2-b.a1))<1e-3){A[i]={t:'C',cx:a.cx,cy:a.cy,r:a.r};A.splice(j,1);break;}}}
@@ -2817,6 +2822,73 @@ window.skUse=(i,how)=>{if(how=='auto')return skAuto();const CS=skCont(),c=CS[i];
   const isl=CS.map(skCircle).filter(q=>q&&q!==cc&&pip(P,q.cx,q.cy)&&(!cc||q.d<cc.d)).map(q=>`О ${nf(q.cx)} ${nf(q.cy)} ${nf(q.d)}`).join('; ');const t=skMill(P);base.tool=t.id;
   addOp('pocketIsl',{src:'op',opn:n,isl,depth:SK.dep});const o=st.ops.find(x=>x.id==selOp);if(o){o.tool=t.id;save();renderOpEd();renderOpList();}toast(`Карман по контуру${isl?' с островами':''}`);return;}
  addOp('contour',{...geo,depth:SK.dep});toast(how=='in'?'Окно: фреза идёт внутри контура':how=='out'?'Фреза идёт снаружи контура (попутно)':'Контур по линии');};
+/* ===================== Автообводка фото без ИИ: силуэт детали или линии чертежа ===================== */
+SK.at={mode:'sil',sens:50,min:3};
+async function atImg(){const m=skD().img;if(!m||!SK.img)throw Error('Сначала выбери фото');const im=new Image();im.src=SK.img;await im.decode();
+ const k=Math.min(1,900/Math.max(im.width,im.height)),W=Math.max(16,Math.round(im.width*k)),H=Math.max(16,Math.round(im.height*k)),cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');c.drawImage(im,0,0,W,H);
+ const d=c.getImageData(0,0,W,H).data,g=new Float32Array(W*H);for(let i=0;i<W*H;i++)g[i]=0.299*d[4*i]+0.587*d[4*i+1]+0.114*d[4*i+2];return{g,W,H,m};}
+function atMap(m,W,H){const ca=Math.cos((m.rot||0)*D2R),sa=Math.sin((m.rot||0)*D2R),sx=m.w/W,sy=m.w*m.ar/H;return([px,py])=>{const u=px*sx,v=-py*sy;return[m.x+u*ca-v*sa,m.y+u*sa+v*ca];};}
+function atInteg(g,W,H){const I=new Float64Array((W+1)*(H+1));for(let y=0;y<H;y++){let s=0;for(let x=0;x<W;x++){s+=g[y*W+x];I[(y+1)*(W+1)+x+1]=I[y*(W+1)+x+1]+s;}}return I;}
+const atMean=(I,W,H,x,y,r)=>{const x0=Math.max(0,x-r),y0=Math.max(0,y-r),x1=Math.min(W,x+r+1),y1=Math.min(H,y+r+1);return(I[y1*(W+1)+x1]-I[y0*(W+1)+x1]-I[y1*(W+1)+x0]+I[y0*(W+1)+x0])/((x1-x0)*(y1-y0));};
+/* силуэт: всё, что отличается от фона по краям фото; самый большой кусок; контуры по «марширующим квадратам» */
+function atSil(g,W,H,sens){const B=[];for(let x=0;x<W;x++)B.push(g[x],g[(H-1)*W+x]);for(let y=0;y<H;y++)B.push(g[y*W],g[y*W+W-1]);B.sort((a,b)=>a-b);const bg=B[B.length>>1];
+ const I=atInteg(g,W,H),dif=new Float32Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)dif[y*W+x]=Math.abs(atMean(I,W,H,x,y,1)-bg);
+ const hist=new Float64Array(256);dif.forEach(v=>hist[Math.min(255,v|0)]++);let sum=0;for(let i=0;i<256;i++)sum+=i*hist[i];let sB=0,wB=0,best=-1,th=30;const tot=W*H;
+ for(let i=0;i<256;i++){wB+=hist[i];if(!wB)continue;const wF=tot-wB;if(!wF)break;sB+=i*hist[i];const v=wB*wF*(sB/wB-(sum-sB)/wF)**2;if(v>best){best=v;th=i;}}
+ th=Math.max(6,th*(1.6-sens/100*1.2));const M=new Uint8Array(W*H);for(let i=0;i<W*H;i++)M[i]=dif[i]>th?1:0;
+ const lab=new Int32Array(W*H).fill(-1),Q=new Int32Array(W*H);let bc=-1,bn=0,cid=0;
+ for(let s=0;s<W*H;s++){if(!M[s]||lab[s]>=0)continue;let qh=0,qt=0,n=0;Q[qt++]=s;lab[s]=cid;while(qh<qt){const p=Q[qh++];n++;const x=p%W,y=(p/W)|0;
+   if(x>0&&M[p-1]&&lab[p-1]<0){lab[p-1]=cid;Q[qt++]=p-1;}if(x<W-1&&M[p+1]&&lab[p+1]<0){lab[p+1]=cid;Q[qt++]=p+1;}if(y>0&&M[p-W]&&lab[p-W]<0){lab[p-W]=cid;Q[qt++]=p-W;}if(y<H-1&&M[p+W]&&lab[p+W]<0){lab[p+W]=cid;Q[qt++]=p+W;}}
+  if(n>bn){bn=n;bc=cid;}cid++;}
+ if(bn<W*H*0.005)throw Error('Деталь не видна — положи её на контрастный фон (светлую на тёмный или наоборот)');
+ const nx=W+2,ny=H+2,F=new Float32Array(nx*ny);for(let y=0;y<H;y++)for(let x=0;x<W;x++)F[(y+1)*nx+x+1]=lab[y*W+x]===bc?1:0;
+ const F2=new Float32Array(nx*ny);for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){let s=0;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)s+=F[(j+a)*nx+i+b];F2[j*nx+i]=s/9;}
+ const smp=p=>{const i=Math.max(0,Math.min(nx-1,Math.round(p[0])+1)),j=Math.max(0,Math.min(ny-1,Math.round(p[1])+1));return F2[j*nx+i];};
+ return isoLoops({F:F2,nx,ny,x0:-1,y0:-1,h:1},0.5,smp).map(l=>({P:l.P,closed:true}));}
+/* линии чертежа: тёмные штрихи → тонкие (в 1 пиксель) → цепочки точек */
+function atLines(g,W,H,sens){const I=atInteg(g,W,H),r=Math.max(6,Math.round(Math.min(W,H)/50)),C=3+(100-sens)*0.3,M=new Uint8Array(W*H);
+ for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x,m=atMean(I,W,H,x,y,r);M[i]=g[i]<m-C&&g[i]<215?1:0;}
+ const circ=[];{const lab=new Int32Array(W*H).fill(-1),Q=new Int32Array(W*H);let cid=0;
+  for(let s0=0;s0<W*H;s0++){if(!M[s0]||lab[s0]>=0)continue;let qh=0,qt=0;Q[qt++]=s0;lab[s0]=cid;while(qh<qt){const p=Q[qh++],x=p%W,y=(p/W)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=W||Y>=H)continue;const q=Y*W+X;if(M[q]&&lab[q]<0){lab[q]=cid;Q[qt++]=q;}}}
+   if(qt>=30){const pts=[];for(let k=0;k<qt;k+=Math.max(1,Math.floor(qt/600)))pts.push([Q[k]%W,(Q[k]/W)|0]);const c=atFitC(pts);
+    if(c&&c.r>=4&&c.rms<Math.max(1.6,0.06*c.r)){const bins=new Uint8Array(36);pts.forEach(p=>{bins[Math.floor((Math.atan2(p[1]-c.cy,p[0]-c.cx)+Math.PI)/(2*Math.PI)*36)%36]=1;});
+     if(bins.reduce((a,b)=>a+b,0)>=33){circ.push({circle:c});for(let k=0;k<qt;k++)M[Q[k]]=0;}}}cid++;}}
+ let ch=true,it=0;const del=[];while(ch&&it++<40){ch=false;for(let ps=0;ps<2;ps++){del.length=0;for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;if(!M[i])continue;
+   const p2=M[i-W],p3=M[i-W+1],p4=M[i+1],p5=M[i+W+1],p6=M[i+W],p7=M[i+W-1],p8=M[i-1],p9=M[i-W-1],Bn=p2+p3+p4+p5+p6+p7+p8+p9;if(Bn<2||Bn>6)continue;
+   const A=(!p2&&p3)+(!p3&&p4)+(!p4&&p5)+(!p5&&p6)+(!p6&&p7)+(!p7&&p8)+(!p8&&p9)+(!p9&&p2);if(A!=1)continue;if(ps==0?(p2&&p4&&p6)||(p4&&p6&&p8):(p2&&p4&&p8)||(p2&&p6&&p8))continue;del.push(i);}
+  if(del.length){ch=true;for(const i of del)M[i]=0;}}}
+ const N=[-W,1,W,-1,-W-1,-W+1,W-1,W+1],deg=i=>{let c=0;for(const d of N)if(M[i+d])c++;return c;},used=new Uint8Array(W*H),out=[];
+ const walk=s=>{const P=[s];used[s]=1;let cur=s;for(;;){let nx=-1;for(const d of N){const q=cur+d;if(M[q]&&!used[q]){nx=q;break;}}if(nx<0)break;used[nx]=1;P.push(nx);cur=nx;if(deg(cur)>2)break;}return P;};
+ for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;if(M[i]&&!used[i]&&deg(i)==1)out.push(walk(i));}
+ for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;if(M[i]&&!used[i])out.push(walk(i));}
+ return circ.concat(out.map(P=>{const Q=P.map(i=>[i%W,(i/W)|0]),cl=Q.length>12&&Math.hypot(Q[0][0]-Q[Q.length-1][0],Q[0][1]-Q[Q.length-1][1])<=2.5;return{P:Q,closed:cl};}));}
+function atRes(P,st){const out=[P[0]];let acc=0;for(let k=1;k<P.length;k++){const a=P[k-1],b=P[k],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(!L)continue;let t=st-acc;while(t<=L){out.push([a[0]+(b[0]-a[0])*t/L,a[1]+(b[1]-a[1])*t/L]);t+=st;}acc=L-(t-st);}return out;}
+/* окружность по точкам (метод наименьших квадратов) */
+function atFitC(P){const n=P.length;if(n<3)return null;let sx=0,sy=0;P.forEach(p=>{sx+=p[0];sy+=p[1];});const mx=sx/n,my=sy/n;let suu=0,svv=0,suv=0,suuu=0,svvv=0,suvv=0,svuu=0;
+ P.forEach(p=>{const u=p[0]-mx,v=p[1]-my;suu+=u*u;svv+=v*v;suv+=u*v;suuu+=u*u*u;svvv+=v*v*v;suvv+=u*v*v;svuu+=v*u*u;});const det=suu*svv-suv*suv;if(Math.abs(det)<1e-12)return null;
+ const b1=(suuu+suvv)/2,b2=(svvv+svuu)/2,uc=(b1*svv-b2*suv)/det,vc=(suu*b2-suv*b1)/det,r=Math.sqrt(uc*uc+vc*vc+(suu+svv)/n),cx=uc+mx,cy=vc+my;let e=0;P.forEach(p=>{const d=Math.hypot(p[0]-cx,p[1]-cy)-r;e+=d*d;});return{cx,cy,r,rms:Math.sqrt(e/n)};}
+/* ломаная → отрезки и дуги (там, где точки ложатся на окружность с поворотом в одну сторону) */
+function atPrims(Q,tol,maxR){const out=[],n=Q.length,cr=(a,b,c)=>(b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]);let i=0;
+ while(i<n-1){let best=-1,bc=null,sg=0;for(let j=i+3;j<n;j++){const S=Q.slice(i,j+1),s0=Math.sign(cr(S[0],S[1],S[2]));let ok=s0!=0;
+   for(let k=1;k<S.length-1&&ok;k++){const c=cr(S[k-1],S[k],S[k+1]),a=Math.atan2(S[k+1][1]-S[k][1],S[k+1][0]-S[k][0])-Math.atan2(S[k][1]-S[k-1][1],S[k][0]-S[k-1][0]),da=Math.abs(Math.atan2(Math.sin(a),Math.cos(a)));if(Math.sign(c)!=s0||da>0.75)ok=false;}
+   if(!ok)break;const c=atFitC(S);if(!c||c.rms>tol||c.r>maxR)break;let lng=false;for(let k=1;k<S.length;k++)if(Math.hypot(S[k][0]-S[k-1][0],S[k][1]-S[k-1][1])>0.55*c.r)lng=true;if(lng)break;best=j;bc=c;sg=s0;}
+  if(best>0){out.push({k:'A',a:Q[i],b:Q[best],c:[bc.cx,bc.cy],cw:sg<0});i=best;}else{out.push({k:'L',a:Q[i],b:Q[i+1]});i++;}}
+ return out;}
+window.skTrace=()=>{const m=skD().img;if(!m||!SK.img)return toast('Сначала выбери фото');if(!m.cal&&!confirm('Масштаб фото ещё не указан — размеры будут неточными. Обвести всё равно?'))return;toast('Ищу контур…');
+ setTimeout(async()=>{try{const{g,W,H}=await atImg(),mp=atMap(m,W,H),pxmm=m.w/W,S=SK.at;
+  const raw=S.mode=='sil'?atSil(g,W,H,S.sens):atLines(g,W,H,S.sens),minPx=Math.max(4,(+S.min||0)/pxmm),E=[];let nC=0;
+  raw.forEach(({P,closed,circle})=>{if(circle){const c=mp([circle.cx,circle.cy]);E.push({t:'C',cx:r3(c[0]),cy:r3(c[1]),r:r3(circle.r*pxmm)});nC++;return;}let len=0;for(let k=1;k<P.length;k++)len+=Math.hypot(P[k][0]-P[k-1][0],P[k][1]-P[k-1][1]);if(len<minPx)return;
+   const Wd=P.map(mp);if(closed&&Wd.length>=4){const c=atFitC(atRes([...Wd,Wd[0]],pxmm));if(c&&c.rms<Math.max(1.8*pxmm,0.015*c.r)&&c.r>2*pxmm){E.push({t:'C',cx:r3(c.cx),cy:r3(c.cy),r:r3(c.r)});nC++;return;}}
+   let Q=closed?rdp([...Wd,Wd[0]],0.9*pxmm):rdp(Wd,0.9*pxmm);if(Q.length<2)return;atPrims(Q,1.2*pxmm,m.w*0.6).forEach(e=>{if(V2.dist(e.a,e.b)>1e-6)E.push(e2p(e));});});
+  if(!E.length)return toast('Ничего не нашёл — подвинь «Чувствительность» или переключи режим');
+  /* стыкуем близкие концы, чтобы контуры замыкались */
+  const tol=2.5*pxmm,K=[];E.forEach(p=>{if(p.t=='A')K.push(arcPt(p,p.a1).map(r3),arcPt(p,p.a2).map(r3));});const fix=(x,y)=>{for(const q of K)if(Math.hypot(q[0]-x,q[1]-y)<tol)return q;const q=[r3(x),r3(y)];K.push(q);return q;};
+  E.forEach(p=>{if(p.t=='L'){const a=fix(p.x1,p.y1),b=fix(p.x2,p.y2);p.x1=a[0];p.y1=a[1];p.x2=b[0];p.y2=b[1];}});
+  const D=skD(),n0=D.ps.length;D.ps.push(...E.filter(p=>p.t!='L'||Math.hypot(p.x2-p.x1,p.y2-p.y1)>1e-6));if(m.op==null||m.op>0.35)m.op=0.3;save();skTool('sel');SK.sel=new Set(D.ps.map((_,i)=>i).filter(i=>i>=n0));renderSk();skPanel();
+  snack(`Найдено: ${D.ps.length-n0} объектов${nC?`, окружностей ${nC}`:''}. Лишнее убери «Удалить» / «Усечь»`,()=>{undo();renderDraw();});}catch(e){toast(e.message);}},30);};
+window.skAt=(k,v)=>{SK.at[k]=v;if(k=='mode')skPanel();};
+window.__at={atImg,atSil,atLines,atFitC,atMap,atPrims};
+
 window.SK=SK;window.num=num;window.skPanel=skPanel;window.renderSk=renderSk;window.skGrid=v=>{skD().grid=+v;save();renderSk();};window.skStockZ=v=>{st.stock.z=num(v);save();OTC.clear();};window.__sk={skCorner:(c,v,k,R)=>'',skPoly,skCircle,opTime,skTrim,skExtend,skCornerP,skOffset,skCont};
 function renderDraw(){skD();SK.sel=new Set([...SK.sel].filter(i=>st.sketch.ps[i]));skTools();skPanel();if(!SK.fitted&&$('#dcv').clientWidth){SK.fitted=true;skFit();}else renderSk();}
 window.renderDraw=renderDraw;
