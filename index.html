@@ -178,7 +178,7 @@ details.cycd[open] summary:before{content:'－'}
    <button class="btn" onclick="exportProj()">💾 Экспорт проекта</button>
    <button class="btn" onclick="document.getElementById('impF').click()">📂 Импорт</button>
    <button class="btn d" onclick="resetProj()">🗑 Новый проект</button>
-   <input type="file" id="impF" accept=".json" hidden onchange="importProj(this)"></div>
+   <input type="file" id="impF" hidden onchange="importProj(this)"></div>
    <div class="stats" id="projStats"></div>
    <div class="hint">В файл экспорта сохраняются и ваши пресеты циклов — так их можно перенести на другое устройство.</div></div>
  </section>
@@ -203,6 +203,7 @@ details.cycd[open] summary:before{content:'－'}
  <section id="t-code" class="tab">
   <div class="card">
    <div class="row">
+    <button class="btn" onclick="document.getElementById('ncF').click()">📂 Открыть файл</button><input type="file" id="ncF" hidden onchange="openCode(this)">
     <button class="btn p" onclick="downloadCode('nc')">⬇ Скачать .NC</button>
     <button class="btn" onclick="downloadCode('txt')">⬇ .TXT</button>
     <button class="btn" onclick="shareCode()">↗ Поделиться</button>
@@ -249,7 +250,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.16.2';
+const APP_VERSION='1.16.3';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -448,7 +449,7 @@ const NATIVE=window.AndroidApp?'android':(window.chrome&&window.chrome.webview?'
 const RELEASES='https://github.com/MXDXCK/g-code-cnc/releases/latest',PAGES='https://mxdxck.github.io/g-code-cnc/';
 const saveNative=(name,text)=>{if(NATIVE!='android')return false;toast(window.AndroidApp.saveFile(name,text));return true;};
 window.exportProj=()=>{if(saveNative(`project_O${st.prog.num}.json`,JSON.stringify({...st,presets:PRE},null,1)))return;const b=new Blob([JSON.stringify({...st,presets:PRE},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`project_O${st.prog.num}.json`;a.click();};
-window.importProj=inp=>{const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;normStock();st.ops=st.ops.filter(o=>OPS[o.type]);manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
+window.importProj=inp=>{const r=new FileReader(),fn=inp.files[0]?.name||'';r.onload=()=>{let j;try{j=JSON.parse(r.result);}catch(e){if(/[GM]\s*\d/i.test(r.result))return openCodeText(r.result,fn);return toast('Это не проект и не G-код');}try{if(!j.tools||!j.ops)throw 0;if(Array.isArray(j.presets)){j.presets.forEach(p=>{if(!PRE.find(q=>q.id==p.id))PRE.push(p)});savePre();}delete j.presets;st=j;normStock();st.ops=st.ops.filter(o=>OPS[o.type]);manual=false;selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;save();renderAll();toast('Проект загружен')}catch(e){toast('Ошибка файла')}};r.readAsText(inp.files[0]);inp.value='';};
 window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();normStock();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
 
 /* ---------- инструменты UI ---------- */
@@ -1135,45 +1136,56 @@ function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Н�
 function parse(code){
  let X;try{X=expand(code)}catch(e){return{segs:[],time:0,len:{f:0,r:0},err:e.message};}
  const WO={};if(mpGet().mode=='wcs')parts().forEach(q=>WO[q.w]={x:q.x,y:q.y});let wo={x:0,y:0},loc={x:0,y:0};
+ const tdia={},TD=n=>tdia[n]||(st.tools.find(t=>t.num==n)||{}).d||0;let dreg=null,g99=false,axA=false,lastC=null;
  const segs=[];let p={x:0,y:0,z:50},cur={...p},mode=0,cyc=null,cz=0,cr=0,init=50,tool=0,feed=100,time=0,len={f:0,r:0},comp=0,cR=0,buf=[],err='';
  const push=(a,b,rapid,ln,f=feed)=>{const l=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);if(l<1e-6)return;segs.push({a,b,rapid,tool,len:l,ln,v:rapid?20000:Math.max(1,f)});if(rapid){len.r+=l;time+=l/20000}else{len.f+=l;time+=l/Math.max(1,f)}};
  const arcPts=(a,b,c,cw,za,zb,full)=>{const r=Math.hypot(a[0]-c[0],a[1]-c[1]),a0=Math.atan2(a[1]-c[1],a[0]-c[0]),a1=Math.atan2(b[1]-c[1],b[0]-c[0]);let da=a1-a0;
   if(cw){if(da>=-1e-9)da-=2*Math.PI}else{if(da<=1e-9)da+=2*Math.PI}if(!full&&Math.hypot(a[0]-b[0],a[1]-b[1])<1e-3)return[];
   const k=Math.min(360,Math.max(12,Math.ceil(Math.abs(da)*r/0.8))),P=[];for(let i=1;i<=k;i++){const t=a0+da*i/k;P.push({x:c[0]+r*Math.cos(t),y:c[1]+r*Math.sin(t),z:za+(zb-za)*i/k});}return P;};
+ /* центр дуги: I J или R (R<0 — дуга больше 180°) */
+ const arcC=(a,b,w,cw)=>{if(w.R==null)return[a[0]+(w.I||0),a[1]+(w.J||0)];const R=w.R,dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy);if(d<1e-9)return a.slice();
+  const h=Math.sqrt(Math.max(0,R*R-d*d/4)),s=(cw?-1:1)*(R>0?1:-1);return[(a[0]+b[0])/2-dy/d*h*s,(a[1]+b[1])/2+dx/d*h*s];};
  const emit=O=>O.forEach(e=>{const A={x:e.a[0],y:e.a[1],z:e.za};if(e.k=='L')push(A,{x:e.b[0],y:e.b[1],z:e.zb},e.rapid,e.ln,e.f);else{let q=A;arcPts(e.a,e.b,e.c,e.cw,e.za,e.zb,e.full).forEach(m=>{push(q,m,false,e.ln,e.f);q=m;});}});
  const flush=()=>{if(!buf.length)return;let O;try{O=offChain(buf,cR,comp==41?1:-1,false);O[0]={...O[0],a:[cur.x,cur.y]};}catch(e){err=ERR[e.message]||e.message;O=buf;}
   emit(O);const l=O[O.length-1];cur={x:l.b[0],y:l.b[1],z:l.zb};buf=[];};
- X.forEach(({t:raw,ln})=>{const l=raw.replace(/\(.*?\)/g,'').toUpperCase().trim();if(!l||l[0]=='%'||l[0]=='O')return;
+ X.forEach(({t:raw,ln})=>{{const c0=/\(([^)]*)\)/.exec(raw);if(c0&&!/T\s*\d/i.test(raw.replace(/\(.*?\)/g,'')))lastC={t:c0[1],ln};}const l=raw.replace(/\(.*?\)/g,'').replace(/<[^>]*>/g,'').toUpperCase().trim();if(!l||l[0]=='%'||l[0]=='O')return;
+  {const mt=/T\s*(\d+)/.exec(l),cm=/\(([^)]*)\)/.exec(raw),DR=/(?:^|[^A-ZА-Я])(?:D|Ø|DIA|ДИАМ|SVERLO|СВЕРЛО|FREZA|ФРЕЗА|DRILL|MILL)\s*=?\s*(\d+(?:[.,]\d+)?)/i;
+   if(mt&&tdia[+mt[1]]==null){const md=(cm&&DR.exec(cm[1]))||(lastC&&ln-lastC.ln<=4&&DR.exec(lastC.t));if(md)tdia[+mt[1]]=+md[1].replace(',','.');}}
   const w={},gs=[];l.replace(/([A-Z])\s*(-?[\d.]+)/g,(m,k,v)=>{if(k=='G')gs.push(+v);else w[k]=+v;});
   if(gs.includes(28)||gs.includes(91))return;
   if(gs.includes(52)){if(w.X!=null)loc.x=w.X;if(w.Y!=null)loc.y=w.Y;return;}
   gs.forEach(g=>{if(g>=54&&g<=59&&Number.isInteger(g))wo=WO['G'+g]||{x:0,y:0};});if(w.X!=null)w.X+=wo.x+loc.x;if(w.Y!=null)w.Y+=wo.y+loc.y;
-  if(w.T!=null)tool=w.T;if(w.F!=null&&!gs.includes(84))feed=w.F;
+  if(w.A!=null||w.B!=null)axA=true;if(w.D!=null)dreg=w.D;if(gs.includes(98))g99=false;if(gs.includes(99))g99=true;if(w.T!=null)tool=w.T;if(w.F!=null&&!gs.includes(84))feed=w.F;
   if(gs.includes(40)&&comp){flush();comp=0;}
-  const g4=gs.find(g=>g==41||g==42);if(g4){if(comp)flush();comp=g4;const T=st.tools.find(t=>t.num==(w.D??tool));cR=T?T.d/2:0;}
+  const g4=gs.find(g=>g==41||g==42);if(g4){if(comp)flush();comp=g4;cR=TD(w.D??dreg??tool)/2;}
   gs.forEach(g=>{if(g<=3){mode=g;cyc=null;}if([73,81,82,83,84,85,86].includes(g)){cyc=g;init=p.z;}if(g==80)cyc=null;});
   if(cyc){if(w.Z!=null)cz=w.Z;if(w.R!=null)cr=w.R;if(w.X==null&&w.Y==null)return;
    const x=w.X??p.x,y=w.Y??p.y,A={x,y,z:p.z},Rr={x,y,z:cr},B={x,y,z:cz},I={x,y,z:init};
-   push(cur,A,true,ln);push(A,Rr,true,ln);push(Rr,B,false,ln);push(B,I,cyc!=84,ln);if(cyc==84)push(B,Rr,false,ln);p=I;cur={...I};return;}
+   push(cur,A,true,ln);push(A,Rr,true,ln);push(Rr,B,false,ln);const E=g99?Rr:I;push(B,E,cyc!=84,ln);if(cyc==84)push(B,Rr,false,ln);p=E;cur={...E};return;}
   if(w.X==null&&w.Y==null&&w.Z==null)return;
   const n={x:w.X??p.x,y:w.Y??p.y,z:w.Z??p.z};
   if(comp){if(Math.hypot(n.x-p.x,n.y-p.y)<1e-9){flush();const c2={...cur,z:n.z};push(cur,c2,mode==0,ln);cur=c2;}
-   else{const e={a:[p.x,p.y],b:[n.x,n.y],za:p.z,zb:n.z,ln,f:feed,rapid:mode==0};buf.push(mode<=1?{...e,k:'L'}:{...e,k:'A',c:[p.x+(w.I||0),p.y+(w.J||0)],cw:mode==2});}
+   else{const e={a:[p.x,p.y],b:[n.x,n.y],za:p.z,zb:n.z,ln,f:feed,rapid:mode==0};buf.push(mode<=1?{...e,k:'L'}:{...e,k:'A',c:arcC([p.x,p.y],[n.x,n.y],w,mode==2),cw:mode==2});}
    p=n;return;}
   if(mode<=1)push(cur,n,mode==0,ln);
-  else{let q=cur;arcPts([cur.x,cur.y],[n.x,n.y],[cur.x+(w.I||0),cur.y+(w.J||0)],mode==2,cur.z,n.z,true).forEach(m=>{push(q,m,false,ln);q=m;});}
+  else{let q=cur;arcPts([cur.x,cur.y],[n.x,n.y],arcC([cur.x,cur.y],[n.x,n.y],w,mode==2),mode==2,cur.z,n.z,w.R==null).forEach(m=>{push(q,m,false,ln);q=m;});}
   p=n;cur={...n};});
  if(comp)flush();
- return {segs,time,len,err};}
+ return {segs,time,len,err,tdia,warn:axA?'Есть поворот 4-й оси (A/B) — 3D показывает траекторию без поворота':''};}
 
 /* ---------- G-код UI ---------- */
 function regen(force){if(force){manual=false;}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast('G-код пересоздан');}
 window.regen=regen;
+/* открыть чужую программу (.nc, .txt, .tap, без расширения) — для просмотра, проверки и 3D */
+function openCodeText(txt,name){txt=String(txt).replace(/\r\n?/g,'\n');if(!/[GM]\s*\d/i.test(txt))return toast('В файле не найден G-код');
+ $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк. Пока не меняете проект — 3D и проверка работают с ним`);}
+window.openCodeText=openCodeText;
+window.openCode=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>openCodeText(r.result,f.name);r.readAsText(f);inp.value='';};
 window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
 window.setCmt=v=>{st.prog.cmt=v;save();regen(true);if(v=='cyr')toast('Проверьте, что стойка показывает кириллицу');};
 const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
- $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+(r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'');
+ $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+((r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'')+(r.warn?`<span style="color:var(--acc)">⚠ ${esc(r.warn)}</span>`:''));
  clearTimeout(window.__chkT);window.__chkT=setTimeout(()=>{const L=checkProgram($('#code').value),b=$('#chkBox');if(b)b.innerHTML=`<details ${L.some(x=>x.sev=='err')?'open':''}><summary style="cursor:pointer;margin:4px 0 8px;color:${L.some(x=>x.sev=='err')?'var(--bad)':L.some(x=>x.sev=='warn')?'var(--acc)':'var(--ok)'}">Проверка программы: ${L[0].sev=='ok'?'✓ замечаний нет':L.length+' замеч.'}</summary>${chkHTML(L)}</details>`;},350);
  $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';}
 $('#code').addEventListener('input',()=>{manual=true;updCodeInfo();});
@@ -1263,7 +1275,7 @@ function build(){
  sim={i:0,t:0,play:false,tm:0};$('#playB').textContent='▶';
  const p0=data.segs[0]?.a||{x:0,y:0,z:50};setTool(p0,data.segs[0]?.tool);fitCam();hud(p0);}
 function setTool(p,n){
- if(n!==toolNum){if(toolObj){SC.remove(toolObj);disposeObj(toolObj);}toolNum=n;const t=st.tools.find(t=>t.num==n)||{d:10,len:40,type:'endmill'},r=t.d/2,L=Math.max(40,t.d*3);
+ if(n!==toolNum){if(toolObj){SC.remove(toolObj);disposeObj(toolObj);}toolNum=n;const t=(data.tdia&&data.tdia[n]?{d:data.tdia[n],type:'endmill'}:null)||st.tools.find(t=>t.num==n)||{d:10,len:40,type:'endmill'},r=t.d/2,L=Math.max(40,t.d*3);
   toolObj=new THREE.Group();const mat=new THREE.MeshStandardMaterial({color:0xffb000,metalness:.8,roughness:.25});
   let cut;if(['drill','center','chamfer'].includes(t.type)){cut=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L*.6,24),mat);cut.position.y=L*.3+r*.6;const tip=new THREE.Mesh(new THREE.ConeGeometry(r,r*1.2,24),mat);tip.rotation.x=Math.PI;tip.position.y=r*.6;toolObj.add(tip);}
   else if(t.type=='ball'){cut=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L*.6,24),mat);cut.position.y=L*.3+r;const b=new THREE.Mesh(new THREE.SphereGeometry(r,24,12),mat);b.position.y=r;toolObj.add(b);}
@@ -1351,7 +1363,7 @@ function checkProgram(code){const out=[],add=(sev,msg,ln)=>{if(out.length<40)out
  /* столкновения ускоренных ходов с материалом — по карте высот */
  const g=stockSim(),res=Math.max(g.w,g.h)/150,nx=Math.ceil(g.w/res)+1,ny=Math.ceil(g.h/res)+1,H=new Float32Array(nx*ny);
  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)H[j*nx+i]=g.PS.some(Q=>pip(Q,g.x0+i*res,g.y0+j*res))||g.rect?0:-1e9;
- const rOf=n=>{const t=st.tools.find(t=>t.num==n);return t?t.d/2:5;};let hits=0,bottom=false;
+ const rOf=n=>{if(P.tdia&&P.tdia[n])return P.tdia[n]/2;const t=st.tools.find(t=>t.num==n);return t?t.d/2:5;};let hits=0,bottom=false;
  P.segs.forEach(s=>{const r=rOf(s.tool),n=Math.max(1,Math.ceil(s.len/(res*.7)));
   for(let k=0;k<=n;k++){const q=k/n,x=s.a.x+(s.b.x-s.a.x)*q,y=s.a.y+(s.b.y-s.a.y)*q,z=s.a.z+(s.b.z-s.a.z)*q;if(z>=0)continue;
    const i0=Math.max(0,Math.floor((x-r-g.x0)/res)),i1=Math.min(nx-1,Math.ceil((x+r-g.x0)/res)),j0=Math.max(0,Math.floor((y-r-g.y0)/res)),j1=Math.min(ny-1,Math.ceil((y+r-g.y0)/res));
