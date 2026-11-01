@@ -17,7 +17,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg);color:var(--tx);font:14px/1.4 -apple-system,"Segoe UI",Roboto,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}
-header{display:flex;align-items:center;gap:16px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(180deg,#151821,#111318);border-bottom:1px solid var(--line)}
+header{position:relative;display:flex;align-items:center;gap:16px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(180deg,#151821,#111318);border-bottom:1px solid var(--line)}
 .logo{display:flex;gap:10px;align-items:center}
 .lg{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#111;font-weight:900;display:grid;place-items:center;font-size:20px;box-shadow:0 4px 14px #ffb30033}
 .logo b{letter-spacing:1px}.logo small{display:block;color:var(--mut);font-size:11px}
@@ -71,6 +71,26 @@ input[type=range]{padding:0;accent-color:var(--acc);border:0;background:none}
 .warn{background:#ff5c5c22;color:var(--bad)}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#222733;border:1px solid var(--line);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
 #toast.on{opacity:1;transform:translateX(-50%)}
+.burger{background:var(--pan2);border:1px solid var(--line);color:var(--tx);width:42px;height:42px;border-radius:12px;font-size:20px;cursor:pointer;flex:none}
+#sheet{position:fixed;inset:0;z-index:40;display:none}#sheet.on{display:block}
+#sheet .bg{position:absolute;inset:0;background:#000a}
+#sheet .pn{position:absolute;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--pan);border-left:1px solid var(--line);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);box-shadow:-10px 0 40px #0008}
+#sheet .hd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+#sheet .bd{flex:1;overflow:auto;padding:14px;padding-bottom:calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+.mi{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--pan2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:12px;margin-bottom:8px;font:inherit;cursor:pointer}
+.mi:hover{border-color:var(--acc)}.mi i{font-style:normal;font-size:24px}.mi small{display:block;color:var(--mut);font-size:12px}
+table.t{width:100%;border-collapse:collapse;font-size:13px}table.t td,table.t th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}table.t th{color:var(--mut);font-weight:600}
+.chk{padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:13px;overflow:hidden}.chk.err{background:#ff5c5c1c;color:#ffa0a0}.chk.warn{background:#ffc40016;color:#ffd666}.chk.ok{background:#2ecc711c;color:var(--ok)}
+.chk .btn{float:right;margin-left:8px}
+.ss{background:#fff;color:#111;border-radius:10px;padding:16px;font:12px/1.35 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.ss h2{margin:0 0 2px;font-size:18px}.ss h4{margin:12px 0 4px;font-size:13px}.ss .sub{color:#555;margin-bottom:8px}
+.ss table{width:100%;border-collapse:collapse;margin:4px 0}.ss td,.ss th{border:1px solid #bbb;padding:3px 5px;text-align:left;vertical-align:top}.ss th{background:#eee}
+.ss .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 16px}.ss .kv div{border-bottom:1px dotted #ccc;padding:2px 0}.ss .kv b{float:right}
+.ss svg{width:100%;height:auto;border:1px solid #ccc;border-radius:6px;background:#fafafa}.ss .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.ss .sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px}.ss .sig div{border-top:1px solid #333;padding-top:3px;color:#555}
+@media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important;display:block!important}
+ body.prt>*:not(#sheet){display:none!important}body.prt #sheet{position:static!important;display:block!important}body.prt #sheet .bg,body.prt #sheet .hd,body.prt .noprint{display:none!important}
+ body.prt #sheet .pn{position:static!important;width:auto!important;border:0!important;box-shadow:none!important;background:#fff!important;padding:0!important}body.prt #sheet .bd{overflow:visible!important;padding:0!important}body.prt .ss{border-radius:0;padding:0}}
 .commit{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.commit small{color:var(--mut)}
 /* циклы */
 details.cycd{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
@@ -104,6 +124,7 @@ details.cycd[open] summary:before{content:'－'}
 .elr input,.elr select{padding:7px 6px}
 @media(max-width:1180px){.oped{grid-template-columns:minmax(0,1fr)}.prevw{position:relative}.prev{height:320px}}
 @media(max-width:820px){
+ .burger{position:absolute;right:12px;top:max(12px,env(safe-area-inset-top))}
  nav{position:fixed;bottom:0;left:0;right:0;background:#12151bf2;border-top:1px solid var(--line);justify-content:space-around;padding:6px 2px calc(6px + env(safe-area-inset-bottom));z-index:10;margin:0;backdrop-filter:blur(10px)}
  nav button{flex-direction:column;font-size:10px;padding:6px 4px;gap:2px;flex:1}
  nav button i{font-size:20px}
@@ -134,11 +155,12 @@ details.cycd[open] summary:before{content:'－'}
   <button data-t="sim"><i>🧊</i>3D</button>
   <button data-t="upd"><i>⟳</i>Обновл.</button>
  </nav>
+ <button class="burger" onclick="openMenu()" aria-label="Меню">☰</button>
 </header>
 <main>
  <section id="t-proj" class="tab on">
   <div class="card"><h3>Программа</h3><div class="grid" id="progF"></div></div>
-  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div><div class="stats" id="stockInfo"></div>
+  <div class="card"><h3>Заготовка и нулевая точка</h3><div class="grid" id="stockF"></div><div class="stats" id="stockInfo"></div><div class="row"><button class="btn s" onclick="matAll()">⚙ Режимы всех инструментов — по материалу</button></div>
    <div class="hint">Произвольный контур: точки «X Y» через «;» в координатах детали (дробь можно через точку или запятую: 1.5 или 1,5) (по часовой или против — не важно). Z0 — верх заготовки. Все глубины вводятся положительными числами, программа сама делает Z отрицательным.</div></div>
   <div class="card"><h3>Проект</h3><div class="row">
    <button class="btn" onclick="exportProj()">💾 Экспорт проекта</button>
@@ -178,7 +200,7 @@ details.cycd[open] summary:before{content:'－'}
     <select id="cmtSel" style="width:auto" onchange="setCmt(this.value)"><option value="lat">Пояснения: русские латиницей</option><option value="cyr">Пояснения: кириллица</option><option value="en">Пояснения: English</option></select>
     <span id="editFlag"></span>
    </div>
-   <div class="stats" id="codeStats"></div>
+   <div class="stats" id="codeStats"></div><div id="chkBox"></div>
    <textarea id="code" spellcheck="false"></textarea>
    <div class="hint">Параметрический G-код: в начале каждой операции идут переменные — размеры (#1, #2…) и режимы фрезы: <b>#20</b> диаметр, <b>#21</b> обороты S, <b>#22</b> подача F, <b>#23</b> подача врезания, <b>#24</b> безопасная Z. Поменяйте число прямо на стойке — проходы пересчитаются сами (циклы WHILE). Нужна опция Custom Macro B (на 0i-MF Plus обычно включена). Пояснения по умолчанию — русские слова латиницей (GLUBINA, PODACHA): кириллицу стойки Fanuc часто не отображают. Ручные правки проверяются в 3D.</div>
   </div>
@@ -208,13 +230,14 @@ details.cycd[open] summary:before{content:'－'}
    <div id="commits" style="margin-top:10px"></div></div>
  </section>
 </main>
+<div id="sheet"><div class="bg" onclick="closeMenu()"></div><div class="pn"><div class="hd"><button class="ib" id="shBack" onclick="openMenu()" style="font-size:20px">←</button><b id="shTitle" style="font-size:16px">Меню</b><span style="flex:1"></span><button class="ib" onclick="closeMenu()" style="font-size:20px">✕</button></div><div class="bd" id="shBody"></div></div></div>
 <div id="toast"></div>
 
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.12.0';
+const APP_VERSION='1.13.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -368,7 +391,8 @@ const nearOn=(P,x,y)=>{let best=null,bd=1e18;for(let i=0;i<P.length;i++){const[a
 /* ---------- проект ---------- */
 function renderProj(){
  $('#progF').innerHTML=[['num','Номер O',1000,'n'],['name','Имя программы','','text'],['note','Комментарий','','text']].map(f=>fld(st.prog,f)).join('');
- $('#stockF').innerHTML=SF.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');
+ const SFr=SF.map(f=>f[0]=='mat'?['mat','Материал','',[...(MATS[st.stock.mat]||!st.stock.mat?[]:[[st.stock.mat,st.stock.mat]]),...Object.keys(MATS).map(k=>[k,k])]]:f);
+ $('#stockF').innerHTML=SFr.filter(f=>shown(st.stock,f)).map(f=>fld(st.stock,f)).join('');
  const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`+(g.bad?'<span style="color:var(--bad)">⚠ Мало точек контура — показан прямоугольник</span>':'');
  bindForm($('#progF'),()=>st.prog);bindForm($('#stockF'),()=>st.stock,()=>{const g=stockGeo();$('#stockInfo').innerHTML=`<span>Габарит: <b>${+g.w.toFixed(2)} × ${+g.h.toFixed(2)} × ${+(+st.stock.z).toFixed(2)} мм</b></span>`;},()=>renderProj());
  $('#projStats').innerHTML=`<span>Инструментов: <b>${st.tools.length}</b></span><span>Операций: <b>${st.ops.length}</b></span><span>Пресетов: <b>${PRE.length}</b></span>`;}
@@ -392,9 +416,10 @@ function toolListOnly(){
 function renderToolEd(t){
 
  $('#toolEd').innerHTML=`<h3>T${t.num} — ${TT[t.type].n}</h3><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
- <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||(PERREV.includes(t.type)?60:t.type=='tap'?10:150)}"></label>${t.type=='tap'?'':`<label>${PERREV.includes(t.type)?'f, мм/об':'fz, мм/зуб'}<input id="fz" inputmode="decimal" value="${t.fz||(PERREV.includes(t.type)?0.1:0.05)}"></label>`}<label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div>
+ <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||(PERREV.includes(t.type)?60:t.type=='tap'?10:150)}"></label>${t.type=='tap'?'':`<label>${PERREV.includes(t.type)?'f, мм/об':'fz, мм/зуб'}<input id="fz" inputmode="decimal" value="${t.fz||(PERREV.includes(t.type)?0.1:0.05)}"></label>`}<label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div><div class="row" style="margin-top:8px"><button class="btn" onclick="matTool()">По материалу «${esc(st.stock.mat||'Сталь 45')}»</button>${FLUTED.includes(t.type)&&t.type!='thread'?`<span class="chip">Шаг вбок ae, % D</span><input id="aeP" inputmode="decimal" value="50" style="width:80px" oninput="chipShow()"><span class="chip" id="chipR"></span>`:''}</div>
  <div class="hint">${t.type=='tap'?'Метчик: S = 1000·Vc / (π·D), подача F = S·P (жёсткое нарезание M29).':PERREV.includes(t.type)?'Сверло: S = 1000·Vc / (π·D), F = S·f (подача на оборот).':'Фреза: S = 1000·Vc / (π·D), F = S·fz·z.'} Вылет инструмента не задаётся — его меряет станок (корректор H).</div>`;
  bindForm($('#tf'),()=>t,()=>toolListOnly(),()=>renderTools());}
+window.chipShow=()=>{const t=st.tools.find(x=>x.id==selTool),e=$('#chipR');if(!t||!e)return;const k=chipK(num($('#aeP').value)||50);e.innerHTML=k>1.001?`утончение стружки: F × ${k.toFixed(2)} = <b style="color:var(--tx)">${Math.round(t.f*k)}</b> мм/мин`:'утончения нет (ae ≥ 50% D)';};
 window.selT=id=>{selTool=id;renderTools();};
 window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);selTool=t.id;save();renderTools();};
 window.delAllTools=()=>{if(!st.tools.length)return;if(!confirm(`Удалить весь инструмент (${st.tools.length} шт.)? Операции останутся, но без инструмента.`))return;st.tools=[];selTool=null;save();renderTools();toast('Магазин очищен');};
@@ -438,7 +463,7 @@ const narrow=()=>innerWidth<820;
 const TSH={endmill:'конц.',ball:'сфер.',bull:'радиус.',face:'торц.',drill:'сверло',center:'центр.',tap:'метчик',thread:'резьбоф.',chamfer:'фаск.',reamer:'развёрт.'};
 const TDEF={endmill:[10,150,.05,4],ball:[12,150,.05,2],bull:[10,150,.05,4],face:[50,200,.08,5],drill:[6.8,60,.1,2],center:[10,40,.05,2],tap:[8,10,0,1],thread:[6,100,.03,3],chamfer:[10,100,.05,4],reamer:[8,15,.15,6]};
 function newTool(type,d){const[d0,vc,fz,fl]=TDEF[type]||TDEF.endmill;d=d||d0;const n=Math.max(0,...st.tools.map(t=>t.num))+1,s=Math.round(1000*vc/(Math.PI*d)),
-  T={id:uid(),num:n,type,name:'',d,fl,s,f:type=='tap'?Math.round(s*1.25):PERREV.includes(type)?Math.round(s*fz):Math.round(s*fz*fl),pitch:1.25,cr:1,vc,fz};st.tools.push(T);return T;}
+  T={id:uid(),num:n,type,name:'',d,fl,s,f:type=='tap'?Math.round(s*1.25):PERREV.includes(type)?Math.round(s*fz):Math.round(s*fz*fl),pitch:1.25,cr:1,vc,fz};applyMat(T,st.stock.mat);st.tools.push(T);return T;}
 function pickTool(o){const k=OPS[o.type].k;let T=null,want=null;
  if(o.type=='groove'){const R=o.prof=='v'?3:Math.max(0.5,+o.rf||3);T=st.tools.filter(t=>t.type=='ball'&&t.d/2<=R+1e-9).sort((a,b)=>b.d-a.d)[0];if(!T)want=['ball',Math.min(2*R,12)];}
  else{T=st.tools.find(t=>t.id==o.tool&&k.includes(t.type))||st.tools.find(t=>k.includes(t.type));if(!T)want=[k[0]];}
@@ -974,6 +999,7 @@ window.setCmt=v=>{st.prog.cmt=v;save();regen(true);if(v=='cyr')toast('Прове
 const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+(r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'');
+ clearTimeout(window.__chkT);window.__chkT=setTimeout(()=>{const L=checkProgram($('#code').value),b=$('#chkBox');if(b)b.innerHTML=`<details ${L.some(x=>x.sev=='err')?'open':''}><summary style="cursor:pointer;margin:4px 0 8px;color:${L.some(x=>x.sev=='err')?'var(--bad)':L.some(x=>x.sev=='warn')?'var(--acc)':'var(--ok)'}">Проверка программы: ${L[0].sev=='ok'?'✓ замечаний нет':L.length+' замеч.'}</summary>${chkHTML(L)}</details>`;},350);
  $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';}
 $('#code').addEventListener('input',()=>{manual=true;updCodeInfo();});
 const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
@@ -1099,6 +1125,188 @@ window.checkUpd=async()=>{const el=$('#updRes');el.innerHTML='Проверка�
   $('#commits').innerHTML='<h3 style="margin-top:8px">Последние изменения</h3>'+c.map(x=>`<div class="commit">${esc(x.commit.message.split('\n')[0])}<br><small>${new Date(x.commit.author.date).toLocaleString('ru')}</small></div>`).join('');}catch(e){}}};
 window.doUpdate=async()=>{try{if('caches' in window)for(const k of await caches.keys())await caches.delete(k);if(navigator.serviceWorker)for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();}catch(e){}
  location.replace(location.pathname+'?v='+Date.now());};
+
+/* ---------- материалы и режимы резания ---------- */
+/* vm — Vc фрезы (твёрдый сплав), fk — fz на 1 мм Ø, vd — Vc сверла (HSS-Co), nk — f сверла на 1 мм Ø, vt — Vc метчика */
+const MATS={
+ 'Д16Т':{g:'Алюминий',vm:300,fk:.010,vd:90,nk:.025,vt:20},'АМг6':{g:'Алюминий',vm:250,fk:.009,vd:80,nk:.022,vt:18},'АД31':{g:'Алюминий',vm:320,fk:.010,vd:90,nk:.025,vt:20},
+ 'Латунь ЛС59':{g:'Цветные',vm:200,fk:.008,vd:60,nk:.020,vt:15},'Бронза БрАЖ':{g:'Цветные',vm:150,fk:.006,vd:40,nk:.016,vt:10},'Медь М1':{g:'Цветные',vm:180,fk:.006,vd:40,nk:.015,vt:10},
+ 'Ст3 / сталь 20':{g:'Сталь',vm:160,fk:.006,vd:28,nk:.015,vt:10},'Сталь 45':{g:'Сталь',vm:140,fk:.005,vd:25,nk:.014,vt:8},'40Х':{g:'Сталь',vm:110,fk:.0045,vd:20,nk:.012,vt:6},
+ '30ХГСА':{g:'Сталь',vm:100,fk:.004,vd:18,nk:.011,vt:6},'65Г / ШХ15 (отож.)':{g:'Сталь',vm:90,fk:.004,vd:16,nk:.010,vt:5},'Закалённая 45–52 HRC':{g:'Сталь',vm:60,fk:.003,vd:8,nk:.006,vt:2},
+ '12Х18Н10Т':{g:'Нержавейка',vm:80,fk:.0035,vd:12,nk:.010,vt:4},'20Х13':{g:'Нержавейка',vm:100,fk:.004,vd:15,nk:.011,vt:5},
+ 'Чугун СЧ20':{g:'Чугун',vm:120,fk:.006,vd:25,nk:.018,vt:8},'Титан ВТ6':{g:'Титан',vm:50,fk:.004,vd:8,nk:.008,vt:3},
+ 'Капролон / ПОМ':{g:'Пластик',vm:250,fk:.012,vd:60,nk:.030,vt:20}};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function matOf(name){return MATS[name]||MATS['Сталь 45'];}
+/* рекомендованные Vc и fz (фрезы) / f (свёрла, мм/об) для инструмента и материала */
+function matCalc(t,mname){const m=matOf(mname),d=+t.d||10;let vc,fz;
+ switch(t.type){
+  case'face':vc=m.vm*1.25;fz=clamp(m.fk*20,.05,.25);break;
+  case'chamfer':vc=m.vm*.8;fz=clamp(m.fk*d*.5,.01,.1);break;
+  case'thread':vc=m.vm*.6;fz=clamp(m.fk*d*.5,.01,.08);break;
+  case'drill':vc=m.vd;fz=clamp(m.nk*d,.02,.4);break;
+  case'center':vc=m.vd*.8;fz=clamp(m.nk*d*.5,.02,.15);break;
+  case'reamer':vc=m.vd*.4;fz=clamp(m.nk*d*2,.1,.8);break;
+  case'tap':vc=m.vt;fz=0;break;
+  default:vc=m.vm;fz=clamp(m.fk*d,.01,.2);}
+ return{vc:Math.round(vc),fz:Math.round(fz*1000)/1000};}
+function applyMat(t,mname){const r=matCalc(t,mname);t.vc=r.vc;t.fz=r.fz;t.s=Math.round(1000*t.vc/(Math.PI*(+t.d||10)));
+ t.f=t.type=='tap'?Math.round(t.s*(+t.pitch||1.25)):PERREV.includes(t.type)?Math.round(t.s*t.fz):Math.round(t.s*t.fz*(+t.fl||1));return t;}
+/* утончение стружки: при шаге вбок ae < D/2 подачу можно увеличить в k раз */
+const chipK=(aePct)=>{const a=clamp(aePct/100,.01,1);return a>=.5?1:1/Math.sqrt(1-(1-2*a)**2);};
+window.matAll=()=>{if(!st.tools.length)return toast('Магазин пуст');st.tools.forEach(t=>applyMat(t,st.stock.mat));save();renderTools();toast('Режимы пересчитаны для «'+(st.stock.mat||'Сталь 45')+'»');};
+window.matTool=()=>{const t=st.tools.find(x=>x.id==selTool);if(!t)return;applyMat(t,st.stock.mat);save();renderTools();toast(`По материалу: S${t.s} F${t.f}`);};
+
+/* ---------- проверка программы ---------- */
+function checkProgram(code){const out=[],add=(sev,msg,ln)=>{if(out.length<40)out.push({sev,msg,ln});};
+ const P=parse(code);if(P.err)add('err','Макро: '+P.err);
+ const raw=code.split('\n');
+ raw.forEach((l,i)=>{if(/\(OP\d+ [^)]*(ERROR|OSHIBKA|ОШИБКА)/.test(l))add('err','Ошибка в операции: '+l.replace(/[()]/g,''),i);});
+ /* шпиндель и H */
+ let sp=false,rig=false,T=null;const spAt=[];raw.forEach((l0,i)=>{const l=l0.replace(/\(.*?\)/g,'').toUpperCase();
+  if(/M0?[34](?!\d)/.test(l))sp=true;if(/M0?5(?!\d)/.test(l))sp=false;if(/M29/.test(l))rig=true;if(/G80/.test(l))rig=false;
+  const mt=/T(\d+)\s*M0?6/.exec(l);if(mt){T=+mt[1];sp=false;}
+  const mh=/G43[^H]*H(\d+)/.exec(l);if(mh&&T!=null&&+mh[1]!=T)add('warn',`Корректор H${mh[1]} не совпадает с инструментом T${T}`,i);
+  spAt[i]=sp||rig;});
+ let spRep=false;P.segs.forEach(s=>{if(!s.rapid&&!spAt[s.ln]&&!spRep&&Math.min(s.a.z,s.b.z)<0){spRep=true;add('err','Рабочий ход в материале при остановленном шпинделе',s.ln);}});
+ /* столкновения ускоренных ходов с материалом — по карте высот */
+ const g=stockGeo(),res=Math.max(g.w,g.h)/150,nx=Math.ceil(g.w/res)+1,ny=Math.ceil(g.h/res)+1,H=new Float32Array(nx*ny);
+ for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)H[j*nx+i]=pip(g.P,g.x0+i*res,g.y0+j*res)||g.rect?0:-1e9;
+ const rOf=n=>{const t=st.tools.find(t=>t.num==n);return t?t.d/2:5;};let hits=0,bottom=false;
+ P.segs.forEach(s=>{const r=rOf(s.tool),n=Math.max(1,Math.ceil(s.len/(res*.7)));
+  for(let k=0;k<=n;k++){const q=k/n,x=s.a.x+(s.b.x-s.a.x)*q,y=s.a.y+(s.b.y-s.a.y)*q,z=s.a.z+(s.b.z-s.a.z)*q;if(z>=0)continue;
+   const i0=Math.max(0,Math.floor((x-r-g.x0)/res)),i1=Math.min(nx-1,Math.ceil((x+r-g.x0)/res)),j0=Math.max(0,Math.floor((y-r-g.y0)/res)),j1=Math.min(ny-1,Math.ceil((y+r-g.y0)/res));
+   for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const px=g.x0+i*res,py=g.y0+j*res;if((px-x)**2+(py-y)**2>r*r)continue;const c=j*nx+i;
+    if(s.rapid){if(H[c]>z+0.05&&hits<5){hits++;add('err',`Ускоренный ход G0 врезается в материал (X${F(x)} Y${F(y)} Z${F(z)})`,s.ln);k=n+1;i=i1+1;j=j1+1;}}
+    else if(z<H[c])H[c]=z;}}
+  if(!s.rapid&&!bottom&&Math.min(s.a.z,s.b.z)<-g.z-0.01){bottom=true;add('warn',`Обработка ниже дна заготовки (Z${F(Math.min(s.a.z,s.b.z))}, высота заготовки ${F(g.z)}) — проверьте, что под деталью есть зазор`,s.ln);}});
+ /* операции и инструмент */
+ st.ops.forEach((o,i)=>{if(!o.on)return;const t=st.tools.find(x=>x.id==o.tool);if(!t){add('err',`Операция ${i+1}: не выбран инструмент`);return;}
+  if(!OPS[o.type].k.includes(t.type))add('warn',`Операция ${i+1} «${OPS[o.type].s}»: инструмент T${t.num} (${TT[t.type].n}) не типичен для этого цикла`);
+  if(+o.step>t.d&&!PERREV.includes(t.type)&&t.type!='tap')add('warn',`Операция ${i+1}: шаг по Z ${o.step} мм больше диаметра фрезы Ø${t.d}`);});
+ const used=[...new Set(st.ops.filter(o=>o.on).map(o=>o.tool))];st.tools.filter(t=>used.includes(t.id)).forEach(t=>{if(!(t.s>0)||!(t.f>0))add('err',`T${t.num}: не заданы обороты или подача`);});
+ if(!out.length)add('ok','Замечаний нет: ускоренные ходы не задевают материал, шпиндель включён, корректоры совпадают');
+ return out;}
+function chkHTML(list){return list.map(c=>`<div class="chk ${c.sev}">${c.ln!=null?`<button class="btn s" onclick="gotoLine(${c.ln})">стр. ${c.ln+1}</button>`:''}${c.sev=='err'?'⛔ ':c.sev=='warn'?'⚠ ':'✓ '}${esc(c.msg)}</div>`).join('');}
+window.gotoLine=n=>{closeMenu();show('code');const ta=$('#code'),L=ta.value.split('\n');let p=0;for(let i=0;i<n&&i<L.length;i++)p+=L[i].length+1;ta.focus();ta.setSelectionRange(p,p+(L[n]||'').length);
+ const lh=parseFloat(getComputedStyle(ta).lineHeight)||20;ta.scrollTop=Math.max(0,n*lh-ta.clientHeight/3);};
+
+/* ---------- меню ☰ ---------- */
+const MENU=[['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
+ ['check','✅','Проверка программы','Столкновения G0, шпиндель, корректоры, режимы'],['calc','🧮','Калькулятор режимов','По материалу и инструменту, утончение стружки'],
+ ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14']];
+window.openMenu=v=>{$('#sheet').classList.add('on');const T=MENU.find(m=>m[0]==v);$('#shTitle').textContent=T?T[2]:'Меню';$('#shBack').style.visibility=T?'visible':'hidden';
+ const B=$('#shBody');if(!T){B.innerHTML=MENU.map(([k,i,t,d])=>`<button class="mi" onclick="openMenu('${k}')"><i>${i}</i><span><b>${t}</b><small>${d}</small></span></button>`).join('');return;}
+ B.innerHTML=VIEWS[v]();if(VIEW_AFTER[v])VIEW_AFTER[v]();B.scrollTop=0;};
+window.closeMenu=()=>$('#sheet').classList.remove('on');
+const VIEW_AFTER={};
+const VIEWS={
+ sheet:()=>`<div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="printSheet()">🖨 Печать / PDF</button><button class="btn" onclick="saveSheet()">⬇ Сохранить HTML</button></div><div id="ssWrap">${sheetHTML()}</div>`,
+ lib:()=>{const L=libGet();return `<div class="row" style="margin-bottom:10px"><button class="btn p" onclick="libSave()">💾 Сохранить текущую деталь</button></div>`+
+  (L.length?L.map(p=>`<div class="it"><div class="m" onclick="libOpen('${p.id}')"><b>${esc(p.name)}</b><small>${new Date(p.date).toLocaleString('ru')} · операций: ${(p.data.ops||[]).length}</small></div><button class="ib" title="Открыть" onclick="libOpen('${p.id}')">📂</button><button class="ib" title="Удалить" onclick="libDel('${p.id}')">✕</button></div>`).join(''):'<div class="empty">Пока нет сохранённых деталей</div>')+
+  '<div class="hint">Детали хранятся на этом устройстве. Чтобы перенести на другое — «Экспорт проекта» на вкладке «Проект».</div>';},
+ check:()=>{regen();return chkHTML(checkProgram($('#code').value))+'<div class="hint">Проверяется по 3D-модели заготовки: ускоренные ходы ниже верха детали, работа без шпинделя, H не равен T, обработка ниже дна, шаг по Z больше диаметра фрезы, нулевые режимы. Проверка не заменяет прогон в графике стойки.</div>';},
+ calc:()=>{const opts=Object.keys(MATS).map(k=>`<option ${k==(st.stock.mat||'')?'selected':''}>${esc(k)}</option>`).join('');
+  return `<div class="grid" id="cc"><label>Материал<select id="ccM">${opts}</select></label><label>Инструмент<select id="ccT">${['endmill','ball','bull','face','chamfer','thread','drill','center','reamer','tap'].map(k=>`<option value="${k}">${TT[k].n}</option>`).join('')}</select></label>
+   <label>Диаметр D, мм<input id="ccD" inputmode="decimal" value="10"></label><label>Зубьев z<input id="ccZ" inputmode="decimal" value="4"></label><label>Шаг вбок ae, % D<input id="ccA" inputmode="decimal" value="50"></label><label>Шаг резьбы P<input id="ccP" inputmode="decimal" value="1.25"></label></div>
+   <div id="ccR" style="margin-top:12px"></div>
+   <div class="row" style="margin-top:12px"><button class="btn p" onclick="matAllFrom()">Применить материал ко всем инструментам</button></div>
+   <div class="hint">Значения — ориентир для твёрдосплавных фрез и свёрл HSS-Co (для твердосплавных свёрл Vc можно поднять в 2–3 раза). Утончение стружки: при шаге вбок меньше половины диаметра толщина стружки меньше fz, поэтому подачу можно увеличить в k раз.</div>`;},
+ ref:()=>`<input id="refQ" placeholder="Поиск: G83, PS0010, резьба…" oninput="refFilter()" style="margin-bottom:10px"><div id="refL">${refRows()}</div><div class="hint">Коды тревог — краткие пояснения для серии 0i-F/0i-F Plus. Точное описание — в руководстве оператора; M-коды выше M30 зависят от станка.</div>`,
+ thr:()=>`<table class="t"><tr><th>Резьба</th><th>Шаг</th><th>Сверло</th><th>Мин. Ø отв.</th></tr>${THR.map(([n,p,d])=>`<tr><td><b>${n}</b></td><td>${p}</td><td>${d}</td><td>${(parseFloat(n.slice(1))-1.0825*p).toFixed(2)}</td></tr>`).join('')}</table><div class="hint">Сверло под резьбу ≈ D − P. «Мин. Ø» — внутренний диаметр гайки D1 = D − 1.0825·P. Для резьбофрезы диаметр фрезы должен быть меньше D1.</div>`,
+ tol:()=>`<div class="grid"><label>Размер, мм<input id="tlD" inputmode="decimal" value="25" oninput="tolCalc()"></label><label>Поле<select id="tlF" onchange="tolCalc()">${['H','h','js'].flatMap(f=>[6,7,8,9,10,11,12,14].map(q=>`<option ${f+q=='H7'?'selected':''}>${f}${q}</option>`)).join('')}</select></label></div><div id="tlR" style="margin:12px 0"></div>
+  <table class="t"><tr><th>Размер, мм</th>${[6,7,8,9,10,11,12,14].map(q=>`<th>IT${q}</th>`).join('')}</tr>${ITR.map((r,i)=>`<tr><td>${i?ITR[i-1][0]:0}–${r[0]}</td>${r.slice(1).map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</table><div class="hint">Значения в микрометрах (мкм). H — отверстие (0…+IT), h — вал (−IT…0), js — симметрично ±IT/2.</div>`};
+VIEW_AFTER.calc=()=>{['ccM','ccT','ccD','ccZ','ccA','ccP'].forEach(i=>{$('#'+i).oninput=calcView;$('#'+i).onchange=calcView;});calcView();};
+VIEW_AFTER.tol=()=>tolCalc();
+function calcView(){const t={type:$('#ccT').value,d:num($('#ccD').value)||10,fl:num($('#ccZ').value)||1,pitch:num($('#ccP').value)||1.25},m=$('#ccM').value;applyMat(t,m);const k=chipK(num($('#ccA').value)||50);
+ const pr=PERREV.includes(t.type)||t.type=='reamer';
+ $('#ccR').innerHTML=`<table class="t"><tr><td>Скорость резания Vc</td><td><b>${t.vc} м/мин</b></td></tr><tr><td>Обороты S</td><td><b>${t.s}</b> об/мин</td></tr>
+  ${t.type=='tap'?`<tr><td>Подача F = S·P</td><td><b>${t.f}</b> мм/мин</td></tr>`:`<tr><td>${pr?'Подача на оборот f':'Подача на зуб fz'}</td><td><b>${t.fz}</b> мм</td></tr><tr><td>Подача F</td><td><b>${t.f}</b> мм/мин</td></tr>`}
+  ${!pr&&t.type!='tap'&&k>1.001?`<tr><td>С учётом утончения стружки (k = ${k.toFixed(2)})</td><td><b>${Math.round(t.f*k)}</b> мм/мин</td></tr>`:''}</table>`;}
+window.matAllFrom=()=>{st.stock.mat=$('#ccM').value;matAll();renderProj();};
+window.tolCalc=()=>{const D=num($('#tlD').value),f=$('#tlF').value,fld=f.replace(/\d+/,''),q=+f.replace(/\D+/,''),row=ITR.find(r=>D<=r[0]);if(!row||!(D>0)){$('#tlR').innerHTML='<span style="color:var(--bad)">Размер вне таблицы (до 500 мм)</span>';return;}
+ const it=row[1+[6,7,8,9,10,11,12,14].indexOf(q)]/1000,[lo,hi]=fld=='H'?[0,it]:fld=='h'?[-it,0]:[-it/2,it/2];
+ $('#tlR').innerHTML=`<div class="chk ok" style="font-size:15px">${D} ${f}: <b>${(D+lo).toFixed(3)} … ${(D+hi).toFixed(3)}</b> мм &nbsp; (${lo>=0?'+':''}${(lo*1000).toFixed(0)} / ${hi>=0?'+':''}${(hi*1000).toFixed(0)} мкм)</div>`;};
+const ITR=[[3,6,10,14,25,40,60,100,250],[6,8,12,18,30,48,75,120,300],[10,9,15,22,36,58,90,150,360],[18,11,18,27,43,70,110,180,430],[30,13,21,33,52,84,130,210,520],[50,16,25,39,62,100,160,250,620],[80,19,30,46,74,120,190,300,740],[120,22,35,54,87,140,220,350,870],[180,25,40,63,100,160,250,400,1000],[250,29,46,72,115,185,290,460,1150],[315,32,52,81,130,210,320,520,1300],[400,36,57,89,140,230,360,570,1400],[500,40,63,97,155,250,400,630,1550]];
+const THR=[['M2',.4,1.6],['M2.5',.45,2.05],['M3',.5,2.5],['M4',.7,3.3],['M5',.8,4.2],['M6',1,5],['M8',1.25,6.8],['M8x1',1,7],['M10',1.5,8.5],['M10x1.25',1.25,8.8],['M10x1',1,9],['M12',1.75,10.2],['M12x1.5',1.5,10.5],['M12x1.25',1.25,10.8],['M14',2,12],['M14x1.5',1.5,12.5],['M16',2,14],['M16x1.5',1.5,14.5],['M18',2.5,15.5],['M18x1.5',1.5,16.5],['M20',2.5,17.5],['M20x1.5',1.5,18.5],['M22',2.5,19.5],['M24',3,21],['M24x2',2,22],['M27',3,24],['M30',3.5,26.5],['M30x2',2,28],['M36',4,32],['M42',4.5,37.5],['M48',5,43]];
+const REF=[
+ ['G00','Ускоренное перемещение'],['G01','Линейная интерполяция (рабочая подача F)'],['G02 / G03','Круговая интерполяция по / против часовой (I J K или R); с Z — винтовая'],['G04','Выдержка: G04 X1.5 (сек) или P1500 (мс)'],
+ ['G10','Запись данных: L2 — смещения G54…, L10–L13 — корректоры инструмента'],['G15 / G16','Полярные координаты выкл / вкл (X — радиус, Y — угол)'],['G17 / G18 / G19','Плоскость XY / ZX / YZ'],['G20 / G21','Дюймы / миллиметры'],
+ ['G28','Возврат в референтную точку (обычно G91 G28 Z0.)'],['G30','Возврат во 2-ю референтную точку (смена инструмента)'],['G40','Отмена коррекции на радиус'],['G41 / G42','Коррекция на радиус слева / справа (D)'],
+ ['G43 / G44 / G49','Коррекция на длину + / − / отмена (H)'],['G50 / G51','Масштабирование выкл / вкл'],['G50.1 / G51.1','Зеркальное отображение выкл / вкл'],['G52','Локальная система координат (смещение от G54…)'],
+ ['G53','Перемещение в системе координат станка (кадрово)'],['G54 … G59','Системы координат детали 1–6'],['G54.1 P1…P48','Дополнительные системы координат'],['G61 / G64','Точный останов / режим резания (сглаживание)'],
+ ['G65','Вызов макропрограммы с аргументами (G65 P9010 A.. B..)'],['G66 / G67','Модальный вызов макро / отмена'],['G68 / G69','Поворот системы координат (X Y R) / отмена'],['G73','Сверление с ломкой стружки (Q — шаг)'],
+ ['G74','Нарезание левой резьбы'],['G76','Чистовое растачивание с ориентацией шпинделя (Q — отвод)'],['G80','Отмена постоянного цикла'],['G81','Сверление, центровка'],['G82','Сверление с выдержкой (P)'],
+ ['G83','Глубокое сверление с полным выводом (Q)'],['G84','Нарезание резьбы метчиком (с M29 — жёсткое)'],['G85','Растачивание / развёртывание (выход на подаче)'],['G86','Растачивание, выход на G0 с остановом шпинделя'],
+ ['G87','Обратное растачивание'],['G88 / G89','Растачивание с остановом / с выдержкой'],['G90 / G91','Абсолютные / относительные координаты'],['G94 / G95','Подача мм/мин / мм/об'],['G98 / G99','Возврат цикла в начальную плоскость / в плоскость R'],
+ ['M00','Программный останов'],['M01','Останов по выбору (кнопка Optional Stop)'],['M02 / M30','Конец программы (M30 — с возвратом в начало)'],['M03 / M04 / M05','Шпиндель по часовой / против / стоп'],['M06','Смена инструмента'],
+ ['M08 / M09','СОЖ вкл / выкл'],['M19','Ориентация шпинделя'],['M29','Жёсткое нарезание резьбы (перед G84)'],['M98 / M99','Вызов подпрограммы / возврат (конец подпрограммы)'],['M198','Вызов подпрограммы с карты памяти / USB'],
+ ['PS0003','Слишком много цифр в слове — проверьте число (например, лишняя точка)'],['PS0004','Не найден адрес — в кадре число без буквы'],['PS0005','Нет данных после адреса (например «X» без числа)'],['PS0006','Недопустимый знак минус'],
+ ['PS0007','Недопустимая десятичная точка (лишняя точка или точка в недопустимом адресе)'],['PS0009','Недопустимый адрес (буква, которая не поддерживается)'],['PS0010','Недопустимый G-код (опция не включена или опечатка)'],['PS0011','Нулевая подача F в рабочем ходе'],
+ ['PS0015','Слишком много осей в одном кадре'],['PS0020','Ошибка радиуса: расстояния от центра до начала и конца дуги различаются — проверьте I J / R'],['PS0021','Неверная плоскость для дуги'],['PS0029','Недопустимое значение корректора (номер вне диапазона)'],
+ ['PS0033','Нет пересечения при коррекции на радиус — контур не стыкуется'],['PS0037','Смена плоскости при включённой коррекции на радиус'],['PS0041','Зарез при коррекции на радиус — радиус фрезы больше элемента контура'],['PS0045','В цикле G73/G83 не задан Q'],
+ ['PS0060','Не найден номер кадра (N) для перехода'],['PS0070','Нет места в памяти программ'],['PS0071','Данные не найдены (программа или номер кадра)'],['PS0073','Номер программы уже существует'],
+ ['PS0076','Не задан номер программы в M98 / G65'],['PS0077','Слишком глубокая вложенность подпрограмм'],['PS0085','Ошибка связи при передаче (скорость, формат)'],['PS0090','Не завершён возврат в референтную точку'],
+ ['PS0115','Недопустимый номер переменной'],['PS0116','Переменная защищена от записи'],['PS0118','Слишком много вложенных скобок [ ]'],['PS0119','Недопустимый аргумент функции (SQRT отрицательного, ASIN >1)'],
+ ['PS0122','Слишком глубокая вложенность вызовов макро'],['PS0123','Макрокоманда недоступна в этом режиме (DNC)'],['PS0124','Нет END для WHILE…DO'],['PS0125','Ошибка в выражении макро'],['PS0126','Недопустимый номер цикла DO (только 1–3)'],
+ ['PS0128','Номер кадра для GOTO не найден'],['PS0200','Недопустимый S при жёстком нарезании'],['PS0201','Не задана подача при жёстком нарезании'],['PS0205','Нет сигнала режима жёсткого нарезания (M29)'],['PS0224','Не выполнен возврат в ноль после включения'],
+ ['#3000','Тревога макропрограммы: номер 3000+n и текст в скобках (в наших программах — «ФРЕЗА БОЛЬШЕ ЭЛЕМЕНТА» и т.п.)'],['OT0500 / OT0501','Программный предел хода + / − — деталь или траектория за пределами рабочей зоны'],
+ ['OT0506 / OT0507','Аппаратный концевик + / −'],['SV0401','Нет готовности сервоусилителя (V READY OFF) — аварийный стоп, питание'],['SV0410','Большое рассогласование при стоянке оси'],['SV0411','Большое рассогласование при движении — перегрузка, заклинивание'],
+ ['SV0368','Ошибка последовательных данных энкодера — кабель/датчик'],['SP9xxx','Тревоги шпиндельного усилителя (номер — в руководстве по приводу)'],['EX / IO','Тревоги станка (PMC) — описание у производителя станка']];
+const refRows=(q='')=>{q=q.trim().toUpperCase();const R=REF.filter(([c,d])=>!q||c.toUpperCase().includes(q)||d.toUpperCase().includes(q));return `<table class="t">${R.map(([c,d])=>`<tr><td style="white-space:nowrap"><b>${esc(c)}</b></td><td>${esc(d)}</td></tr>`).join('')}</table>`;};
+window.refFilter=()=>{$('#refL').innerHTML=refRows($('#refQ').value);};
+
+/* ---------- мои детали ---------- */
+const libGet=()=>{try{return JSON.parse(localStorage.getItem('fcam_lib'))||[]}catch(e){return[]}};
+const libPut=L=>{try{localStorage.setItem('fcam_lib',JSON.stringify(L));return true}catch(e){toast('Нет места для сохранения');return false}};
+window.libSave=()=>{const def=`${st.prog.name||'Деталь'} O${st.prog.num}`,name=prompt('Название детали',def);if(!name)return;const L=libGet(),ex=L.find(p=>p.name==name.trim());
+ if(ex&&!confirm(`«${name}» уже есть. Заменить?`))return;const item={id:ex?ex.id:uid(),name:name.trim(),date:Date.now(),data:JSON.parse(JSON.stringify(st))};
+ const L2=ex?L.map(p=>p.id==ex.id?item:p):[item,...L];if(libPut(L2)){toast('Деталь сохранена');openMenu('lib');}};
+window.libOpen=id=>{const p=libGet().find(x=>x.id==id);if(!p)return;if(!confirm(`Открыть «${p.name}»? Текущий проект будет заменён (сохраните его, если нужно).`))return;
+ st=JSON.parse(JSON.stringify(p.data));normStock();st.ops=st.ops.filter(o=>OPS[o.type]);selTool=st.tools[0]?.id;selOp=st.ops[0]?.id;manual=false;save();renderAll();closeMenu();show('ops');toast('Открыта: '+p.name);};
+window.libDel=id=>{const L=libGet(),p=L.find(x=>x.id==id);if(!p||!confirm(`Удалить «${p.name}»?`))return;libPut(L.filter(x=>x.id!=id));openMenu('lib');};
+
+/* ---------- лист наладки ---------- */
+const SSCSS=`.ss{background:#fff;color:#111;border-radius:10px;padding:16px;font:12px/1.35 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.ss h2{margin:0 0 2px;font-size:18px}.ss h4{margin:12px 0 4px;font-size:13px}.ss .sub{color:#555;margin-bottom:8px}
+.ss table{width:100%;border-collapse:collapse;margin:4px 0}.ss td,.ss th{border:1px solid #bbb;padding:3px 5px;text-align:left;vertical-align:top}.ss th{background:#eee}
+.ss .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 16px}.ss .kv div{border-bottom:1px dotted #ccc;padding:2px 0}.ss .kv b{float:right}
+.ss svg{width:100%;height:auto;border:1px solid #ccc;border-radius:6px;background:#fafafa}.ss .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.ss .sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px}.ss .sig div{border-top:1px solid #333;padding-top:3px;color:#555}`;
+const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#0aa6b8','#f032e6','#9a6324','#808000','#000075'];
+function opBrief(o){const keys=['w','h','d','l','sw','dia','n','cnt','pr','rf','pitch','depth'],L=OPS[o.type].f.filter(f=>keys.includes(f[0])&&shown(o,f));return L.map(f=>`${f[1].replace(/,.*$/,'')}: ${o[f[0]]}`).join('; ');}
+const FS=v=>String(Math.round((+v||0)*1000)/1000);
+function sheetHTML(){regen();const code=$('#code').value,P=parse(code),g=stockGeo(),s=st.stock;
+ const ops=st.ops.map((o,i)=>{if(!o.on)return null;const t=st.tools.find(x=>x.id==o.tool);let tm=0,err='';try{tm=parse(opCode(o).code).time;}catch(e){err=ERR[e.message]||e.message;}return{i,o,t,tm,err};}).filter(Boolean);
+ const usedT=[...new Set(ops.map(r=>r.t&&r.t.id).filter(Boolean))].map(id=>st.tools.find(t=>t.id==id)).sort((a,b)=>a.num-b.num),col=n=>PAL[usedT.findIndex(t=>t.num==n)%PAL.length]||'#444';
+ let x0=g.x0,y0=g.y0,x1=g.x1,y1=g.y1;P.segs.forEach(q=>{if(q.rapid)return;[q.a,q.b].forEach(p=>{x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x);y1=Math.max(y1,p.y);});});
+ const pad=Math.max(x1-x0,y1-y0)*.08+2;x0-=pad;y0-=pad;x1+=pad;y1+=pad;const W=x1-x0,Hh=y1-y0,sz=Math.max(W,Hh)/60;
+ const byT={};P.segs.forEach(q=>{if(q.rapid||Math.min(q.a.z,q.b.z)>=0)return;(byT[q.tool]=byT[q.tool]||[]).push(`M${FS(q.a.x)} ${FS(q.a.y)}L${FS(q.b.x)} ${FS(q.b.y)}`);});
+ const HT=['drill','center','tap','reamer'],isH=n=>{const t=st.tools.find(t=>t.num==n);return t&&HT.includes(t.type);};const holes={};P.segs.forEach(q=>{if(q.rapid||!isH(q.tool)||q.b.z>=q.a.z||q.b.z>=0||Math.hypot(q.b.x-q.a.x,q.b.y-q.a.y)>1e-6)return;const k=q.tool+'|'+FS(q.b.x)+'|'+FS(q.b.y);holes[k]=q;});
+ const rT=n=>{const t=st.tools.find(t=>t.num==n);return t?t.d/2:1;};
+ const svg=`<svg viewBox="${FS(x0)} ${FS(-y1)} ${FS(W)} ${FS(Hh)}" xmlns="http://www.w3.org/2000/svg"><g transform="scale(1,-1)">
+  <path d="M${g.P.map(p=>FS(p[0])+' '+FS(p[1])).join('L')}Z" fill="#e8ebf0" stroke="#555" stroke-width="${FS(sz*.15)}"/>
+  ${Object.entries(byT).map(([n,d])=>`<path d="${d.join('')}" fill="none" stroke="${col(+n)}" stroke-width="${FS(sz*.12)}" opacity=".85"/>`).join('')}
+  ${Object.values(holes).map(q=>`<circle cx="${FS(q.b.x)}" cy="${FS(q.b.y)}" r="${FS(rT(q.tool))}" fill="none" stroke="${col(q.tool)}" stroke-width="${FS(sz*.14)}"/>`).join('')}
+  <path d="M0 0L${FS(sz*5)} 0M0 0L0 ${FS(sz*5)}" stroke="#000" stroke-width="${FS(sz*.25)}"/><circle r="${FS(sz*.6)}" fill="#000"/></g>
+  <text x="${FS(sz*5.4)}" y="${FS(sz*.5)}" font-size="${FS(sz*1.6)}">X</text><text x="${FS(-sz*.6)}" y="${FS(-sz*5.6)}" font-size="${FS(sz*1.6)}">Y</text>
+  <text x="${FS(sz*1)}" y="${FS(sz*2.4)}" font-size="${FS(sz*1.4)}">XY0</text></svg>`;
+ const shp={rect:`прямоугольник ${FS(s.x)}×${FS(s.y)}`,round:`круг Ø${FS(s.d)}`,poly:`${Math.round(s.n)}-гранник SW${FS(s.sw)}`,custom:`контур ${FS(g.w)}×${FS(g.h)}`}[s.shape||'rect'];
+ const now=new Date().toLocaleString('ru');
+ return `<div class="ss"><h2>Лист наладки — O${String(Math.round(st.prog.num)).padStart(4,'0')} ${esc(st.prog.name||'')}</h2><div class="sub">${esc(st.prog.note||'')} · сформирован ${now} · G-код ЧПУ v${APP_VERSION}</div>
+  <div class="kv"><div>Станок <b>Fanuc 0i-MF Plus</b></div><div>Материал <b>${esc(s.mat||'—')}</b></div><div>Заготовка <b>${shp} × ${FS(s.z)}</b></div><div>Система координат <b>${s.wcs}</b></div>
+   <div>Ноль XY <b>${s.shape=='custom'?'по детали':s.origin=='center'?'центр заготовки':'левый нижний угол'}</b></div><div>Ноль Z <b>верх заготовки</b></div>
+   <div>Операций <b>${ops.length}</b></div><div>Время цикла ≈ <b>${tfmt(P.time)}</b></div><div>Формат G-кода <b>${st.prog.fmt=='plain'?'обычный':'параметрический (макро B)'}</b></div><div>Строк программы <b>${code.split('\n').length}</b></div></div>
+  <h4>Схема (вид сверху, траектории по инструментам)</h4>${svg}
+  <h4>Инструмент</h4><table><tr><th>T / H</th><th>Тип</th><th>Ø, мм</th><th>z</th><th>S, об/мин</th><th>F, мм/мин</th><th>Вылет</th></tr>
+   ${usedT.map(t=>`<tr><td><span class="sw" style="background:${col(t.num)}"></span><b>T${t.num}</b> / H${t.num}</td><td>${TT[t.type].n}${t.name?' — '+esc(t.name):''}${t.type=='bull'?` r${t.cr}`:''}${['tap','thread'].includes(t.type)?` P${t.pitch}`:''}</td><td>${t.d}</td><td>${FLUTED.includes(t.type)?t.fl:''}</td><td>${t.s}</td><td>${t.f}</td><td></td></tr>`).join('')}</table>
+  <h4>Операции</h4><table><tr><th>№</th><th>Цикл</th><th>Инстр.</th><th>Параметры</th><th>Время</th></tr>
+   ${ops.map(r=>`<tr><td>${r.i+1}</td><td>${OPS[r.o.type].n}</td><td>${r.t?'T'+r.t.num:'—'}</td><td>${esc(opBrief(r.o))}${r.err?` <b style="color:#c00">⚠ ${esc(r.err)}</b>`:''}</td><td>${tfmt(r.tm)}</td></tr>`).join('')}</table>
+  <h4>Замечания проверки</h4>${checkProgram(code).map(c=>`<div>${c.sev=='err'?'⛔':c.sev=='warn'?'⚠':'✓'} ${esc(c.msg)}${c.ln!=null?` (стр. ${c.ln+1})`:''}</div>`).join('')}
+  <div class="sig"><div>Наладчик</div><div>Оператор</div><div>Дата</div></div></div>`;}
+window.printSheet=()=>{if(NATIVE=='android'){saveSheet();return;}document.body.classList.add('prt');const off=()=>document.body.classList.remove('prt');window.addEventListener('afterprint',off,{once:true});setTimeout(()=>{window.print();setTimeout(off,1500);},50);};
+window.saveSheet=()=>{const n=`naladka_O${String(Math.round(st.prog.num)).padStart(4,'0')}.html`,html=`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Лист наладки O${st.prog.num}</title><style>body{margin:12px;background:#fff}${SSCSS}@media print{body{margin:0}}</style></head><body>${sheetHTML()}</body></html>`;
+ if(saveNative(n,html))return;const b=new Blob([html],{type:'text/html'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();a.remove();toast('Файл '+n+' сохранён');};
 
 /* ---------- вкладки ---------- */
 function show(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
