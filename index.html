@@ -79,6 +79,9 @@ input[type=range]{padding:0;accent-color:var(--acc);border:0;background:none}
 .warn{background:#ff5c5c22;color:var(--bad)}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#222733;border:1px solid var(--line);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
 #toast.on{opacity:1;transform:translateX(-50%)}
+.updbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:9px 12px;background:linear-gradient(90deg,#3a2a00,#2a2208);border-bottom:1px solid #ffc40066;color:var(--tx);font-size:13px}
+.updbar[hidden]{display:none}.updbar b{color:var(--acc)}.updbar .sp{flex:1;min-width:120px}.updbar .btn{padding:7px 12px;font-size:13px}
+.updbar .x{background:none;border:0;color:var(--mut);font-size:18px;cursor:pointer;padding:2px 6px}.updbar ul{flex-basis:100%;margin:2px 0 0 18px;padding:0;color:#d9d2bd;font-size:12px}
 .burger{background:var(--pan2);border:1px solid var(--line);color:var(--tx);width:42px;height:42px;border-radius:12px;font-size:20px;cursor:pointer;flex:none}
 #sheet{position:fixed;inset:0;z-index:40;display:none}#sheet.on{display:block}
 #sheet .bg{position:absolute;inset:0;background:#000a}
@@ -167,6 +170,7 @@ details.cycd[open] summary:before{content:'－'}
  </nav>
  <button class="burger" onclick="openMenu()" aria-label="Меню">☰</button>
 </header>
+<div id="updBar" class="updbar" hidden></div>
 <main>
  <section id="t-proj" class="tab on">
   <div class="card"><h3>Программа</h3><div class="grid" id="progF"></div></div>
@@ -252,7 +256,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.19.0';
+const APP_VERSION='1.20.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -1455,6 +1459,15 @@ window.checkUpd=async()=>{const el=$('#updRes');el.innerHTML='Проверка�
  catch(e){el.innerHTML=`<span class="badge warn">Не удалось проверить${NATIVE?' — нет интернета':'. Приложение должно быть открыто с GitHub Pages'}.</span>`;}
  const repo=$('#repo').value.trim();if(repo){try{const r=await fetch(`https://api.github.com/repos/${repo}/commits?per_page=6`);const c=await r.json();
   $('#commits').innerHTML='<h3 style="margin-top:8px">Последние изменения</h3>'+c.map(x=>`<div class="commit">${esc(x.commit.message.split('\n')[0])}<br><small>${new Date(x.commit.author.date).toLocaleString('ru')}</small></div>`).join('');}catch(e){}}};
+/* баннер «вышло обновление» на главном экране: при запуске и при возврате в приложение */
+let updSeen=0,updHide='';
+async function updBanner(force){if(!force&&Date.now()-updSeen<20*60e3)return;updSeen=Date.now();
+ try{const r=await fetch((NATIVE?PAGES:'')+'version.json?t='+Date.now(),{cache:'no-store'});const j=await r.json(),b=$('#updBar');
+  if(!b||!(cmpV(j.version,APP_VERSION)>0)||updHide==j.version){if(b)b.hidden=true;return;}
+  b.innerHTML=`<span class="sp">🎉 Вышло обновление <b>v${esc(j.version)}</b> <a href="#" style="color:var(--mut);white-space:nowrap" onclick="this.closest('.updbar').querySelector('ul').hidden^=1;return false">что нового</a></span>`+
+   (NATIVE?`<a class="btn p" style="text-decoration:none" href="${RELEASES}" target="_blank">⬇ Скачать ${NATIVE=='android'?'APK':'EXE'}</a>`:`<button class="btn p" onclick="doUpdate()">⟳ Обновить</button>`)+
+   `<button class="x" title="Позже" onclick="updHide='${esc(j.version)}';this.closest('.updbar').hidden=true">✕</button><ul hidden>${(j.notes||[]).map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`;b.hidden=false;}catch(e){}}
+setTimeout(()=>updBanner(true),2500);document.addEventListener('visibilitychange',()=>{if(!document.hidden)updBanner();});
 window.doUpdate=async()=>{try{if('caches' in window)for(const k of await caches.keys())await caches.delete(k);if(navigator.serviceWorker)for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();}catch(e){}
  location.replace(location.pathname+'?v='+Date.now());};
 
