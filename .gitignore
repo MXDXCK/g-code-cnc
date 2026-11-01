@@ -9,3 +9,7 @@ windows/web/
 windows/out/
 *.iml
 .idea/
+
+# ключи подписи никогда не коммитим
+*.jks
+*.keystore

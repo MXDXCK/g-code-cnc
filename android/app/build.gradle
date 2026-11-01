@@ -14,28 +14,23 @@ android {
         versionCode code
         versionName ver
     }
-    // Ключ подписи для магазинов берётся из секретов GitHub (ANDROID_KEYSTORE …).
-    // Пока секретов нет — тестовая подпись старым ключом из репозитория (только для проверки, не для RuStore).
+    // Ключ подписи берётся только из секретов GitHub (ANDROID_KEYSTORE …).
+    // Локальная сборка без секретов подписывается отладочным ключом Android.
     def ksFile = System.getenv('ANDROID_KEYSTORE_FILE')
     signingConfigs {
-        release {
-            if (ksFile) {
+        if (ksFile) {
+            release {
                 storeFile file(ksFile)
                 storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
                 keyAlias System.getenv('ANDROID_KEY_ALIAS') ?: 'fresa'
                 keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
-            } else {
-                storeFile file('../release.keystore')
-                storePassword 'gcodecnc'
-                keyAlias 'gcnc'
-                keyPassword 'gcodecnc'
             }
         }
     }
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
+            signingConfig ksFile ? signingConfigs.release : signingConfigs.debug
         }
     }
     compileOptions {

@@ -91,7 +91,8 @@ jobs:
             echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
             echo "Подпись: ключ из секретов"
           else
-            echo "::warning::Секрет ANDROID_KEYSTORE не задан — APK подписан тестовым ключом (не для магазина)"
+            echo "::error::Секрет ANDROID_KEYSTORE не задан — сборка остановлена"
+            exit 1
           fi
       - name: Сборка APK и AAB
         env:
