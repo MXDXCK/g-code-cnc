@@ -145,7 +145,7 @@ public class MainActivity extends Activity {
                 dir.mkdirs();
                 File f = new File(dir, name);
                 try (FileOutputStream os = new FileOutputStream(f)) { os.write(text.getBytes(StandardCharsets.UTF_8)); }
-                Uri uri = FileProvider.getUriForFile(MainActivity.this, "ru.mxdxck.gcodecnc.files", f);
+                Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".files", f);
                 Intent i = new Intent(Intent.ACTION_SEND);
                 i.setType("text/plain");
                 i.putExtra(Intent.EXTRA_STREAM, uri);
