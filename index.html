@@ -262,7 +262,7 @@ details.cycd[open] summary:before{content:'－'}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='1.28.0';
+const APP_VERSION='1.29.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -282,7 +282,7 @@ const TT={
  thread:{n:'Резьбофреза',c:'THREAD MILL'},chamfer:{n:'Фаскосним',c:'CHAMFER'},reamer:{n:'Развёртка',c:'REAMER'}};
 const FLUTED=['endmill','ball','bull','face','thread','chamfer','reamer'],PERREV=['drill','center'];
 const TF=[['num','Номер T / H',1,'n'],['type','Тип','endmill',Object.entries(TT).map(([k,v])=>[k,v.n])],['name','Название','','text'],
- ['d','Диаметр D, мм',10,'n'],['cr','Радиус при вершине r, мм',1,'n',{type:'bull'}],['ang','Угол при вершине°',90,'n',{type:['chamfer','center','drill']}],['tip','Ø вершины, мм',0,'n',{type:'chamfer'}],['fl','Кол-во зубьев',4,'n',{type:FLUTED}],['s','Обороты S, об/мин',3000,'n'],
+ ['d','Диаметр D, мм',10,'n'],['cr','Радиус при вершине r, мм',1,'n',{type:'bull'}],['ri','Радиус пластины / при вершине r, мм (0 — острый угол)',0,'n',{type:['endmill','face']}],['ang','Угол при вершине°',90,'n',{type:['chamfer','center','drill']}],['tip','Ø вершины, мм',0,'n',{type:'chamfer'}],['fl','Кол-во зубьев',4,'n',{type:FLUTED}],['s','Обороты S, об/мин',3000,'n'],
  ['f','Подача F, мм/мин',500,'n'],['pitch','Шаг резьбы P, мм',1.25,'n',{type:['tap','thread']}]];
 
 /* ---------- операции ---------- */
@@ -331,7 +331,7 @@ const OPS={
   ['depth','Глубина',0.2,'n'],['step','Шаг по Z',0.2,'n']]},
  rodFlats:{n:'Лыски на прутке (4 ось)',s:'Лыски на прутке',c:'ROD FLATS',rodNo:true,k:['endmill','face'],f:[['th','Толщина T (между лысками), мм',12,'n'],['from','Лыска от','l',[['l','Левого торца прутка'],['r','Правого торца прутка']]],['len','Длина лыски L, мм',25,'n'],
   ['cnt','Сколько сторон','2',[['1','1 — только A нач.'],['2','2 — A и A+180°'],['4','4 — квадрат (через 90°)'],['6','6 — шестигранник (через 60°)']]],['a0','A первой стороны, °',0,'c'],
-  ['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',60,'n'],['strat','Как идти','one',[['one','Прямыми: проход → подъём → возврат'],['zz','Зигзагом']]],['fdir','Направление проходов','x',[['x','Вдоль прутка (по X)'],['y','Поперёк прутка (по Y)']]],['aend','После операции повернуть A на, °','','text']]}
+  ['step','Шаг по Z',1,'n'],['over','Шаг вбок, % D',60,'n'],['strat','Как идти','one',[['one','Прямыми: проход → подъём → возврат'],['zz','Зигзагом']]],['fdir','Направление проходов','y-',[['y-','Поперёк: с +Y в −Y'],['y+','Поперёк: с −Y в +Y'],['x','Вдоль прутка (по X)']]],['aend','После операции повернуть A на, °','','text']]}
 };
 /* ноль операции: по умолчанию у всех один (ноль детали); можно сдвинуть для отдельной операции — выводится как G52 */
 const ZF=[['aA','Поворот A, ° — несколько через ; (0; 180) — пусто: нет','','text',()=>st.stock.shape=='rod'],['ox','Ноль операции: сдвиг X',0,'c'],['oy','Ноль операции: сдвиг Y',0,'c'],['zt','Ноль операции: сдвиг Z',0,'c']];
@@ -523,20 +523,36 @@ window.importProj=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader
 window.resetProj=()=>{if(!confirm('Создать новый проект? Текущий будет удалён.'))return;st=defaults();normStock();manual=false;selTool=st.tools[0].id;selOp=st.ops[0].id;save();renderAll();};
 
 /* ---------- инструменты UI ---------- */
+/* картинка инструмента (вид сбоку); big — с размерами D и r */
+function toolPic(t,big){const ty=t.type,D=+t.d||10,acc='#ffc400',sh='#7c8596',r0=toolCR(t),W=ty=='face'?50:ty=='thread'?14:ty=='center'?14:26,x0=30-W/2,x1=30+W/2,yb=ty=='face'?58:72,
+  rp=r0>0?Math.max(2.2,Math.min(W/2,r0/D*W)):0,body=(y0,rr)=>`M${x0} ${y0}V${yb-rr}${rr?`A${rr} ${rr} 0 0 0 ${x0+rr} ${yb}`:''}H${x1-rr}${rr?`A${rr} ${rr} 0 0 0 ${x1} ${yb-rr}`:''}V${y0}Z`;
+ let g='';const shank=(w,y0,y1)=>`<rect x="${30-w/2}" y="${y0}" width="${w}" height="${y1-y0}" fill="${sh}" fill-opacity=".35" stroke="${sh}"/>`;
+ if(ty=='face')g=shank(18,4,40)+`<path d="${body(40,rp)}" fill="${acc}" fill-opacity=".25" stroke="${acc}"/>`+[x0+3,x1-9].map(x=>`<rect x="${x}" y="${yb-8}" width="6" height="6" rx="1" fill="${acc}" fill-opacity=".8"/>`).join('');
+ else if(ty=='endmill'||ty=='bull'||ty=='ball'){const rr=ty=='ball'?W/2:rp;g=shank(W,4,30)+`<path d="${ty=='ball'?`M${x0} 30V${yb-W/2}A${W/2} ${W/2} 0 0 0 ${x1} ${yb-W/2}V30Z`:body(30,rr)}" fill="${acc}" fill-opacity=".25" stroke="${acc}"/>`+[0,1,2,3].map(i=>`<path d="M${x0} ${36+i*9}L${x1} ${30+i*9}" stroke="${acc}" stroke-opacity=".6"/>`).join('');}
+ else if(ty=='drill'||ty=='reamer'){g=shank(W,4,28)+`<path d="M${x0} 28V${ty=='drill'?66:70}L${ty=='drill'?30:x0+3} ${ty=='drill'?78:73}${ty=='drill'?'':`H${x1-3}`}L${x1} ${ty=='drill'?66:70}V28Z" fill="${acc}" fill-opacity=".25" stroke="${acc}"/>`+(ty=='drill'?[0,1,2,3].map(i=>`<path d="M${x0} ${34+i*8}Q30 ${30+i*8} ${x1} ${38+i*8}" fill="none" stroke="${acc}" stroke-opacity=".6"/>`).join(''):[x0+7,30,x1-7].map(x=>`<path d="M${x} 30V68" stroke="${acc}" stroke-opacity=".6"/>`).join(''));}
+ else if(ty=='center'){g=shank(26,4,40)+`<path d="M17 40V52L23 60H${37}L43 52V40Z" fill="${acc}" fill-opacity=".25" stroke="${acc}"/><path d="M23 60V66L30 74L37 66V60" fill="${acc}" fill-opacity=".35" stroke="${acc}"/>`;}
+ else if(ty=='chamfer'){g=shank(20,4,36)+`<path d="M12 36H48L${30+Math.max(.5,(+t.tip||0)/D*36/2)} 74H${30-Math.max(.5,(+t.tip||0)/D*36/2)}Z" fill="${acc}" fill-opacity=".25" stroke="${acc}"/>`;}
+ else if(ty=='tap'){g=shank(16,4,30)+`<path d="M20 30V66L24 74H36L40 66V30Z" fill="${acc}" fill-opacity=".2" stroke="${acc}"/>`+[...Array(9)].map((_,i)=>`<path d="M20 ${33+i*4}L40 ${35+i*4}" stroke="${acc}" stroke-opacity=".7"/>`).join('');}
+ else if(ty=='thread'){g=shank(14,4,52)+`<rect x="18" y="52" width="24" height="20" rx="2" fill="${acc}" fill-opacity=".2" stroke="${acc}"/>`+[0,1,2,3,4].map(i=>`<path d="M16 ${55+i*4}H44" stroke="${acc}" stroke-width="1.6"/>`).join('');}
+ else g=shank(W,4,30)+`<path d="${body(30,rp)}" fill="${acc}" fill-opacity=".25" stroke="${acc}"/>`;
+ if(!big)return`<svg viewBox="0 0 60 80" width="26" height="34" style="flex:none">${g}</svg>`;
+ const dW=ty=='face'?W:ty=='center'||ty=='tap'?20:ty=='thread'?24:ty=='chamfer'?36:W,dim=`<path d="M${30-dW/2} ${yb+9}H${30+dW/2}" stroke="#e6e8ec" stroke-width=".8" marker-start="url(#ta)" marker-end="url(#ta)"/><text x="30" y="${yb+19}" fill="#e6e8ec" font-size="8" text-anchor="middle">Ø${F(D)}</text>`;
+ const rl=r0>0&&ty!='ball'?`<path d="M${x1-rp*.3} ${yb-rp*.3}L${x1+9} ${yb-12}" stroke="${acc}" stroke-width=".8"/><text x="${x1+10}" y="${yb-13}" fill="${acc}" font-size="8">r${F(r0)}</text>`:ty=='ball'?`<text x="${x1+3}" y="${yb-6}" fill="${acc}" font-size="8">R${F(D/2)}</text>`:'';
+ return`<svg viewBox="-8 0 84 96" width="130" height="150" style="flex:none"><defs><marker id="ta" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1L7 4L0 7z" fill="#e6e8ec"/></marker></defs>${g}${dim}${rl}</svg>`;}
 function renderTools(){
  toolListOnly();
  const t=st.tools.find(x=>x.id==selTool);
  if(!t){$('#toolEd').innerHTML='<div class="empty">Выберите инструмент</div>';return;}
  renderToolEd(t);}
 function toolListOnly(){
- $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div><div class="m"><b>${esc(t.name||TT[t.type].n)}</b><small>Ø${t.d} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}${FLUTED.includes(t.type)?' · z'+t.fl:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
+ $('#toolList').innerHTML=st.tools.slice().sort((a,b)=>a.num-b.num).map(t=>`<div class="it ${t.id==selTool?'sel':''}" onclick="selT('${t.id}')"><div class="n">T${t.num}</div>${toolPic(t)}<div class="m"><b>${esc(t.name||TT[t.type].n)}</b><small>Ø${t.d}${toolCR(t)>0&&t.type!='ball'?' r'+F(toolCR(t)):''} · S${t.s} · F${t.f}${['tap','thread'].includes(t.type)?' · P'+t.pitch:''}${FLUTED.includes(t.type)?' · z'+t.fl:''}</small></div><button class="ib" onclick="event.stopPropagation();delTool('${t.id}')">✕</button></div>`).join('')||'<div class="empty">Нет инструмента</div>';
  }
 function renderToolEd(t){
 
- $('#toolEd').innerHTML=`<h3>T${t.num} — ${TT[t.type].n}</h3><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
+ $('#toolEd').innerHTML=`<h3>T${t.num} — ${TT[t.type].n}</h3><div class="row" style="align-items:center;gap:14px;flex-wrap:nowrap"><div id="tPic">${toolPic(t,true)}</div><div class="hint" style="margin:0;flex:1">${['endmill','face'].includes(t.type)?'Для фрезы с пластинами укажите радиус пластины r (например, Ø40 r2): он учитывается в 3D и при радиусе у дна кармана.':t.type=='bull'?'Радиусная фреза: D и радиус при вершине r.':t.type=='chamfer'?'Фаскосним: угол при вершине и Ø вершины задают конус.':'Размеры инструмента — на картинке.'}</div></div><div class="grid" id="tf">${TF.filter(f=>shown(t,f)).map(f=>fld(t,f)).join('')}</div>
  <h3 style="margin-top:18px">Калькулятор режимов</h3><div class="grid"><label>Vc, м/мин<input id="vc" inputmode="decimal" value="${t.vc||(PERREV.includes(t.type)?60:t.type=='tap'?10:150)}"></label>${t.type=='tap'?'':`<label>${PERREV.includes(t.type)?'f, мм/об':'fz, мм/зуб'}<input id="fz" inputmode="decimal" value="${t.fz||(PERREV.includes(t.type)?0.1:0.05)}"></label>`}<label>&nbsp;<button class="btn p" onclick="calcSF()">Рассчитать S и F</button></label></div><div class="row" style="margin-top:8px"><button class="btn" onclick="matTool()">По материалу «${esc(st.stock.mat||'Сталь 45')}»</button>${FLUTED.includes(t.type)&&t.type!='thread'?`<span class="chip">Шаг вбок ae, % D</span><input id="aeP" inputmode="decimal" value="50" style="width:80px" oninput="chipShow()"><span class="chip" id="chipR"></span>`:''}</div>
  <div class="hint">${t.type=='tap'?'Метчик: S = 1000·Vc / (π·D), подача F = S·P (жёсткое нарезание M29).':PERREV.includes(t.type)?'Сверло: S = 1000·Vc / (π·D), F = S·f (подача на оборот).':'Фреза: S = 1000·Vc / (π·D), F = S·fz·z.'} Вылет инструмента не задаётся — его меряет станок (корректор H).</div>`;
- bindForm($('#tf'),()=>t,()=>toolListOnly(),()=>renderTools());}
+ bindForm($('#tf'),()=>t,()=>{toolListOnly();const tp=$('#tPic');if(tp)tp.innerHTML=toolPic(t,true);},()=>renderTools());}
 window.chipShow=()=>{const t=st.tools.find(x=>x.id==selTool),e=$('#chipR');if(!t||!e)return;const k=chipK(num($('#aeP').value)||50);e.innerHTML=k>1.001?`утончение стружки: F × ${k.toFixed(2)} = <b style="color:var(--tx)">${Math.round(t.f*k)}</b> мм/мин`:'утончения нет (ae ≥ 50% D)';};
 window.selT=id=>{selTool=id;renderTools();};
 window.addTool=()=>{const n=Math.max(0,...st.tools.map(t=>t.num))+1;const t={id:uid(),num:n,type:'endmill',name:'',d:10,fl:4,s:3000,f:500,pitch:1.25};st.tools.push(t);selTool=t.id;save();renderTools();};
@@ -860,7 +876,7 @@ function ctrDraw(o){const c=$('#ctrC');if(!c)return;const W=600,H=360;c.width=W;
 /* ---------- генератор G-кода ---------- */
 function levels(depth,step){const a=[];let z=0;step=Math.max(0.01,+step||1);depth=Math.abs(+depth);while(z>-depth+1e-6){z=Math.max(z-step,-depth);a.push(z);}return a;}
 const toolCone=t=>['chamfer','center','drill'].includes(t.type)?{rt:t.type=='chamfer'?Math.max(0,+t.tip||0)/2:0,tn:Math.tan(Math.max(10,Math.min(170,+t.ang||(t.type=='drill'?118:90)))/2*Math.PI/180)}:null;
-const toolCR=t=>t.type=='ball'?t.d/2:t.type=='bull'?Math.max(0,Math.min(+t.cr||0,t.d/2)):0;
+const toolCR=t=>t.type=='ball'?t.d/2:t.type=='bull'?Math.max(0,Math.min(+t.cr||0,t.d/2)):['endmill','face'].includes(t.type)?Math.max(0,Math.min(+t.ri||0,t.d/2)):0;
 /* уровни по Z с радиусом у дна: ins — насколько сузить контур на этом уровне */
 function lvF(c,o=c.o){const D=Math.abs(+o.depth),st=Math.max(0.01,+o.step||1),Rf=+o.rf||0;if(!(Rf>0))return levels(D,st).map(z=>({z,ins:0}));
  const cr=toolCR(c.t);if(cr>Rf+1e-9)throw Error('FILLET < TOOL CR');const fs=Math.max(0.01,+o.fs||0.3),K=Rf-cr,zf=K-D,a=[];let z=0,g=0;
@@ -977,7 +993,7 @@ const G={
   L.push(`G0 G90 ${c.w} X${F(xa)} Y0.`,`S${Math.round(t.s)} M03`,`G43 H${t.num} Z${F(safe)}`,'M08');
   for(let k=0;k<n;k++){const a=A0+k*360/n;if(k)L.push(`G0 Z${F(safe)}`,`G0 A${F(a)}`);L.push(`(SIDE ${k+1} A${F(a)})`);
    LV.forEach(z=>{const hw=HW(z);
-    if(o.fdir=='y'){const yb=hw+r+2,ya=-yb;
+    if(o.fdir&&o.fdir[0]=='y'){const sy=o.fdir=='y-'?-1:1,yb=sy*(hw+r+2),ya=-yb;
      if(o.strat=='zz'){L.push(`G0 X${F(cols[0])} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 Y${F(yb)} F${t.f}`);let fw=1;cols.slice(1).forEach(x=>{fw=-fw;L.push(`G1 X${F(x)}`,`G1 Y${F(fw*yb)}`);});L.push(`G0 Z${F(top+1)}`);}
      else cols.forEach(x=>{L.push(`G0 X${F(x)} Y${F(ya)}`,`G0 Z${F(z+1)}`,`G1 Z${F(z)} F${c.fp}`,`G1 Y${F(yb)} F${t.f}`,`G0 Z${F(top+1)}`);});return;}
     const y0=-Math.max(0,hw-r*0.5),y1=-y0;let y=y0;
@@ -1033,11 +1049,11 @@ const M={
   MV(L,20,t.d,'TOOL D');MV(L,21,Math.round(t.s),'SPINDLE S');MV(L,22,Math.round(t.f),'FEED F');MV(L,23,c.fp,'PLUNGE F');L.push(`#24=#6+#5+${F(Math.max(3,+o.safe||10))} (SAFE Z)`,'#25=#20/2 (TOOL R)');
   L.push('#11=#6+#5 (TOP Z)','#12=#6+#1/2 (FLAT Z)','#13=#20*#8/100 (STEPOVER)','#14=#3-#4*[#25+2.] (X START)','#15=#3+#4*[#2-#25] (X END)');
   mAlarm(c,'#12LT[#11-0.000001]','T BIGGER THAN BAR');mAlarm(c,'[[#15-#14]*#4]GT0','FLAT SHORTER THAN TOOL R');
-  const Y=o.fdir=='y',ZZ=o.strat=='zz';if(Y)L.push('#17=FUP[[[#15-#3]*#4-[#25-1.]]/#13-0.000001] (COLUMNS)','IF[#17LT0]THEN#17=0');
+  const Y=!!o.fdir&&o.fdir[0]=='y',SY=o.fdir=='y-'?-1:1,ZZ=o.strat=='zz';if(Y)L.push('#17=FUP[[[#15-#3]*#4-[#25-1.]]/#13-0.000001] (COLUMNS)','IF[#17LT0]THEN#17=0');
   mStart(c,'#14','0');const l1=c.n(),l2=c.n();
   L.push('#18=0 (SIDE NO)',`N${l1}`,`IF[#18EQ0]GOTO${l2}`,'G0 Z#24','G0 A[#9+#18*360/#10]',`N${l2}`,
    '#27=0','WHILE[[#11+#27-#12]GT0.001]DO1','#27=#27-#7','IF[[#11+#27]LT#12]THEN#27=#12-#11','#26=#11+#27 (Z)','#29=SQRT[ABS[#5*#5-[#26-#6]*[#26-#6]]] (HALF WIDTH)');
-  if(Y){L.push('#28=#29+#25+2. (Y END)');
+  if(Y){L.push(`#28=${SY<0?'0-':''}[#29+#25+2.] (Y END)`);
    if(ZZ)L.push('G0 X[#15-#4*#13*#17] Y[0-#28]','G0 Z[#26+1.]','G1 Z#26 F#23','G1 Y#28 F#22','#30=1','#19=1','WHILE[#19LE#17]DO2','#31=#15-#4*#13*[#17-#19]','#30=0-#30','G1 X#31','G1 Y[#30*#28]','#19=#19+1','END2','G0 Z[#11+1.]');
    else L.push('#19=0','WHILE[#19LE#17]DO2','#31=#15-#4*#13*[#17-#19]','G0 X#31 Y[0-#28]','G0 Z[#26+1.]','G1 Z#26 F#23','G1 Y#28 F#22','G0 Z[#11+1.]','#19=#19+1','END2');}
   else{L.push('#16=0-[#29-#25*0.5]','IF[#16GT0]THEN#16=0','#28=0-#16 (Y END)');
