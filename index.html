@@ -330,7 +330,19 @@ nav button svg{width:22px;height:22px;display:block}
  .dhandle{display:flex;align-items:center;justify-content:center;gap:8px;height:30px;border:0;background:var(--pan);color:var(--mut);font-family:inherit;font-size:12px;cursor:pointer;flex:none;border-bottom:1px solid var(--line)}
  .dhandle i{width:36px;height:4px;border-radius:2px;background:#3a4252}
  .dpan{max-height:30vh;padding:10px 12px calc(10px + var(--sab))}
-}</style>
+}
+#ctM{position:fixed;inset:0;z-index:100;background:#0008;display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}
+#ctM .wb{background:var(--pan);border:1px solid var(--line);border-radius:20px;padding:20px 16px;max-width:440px;width:100%;box-shadow:0 20px 60px #000a;max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:10px}
+#ctM h2{margin:0;font-size:19px}#ctM p{margin:0;color:var(--mut);font-size:13px;line-height:1.45}#ctM p b{color:var(--tx)}
+#ctM ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ctr{display:flex;align-items:center;gap:10px;background:var(--pan2);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:14px}
+.ctr b{color:var(--acc);min-width:34px}.ctr span{flex:1;min-width:0}.ctr i{color:var(--mut);font-style:normal;font-size:12px}
+.ctr em{font-style:normal;font-size:11px;font-weight:700;border-radius:8px;padding:2px 8px;background:#2a3140;color:var(--mut);white-space:nowrap}
+.ctr em.new{background:#1d3a26;color:#7ee2a0}.ctr em.diff{background:#4a3410;color:#ffc061}
+.ctb{display:flex;flex-direction:column;gap:8px}.ctb .btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 14px;height:auto;gap:2px}.ctb small{font-weight:400;opacity:.85;font-size:12px}
+#ctBar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}#ctBar:empty{display:none}#ctBar em{font-style:normal;color:var(--acc)}#ctBar .btn{white-space:normal;text-align:left;height:auto;min-height:34px}
+.ctsy{display:flex!important;flex-direction:row!important;align-items:center;gap:6px;font-size:13px;color:var(--mut);cursor:pointer}.ctsy input{width:auto;margin:0}
+</style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
@@ -374,7 +386,7 @@ nav button svg{width:22px;height:22px;display:block}
     <div class="phd"><div class="m"><b>Инструменты</b><small id="tSub"></small></div><button class="ub" onclick="addTool()" aria-label="Добавить инструмент" style="background:var(--acc);color:#141414;border:0;font-weight:800">+</button></div>
     <div class="tf" id="tFil"></div>
     <div id="toolList" class="tgrid"></div>
-    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn d s" onclick="delAllTools()">🗑 Удалить все</button></div>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn s" onclick="ctOpen()">🔧 Взять из программы</button><button class="btn d s" onclick="delAllTools()">🗑 Удалить все</button></div>
    </div>
    <div class="pr card"><div class="edhd"><button class="btn" onclick="tBack()">← Инструменты</button><b id="tedT"></b><button class="btn p" onclick="tBack()">Готово</button></div><div id="toolEd"></div></div>
   </div>
@@ -402,7 +414,7 @@ nav button svg{width:22px;height:22px;display:block}
     <div class="seg" id="fmtSeg" style="flex:1 1 280px"><button data-f="plain" onclick="setFmtB('plain')">Обычный</button><button data-f="macro" onclick="setFmtB('macro')">Параметрический #</button></div>
     <button class="btn" id="cvEd" onclick="cvToggle()">✏ Править вручную</button>
    </div>
-   <div class="stats" id="codeStats"></div><div id="convBox"></div><div id="chkBox"></div>
+   <div class="stats" id="codeStats"></div><div id="ctBar"></div><div id="convBox"></div><div id="chkBox"></div>
    <div class="cv" id="cv"></div>
    <textarea id="code" spellcheck="false" hidden></textarea>
    <div class="safe"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg><span><b>Перед запуском проверь программу на станке:</b> графика стойки → прогон «по воздуху» (ноль Z поднят) → первая деталь на пониженной подаче, рука на STOP. Fresa не видит твой станок, тиски и зажимы — ответственность за запуск на тебе.</span></div>
@@ -472,7 +484,7 @@ nav button svg{width:22px;height:22px;display:block}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.7.2';
+const APP_VERSION='2.8.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -964,6 +976,73 @@ const narrow=()=>innerWidth<820;
 /* подходящий инструмент для цикла: из магазина, а если нет — добавить в магазин */
 const TSH={endmill:'конц.',ball:'сфер.',bull:'радиус.',face:'торц.',drill:'сверло',center:'центр.',tap:'метчик',thread:'резьбоф.',chamfer:'фаск.',reamer:'развёрт.'};
 const TDEF={endmill:[10,150,.05,4],ball:[12,150,.05,2],bull:[10,150,.05,4],face:[50,200,.08,5],drill:[6.8,60,.1,2],center:[10,40,.05,2],tap:[8,10,0,1],thread:[6,100,.03,3],chamfer:[10,100,.05,4],reamer:[8,15,.15,6]};
+/* ===================== инструменты из текста программы ===================== */
+/* тип по словам из комментария (рус., транслит, англ.) */
+const CTK=[['center',/CENT|ЦЕНТР|SPOT/],['thread',/REZBOF|РЕЗЬБОФ|THREAD/],['tap',/METCH|МЕТЧ|(^|[^A-ZА-Я])TAP/],['reamer',/RAZV|РАЗВ|REAM/],['chamfer',/FASK|ФАСК|CHAMF|ZENK|ЗЕНК/],
+ ['drill',/SVERL|СВЕРЛ|DRILL/],['face',/TORC|TOREC|ТОРЦ|FACE/],['ball',/SFER|СФЕР|BALL|ШАР/],['bull',/TOROID|ТОРОИД|BULL|RADIUSN|РАДИУСН/],['endmill',/FREZ|ФРЕЗ|MILL|KONC|КОНЦ/]];
+const CTD=/(?:^|[^A-ZА-ЯЁ])(?:DIAM?_?|ДИАМ\.?|DIA|D|Д|Ø|Ф)\s*=?\s*(\d+(?:[.,]\d+)?)/,CTW=/(?:SVERLO|СВЕРЛО|FREZA|ФРЕЗА|DRILL|MILL|CENTROVKA|ЦЕНТРОВКА)\s+(\d+(?:[.,]\d+)?)/,
+ CTM=/(?:^|[^A-ZА-Я])[MМ]\s*(\d+(?:[.,]\d+)?)(?:\s*[XХ×]\s*(\d+(?:[.,]\d+)?))?/,CTR=/(?:^|[^A-ZА-ЯЁ])(?:R|РАДИУС)\s*=?\s*(\d+(?:[.,]\d+)?)/,
+ CTP={3:.5,4:.7,5:.8,6:1,8:1.25,10:1.5,12:1.75,14:2,16:2,20:2.5,24:3};
+const ctN=v=>+String(v).replace(',','.');
+function ctDesc(txt){const u=' '+String(txt||'').toUpperCase().replace(/^\s*T\s*\d+\b/,'')+' ',r={};
+ const k=CTK.find(([,re])=>re.test(u));if(k)r.type=k[0];
+ let m=CTD.exec(u)||CTW.exec(u);if(m)r.d=ctN(m[1]);
+ if(r.type=='tap'||r.type=='thread'){const mm=CTM.exec(u);if(mm){if(r.d==null)r.d=ctN(mm[1]);r.pitch=mm[2]?ctN(mm[2]):CTP[Math.round(ctN(mm[1]))];}}
+ if(r.type!='ball'){const mr=CTR.exec(u);if(mr&&ctN(mr[1])>0)r.cr=ctN(mr[1]);}
+ if(!(r.d>0))delete r.d;return r;}
+/* все T из кода: шапка «(T1 ФРЕЗА D10)», комментарий у смены инструмента, #20=… (DIAMETR FREZY) внутри его участка, первые S и F */
+function codeTools(code){const I={},get=n=>I[n]||(I[n]={num:n});let cur=null,pend=null,lastC=null;
+ String(code||'').split('\n').forEach((raw,ln)=>{const cms=[...raw.matchAll(/\(([^)]*)\)/g)].map(m=>m[1]),body=raw.replace(/\(.*?\)/g,'').replace(/;.*$/,'').toUpperCase(),cm=cms.join(' ');
+  if(!body.trim()){const h=/^\s*T\s*0*(\d+)\b\s*[-:=]?\s*(.*)$/i.exec(cms[0]||'');if(h&&+h[1]>0){const q=get(+h[1]);if(q.hdr==null)q.hdr=ctDesc(h[2]);}else if(cm)lastC={t:cm,ln};return;}
+  const mt=!/#/.test(body)&&/(?:^|[^A-Z])T\s*0*(\d+)/.exec(body),m6=/M0?6(?!\d)/.test(body);
+  if(mt&&+mt[1]>0){const n=+mt[1],q=get(n);if(q.near==null){const tx=cm||(lastC&&ln-lastC.ln<=4?lastC.t:'');q.near=ctDesc(tx);}if(m6)cur=n;else pend=n;}
+  else if(m6&&pend!=null){cur=pend;pend=null;}
+  if(!mt&&cm)lastC={t:cm,ln};
+  if(cur==null)return;const q=get(cur),mv=/^\s*#(\d+)\s*=\s*(-?\d+(?:\.\d*)?)/.exec(body);
+  if(mv){const c=cm.toUpperCase();if(q.mac==null&&/(DIAM|ДИАМ|(^|[^A-Z])D(?![A-Z])).*(FREZ|ФРЕЗ|TOOL|INSTR|ИНСТР)|(FREZ|ФРЕЗ|TOOL).*(DIAM|ДИАМ|(^|[^A-Z])D(?![A-Z]))/.test(c))q.mac=+mv[2];else if(q.ms==null&&/OBOROT|ОБОРОТ|SPINDLE/.test(c))q.ms=+mv[2];else if(q.mf==null&&/PODACH|ПОДАЧ|FEED/.test(c)&&!/VREZ|ВРЕЗ|PLUNGE/.test(c))q.mf=+mv[2];return;}
+  if(/#/.test(body))return;const ms=/(?:^|[^A-Z])S\s*(\d+)/.exec(body);if(ms&&q.s==null&&+ms[1]>0)q.s=+ms[1];
+  const mf=/(?:^|[^A-Z])F\s*(\d+(?:\.\d*)?)/.exec(body);if(mf&&q.f==null&&+mf[1]>0&&/[XY]\s*-?[\d.]/.test(body))q.f=+mf[1];});
+ return Object.values(I).sort((a,b)=>a.num-b.num).map(q=>{const h=q.hdr||{},n=q.near||{};
+  return{num:q.num,type:h.type||n.type||null,d:q.mac>0?q.mac:h.d||n.d||null,cr:h.cr??n.cr,pitch:h.pitch??n.pitch,s:q.ms>0?q.ms:q.s,f:q.mf>0?q.mf:q.f,src:{mac:q.mac,hd:h.d,nd:n.d,ht:h.type,nt:n.type}};});}
+/* сравнение с магазином */
+function ctCmp(L){return L.map(f=>{const t=st.tools.find(x=>x.num==f.num);let st2='new',why='';
+ if(t){const dd=f.d!=null&&Math.abs(t.d-f.d)>1e-6,dt=f.type&&f.type!=t.type;st2=dd||dt?'diff':'same';why=[dt?`${TSH[t.type]}→${TSH[f.type]}`:'',dd?`Ø${nf(t.d)}→Ø${nf(f.d)}`:''].filter(Boolean).join(', ');}
+ return{...f,t,st:st2,why};});}
+function ctApplyOne(T,f){if(f.type)T.type=f.type;if(f.d>0)T.d=f.d;if(f.cr>0){if(T.type=='bull')T.cr=f.cr;else if(['endmill','face'].includes(T.type))T.ri=f.cr;}if(f.pitch>0)T.pitch=f.pitch;if(f.s>0)T.s=Math.round(f.s);if(f.f>0)T.f=Math.round(f.f);}
+let CT={last:null,inp:false,tm:0,fnd:[]};
+function ctApply(mode,L){if(mode=='none')return;const before=st.tools.length;let add=0,upd=0,del=0,reop=0;
+ L.forEach(f=>{let T=st.tools.find(x=>x.num==f.num);if(T){upd++;ctApplyOne(T,f);}else{T=newTool(f.type||'endmill',f.d>0?f.d:undefined);T.num=f.num;ctApplyOne(T,f);add++;}});
+ if(mode=='only'){const keep=new Set(L.map(f=>f.num)),gone=st.tools.filter(t=>!keep.has(t.num)).map(t=>t.id);del=gone.length;st.tools=st.tools.filter(t=>keep.has(t.num));
+  st.ops.forEach(o=>{if(gone.includes(o.tool)){const k=OPS[o.type].k,T=st.tools.find(t=>k.includes(t.type));o.tool=T?T.id:null;if(!T)reop++;}});}
+ if(!st.tools.some(t=>t.id==selTool))selTool=(st.tools[0]||{}).id;
+ CT.last=codeTools($('#code').value);save(true);renderTools();if(typeof renderOpList=='function'&&st.ops.length)try{renderOpList();}catch(e){}updCodeInfo();
+ snack([add?`добавлено ${add}`:'',upd?`обновлено ${upd}`:'',del?`убрано ${del}`:'',reop?`без инструмента осталось операций: ${reop}`:''].filter(Boolean).join(' · ')||'Инструменты без изменений',()=>undo());}
+const ctRow=f=>`<li class="ctr"><b>T${f.num}</b><span>${f.type?esc(TT[f.type].n):'<i>тип не указан — будет концевая</i>'} ${f.d>0?'Ø'+nf(f.d):'<i>Ø не найден</i>'}${f.s?` · S${f.s}`:''}</span><em class="${f.st}">${f.st=='new'?'новый':f.st=='same'?'есть':esc(f.why)}</em></li>`;
+function ctAsk(L,name){L=ctCmp(L);if(!L.length)return toast('В программе не нашёл номеров инструментов T');
+ const extra=st.tools.filter(t=>!L.some(f=>f.num==t.num)),same=L.every(f=>f.st=='same');
+ const old=$('#ctM');if(old)old.remove();const d=document.createElement('div');d.id='ctM';
+ d.innerHTML=`<div class="wb"><h2>Инструменты из программы</h2><p>${name?`В «${esc(name)}» `:'В программе '}найдено: <b>${L.length}</b>${same?' — все уже есть в магазине с такими же размерами.':''}</p>
+ <ul>${L.map(ctRow).join('')}</ul>
+ ${extra.length?`<p class="ctx">В магазине есть ещё ${extra.length}: ${extra.slice(0,6).map(t=>'T'+t.num).join(', ')}${extra.length>6?'…':''} — их в программе нет.</p>`:''}
+ <div class="ctb">${extra.length?`<button class="btn p" data-m="only"><b>Только из программы</b><small>Остальные ${extra.length} уберу из магазина</small></button><button class="btn" data-m="add"><b>Добавить к моим</b><small>Номера из программы обновлю, остальные оставлю</small></button>`:`<button class="btn p" data-m="add"><b>${same?'Хорошо':'Взять в магазин'}</b><small>${same?'Ничего менять не нужно':'Совпадающие номера T обновлю'}</small></button>`}
+ <button class="btn" data-m="none"><b>Не трогать инструменты</b></button></div>
+ <label class="wck"><input type="checkbox" id="ctSy" ${st.prog.tsync!==false?'checked':''}><span>Когда правлю диаметр или тип в коде — сразу менять и в инструментах</span></label></div>`;
+ document.body.appendChild(d);d.onclick=e=>{if(e.target===d)d.remove();};
+ d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{st.prog.tsync=$('#ctSy').checked;d.remove();ctApply(b.dataset.m,L);if(b.dataset.m=='none')save(true);});}
+window.ctOpen=()=>{const c=$('#code').value;if(!/[GM]\s*\d/i.test(c))return toast('Сначала открой или создай программу');ctAsk(codeTools(c),SRC&&manual?SRC.n:'');};
+window.ctTog=v=>{st.prog.tsync=!!v;CT.last=codeTools($('#code').value);save(true);toast(v?'Диаметр из кода будет сразу меняться в инструментах':'Синхронизация с инструментами выключена');};
+/* живая синхронизация: что поменял в коде (шапка, комментарий у T или #20) — то и меняется в магазине */
+function ctSync(){const now=codeTools($('#code').value),prev=CT.last;CT.last=now;if(!prev||st.prog.tsync===false)return;const ch=[];
+ now.forEach(f=>{const p=prev.find(x=>x.num==f.num);if(!p)return;const T=st.tools.find(x=>x.num==f.num);if(!T)return;const a=f.src,b=p.src;
+  let d=null;if(a.mac!==b.mac&&a.mac>0)d=a.mac;else if(a.hd!==b.hd&&a.hd>0)d=a.hd;else if(a.nd!==b.nd&&a.nd>0)d=a.nd;
+  let ty=null;if(a.ht!==b.ht&&a.ht)ty=a.ht;else if(a.nt!==b.nt&&a.nt&&!a.ht)ty=a.nt;
+  const msg=[];if(d!=null&&Math.abs(T.d-d)>1e-6){msg.push(`Ø${nf(T.d)}→Ø${nf(d)}`);T.d=d;}if(ty&&ty!=T.type){msg.push(TSH[ty]);T.type=ty;}if(msg.length)ch.push(`T${T.num} ${msg.join(' ')}`);});
+ if(!ch.length)return;save(true);renderTools();ctBar();toast('Инструменты: '+ch.join(' · '));}
+function ctBar(L){const b=$('#ctBar');if(!b)return;L=ctCmp(L||codeTools($('#code').value));if(!L.length){b.innerHTML='';return;}
+ const bad=L.filter(f=>f.st!='same');
+ b.innerHTML=`<button class="btn s" onclick="ctOpen()">🔧 Инструменты из программы: ${L.map(f=>'T'+f.num+(f.d>0?' Ø'+nf(f.d):'')).slice(0,5).join(', ')}${L.length>5?'…':''}${bad.length?` <em>· ${bad.length} не как в магазине</em>`:''}</button>
+ <label class="ctsy" title="Правишь Ø фрезы в коде (в шапке, у смены инструмента или #20) — он сразу меняется во вкладке «Инструменты»"><input type="checkbox" ${st.prog.tsync!==false?'checked':''} onchange="ctTog(this.checked)"> Ø из кода → в инструменты</label>`;}
+
 function newTool(type,d){const[d0,vc,fz,fl]=TDEF[type]||TDEF.endmill;d=d||d0;const n=Math.max(0,...st.tools.map(t=>t.num))+1,s=Math.round(1000*vc/(Math.PI*d)),
   T={id:uid(),num:n,type,name:'',d,fl,s,f:type=='tap'?Math.round(s*1.25):PERREV.includes(type)?Math.round(s*fz):Math.round(s*fz*fl),pitch:1.25,cr:1,vc,fz,ang:type=='drill'?118:90,tip:type=='chamfer'?0.5:0};applyMat(T,st.stock.mat);st.tools.push(T);return T;}
 function pickTool(o){const k=OPS[o.type].k;let T=null,want=null;
@@ -1164,7 +1243,9 @@ function ctrChains(o,t){const r=t.d/2,M=ctrMir(o);
  M.forEach(([mx,my],gi)=>{const{E,closed}=ctrEls(o,mx,my);if(!E.length)throw Error('Контур пуст — добавьте элементы');const s=(o.comp=='42'?-1:1)*mx*my;
   for(let k=np;k>=0;k--){let P=offChain(E,k*so,s,closed);const T=offChain(P,r,s,closed);const g41=o.cmode=='g41';if(!g41)P=T;
    const t0=tS(P[0]),tn=tE(P[P.length-1]);
-   out.push({gi,E:P,g:g41?(s>0?41:42):0,app:V2.add(V2.sub(P[0].a,V2.mul(t0,Ld)),V2.mul(lft(t0),s*Ld)),out:V2.add(V2.add(P[P.length-1].b,V2.mul(tn,Ld)),V2.mul(lft(tn),s*Ld))});}});
+   let app=V2.add(V2.sub(P[0].a,V2.mul(t0,Ld)),V2.mul(lft(t0),s*Ld));
+   {const v=V2.sub(app,P[0].a),l=Math.hypot(v[0],v[1]);if(l>1e-9){const u=V2.mul(v,1/l),d=leadOut(app,u,r);if(d>0){let ok=true;for(let k2=0;k2<=Math.ceil(d/0.5)&&ok;k2++){const q=V2.add(app,V2.mul(u,Math.min(d,k2*0.5)));if(E.some(e=>elDist(e,q)<r-1e-3))ok=false;}if(ok)app=V2.add(app,V2.mul(u,d));}}}
+   out.push({gi,E:P,g:g41?(s>0?41:42):0,app,out:V2.add(V2.add(P[P.length-1].b,V2.mul(tn,Ld)),V2.mul(lft(tn),s*Ld))});}});
  return out;}
 
 /* ---------- импорт DXF ---------- */
@@ -1258,6 +1339,23 @@ function pts(o){
  if(o.pat=='pcd'){const a=[];for(let i=0;i<Math.max(1,Math.round(o.cnt));i++){const g=(o.ang+360*i/o.cnt)*Math.PI/180;a.push([o.cx+o.pr*Math.cos(g),o.cy+o.pr*Math.sin(g)]);}return a;}
  if(o.pat=='grid'){const a=[];for(let j=0;j<o.ny;j++){const row=[];for(let i=0;i<o.nx;i++)row.push([o.gx+i*o.dx,o.gy+j*o.dy]);if(j%2)row.reverse();a.push(...row);}return a;}
  return parsePts(o.list);}
+/* безопасный подвод снаружи: на сколько отойти от точки p по направлению u, чтобы фреза радиуса r оказалась вне заготовки с зазором 2 мм.
+   0 — точка уже снаружи, -1 — до края слишком далеко (подвод не строим, врезание по месту) */
+function leadOut(p,u,r){let g;try{g=stockGeo();}catch(e){return 0;}if(g.rod||g.bad||!g.P)return 0;const m=r+2,Q=g.P,n=Q.length;
+ const clear=q=>{if(pip(Q,q[0],q[1]))return false;for(let i=0;i<n;i++){const a=Q[i],b=Q[(i+1)%n],dx=b[0]-a[0],dy=b[1]-a[1],l2=dx*dx+dy*dy||1e-12,k=Math.max(0,Math.min(1,((q[0]-a[0])*dx+(q[1]-a[1])*dy)/l2));if(Math.hypot(a[0]+dx*k-q[0],a[1]+dy*k-q[1])<m-1e-6)return false;}return true;};
+ if(clear(p))return 0;const lim=Math.max(8*r,30);for(let d=0.5;d<=lim+1e-9;d+=0.5)if(clear([p[0]+u[0]*d,p[1]+u[1]*d]))return d;return -1;}
+/* точка входа для наружных контуров: p — начало первого прохода, u — наружу (все проходы начинаются на этой же линии) */
+function leadOp(o,t){if(o.side!='out'||!t)return null;const r=t.d/2;let p,u,rect=false;
+ if(o.type=='contourRect'){const e=passes(o,t)[0];p=[o.cx-(o.w/2+r+e),o.cy-(o.h/2+r+e)];u=[-Math.SQRT1_2,-Math.SQRT1_2];rect=true;}
+ else if(o.type=='contourCircle'){const e=passes(o,t)[0],Rp=o.d/2+r+e;let best=null;[[1,0],[0,1],[-1,0],[0,-1]].forEach((v,k)=>{const q=[+o.cx+Rp*v[0],+o.cy+Rp*v[1]],d=leadOut(q,v,r);if(d>=0&&(!best||d<best.d))best={d,q,v,k};});
+  if(!best)return{s:-1,q:0,ent:null,k:0,u:[1,0]};return{s:best.d,q:best.d,k:best.k,u:best.v,ent:best.d>0?[best.q[0]+best.v[0]*best.d,best.q[1]+best.v[1]*best.d]:null};}
+ else if(o.type=='contourOval'){const e=passes(o,t)[0],R=rot(o),a=Math.max(0,(o.l-o.w)/2);p=R.p(-a,o.w/2+r+e);u=R.v(0,1);}
+ else if(o.type=='polygon'){const N=Math.max(3,Math.round(o.n)),e=passes({...o,side:'out',wall:+o.blank>0?Math.max(0,o.blank/2-o.sw/2):o.wall},t)[0],R=rot(o),Rv=(o.sw/2+r+e)/Math.cos(Math.PI/N);let best=null;
+  for(let j=0;j<N;j++){const th=Math.PI/N+j*2*Math.PI/N,q=R.p(Rv*Math.cos(th),Rv*Math.sin(th)),v=R.v(Math.cos(th),Math.sin(th)),d=leadOut(q,v,r);if(d>=0&&(!best||d<best.d-1e-9))best={d,q,v,j};if(d===0)break;}
+  if(!best)return{s:-1,q:0,ent:null,j:0};return{s:best.d,q:best.d,j:best.j,ent:best.d>0?[best.q[0]+best.v[0]*best.d,best.q[1]+best.v[1]*best.d]:null};}
+ else return null;
+ const sd=leadOut(p,u,r);if(!(sd>0))return{s:sd,q:0,ent:null};
+ const q=rect?Math.ceil(sd*Math.SQRT1_2*10)/10:sd;return{s:sd,q,ent:rect?[p[0]-q,p[1]-q]:[p[0]+u[0]*q,p[1]+u[1]*q]};}
 /* смещения проходов вокруг выступа: от внешнего к чистовому */
 const passes=(o,t)=>{if(o.side!='out'||!(+o.wall>0))return[0];const so=Math.max(0.1,t.d*(+o.over||45)/100),n=Math.max(0,Math.ceil((o.wall-t.d)/so)),a=[];for(let k=n;k>=0;k--)a.push(k*so);return a;};
 /* овал (две полуокружности + прямые): ccw — против часовой */
@@ -1277,14 +1375,15 @@ const G={
    L.push(`G1 X${X(-ax)} Y${Y(-ay)} F${t.f}`,`G1 X${X(ax)}`,`G1 Y${Y(ay)}`,`G1 X${X(-ax)}`,`G1 Y${Y(-ay)}`);}L.push(`G1 X${F(o.cx)} Y${F(o.cy)}`);});L.push(`G0 Z${F(c.safe)}`);},
  contourRect(c){const{o,t,r,L}=c,E=passes(o,t),off=o.side=='out'?r:-r,hx0=o.w/2+off,hy0=o.h/2+off;if(hx0<=0||hy0<=0)throw Error('TOOL TOO BIG');
   const path=e=>{const hx=hx0+e,hy=hy0+e;return o.side=='out'?[[-hx,-hy],[-hx,hy],[hx,hy],[hx,-hy],[-hx,-hy]]:[[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy],[-hx,-hy]];};
-  const P0=path(E[0]);c.start(o.cx+P0[0][0],o.cy+P0[0][1]);L.push('G0 Z1.');
-  levels(o.depth,o.step).forEach(z=>{E.forEach((e,ei)=>{const P=path(e);L.push(`G1 X${F(o.cx+P[0][0])} Y${F(o.cy+P[0][1])} F${t.f}`);if(!ei)L.push(`G1 Z${F(z)} F${c.fp}`);
+  const P0=path(E[0]),ent=(leadOp(o,t)||{}).ent;c.start(...(ent||[o.cx+P0[0][0],o.cy+P0[0][1]]));L.push('G0 Z1.');
+  levels(o.depth,o.step).forEach((z,li)=>{if(ent){if(li)L.push(`G1 ${XY(ent)} F${t.f}`);L.push(`G1 Z${F(z)} F${c.fp}`);}E.forEach((e,ei)=>{const P=path(e);L.push(`G1 X${F(o.cx+P[0][0])} Y${F(o.cy+P[0][1])} F${t.f}`);if(!ei&&!ent)L.push(`G1 Z${F(z)} F${c.fp}`);
    P.slice(1).forEach(([x,y],k)=>L.push(`G1 X${F(o.cx+x)} Y${F(o.cy+y)}${k?'':' F'+t.f}`));});});L.push(`G0 Z${F(c.safe)}`);},
  pocketCircle(c){const{o,t,r,L}=c,R=o.d/2-r;if(R<0)throw Error('TOOL TOO BIG');const so=Math.max(0.1,t.d*o.over/100),n=Math.max(1,Math.ceil(R/so)),LV=lvF(c);filChk(c,o,R-0.011);
   c.start(o.cx,o.cy);L.push('G0 Z1.');LV.forEach(({z,ins})=>{L.push(`G1 X${F(o.cx)} Y${F(o.cy)} F${t.f}`,`G1 Z${F(z)} F${c.fp}`);
    if(R>0.01)for(let i=1;i<=n;i++){const ri=(R-ins)*i/n;L.push(`G1 X${F(o.cx+ri)} Y${F(o.cy)} F${t.f}`,`G3 X${F(o.cx+ri)} Y${F(o.cy)} I${F(-ri)} J0.`);}});L.push(`G0 Z${F(c.safe)}`);},
  contourCircle(c){const{o,t,r,L}=c,E=passes(o,t),R0=o.d/2+(o.side=='out'?r:-r);if(R0<=0)throw Error('TOOL TOO BIG');const g=o.side=='out'?'G2':'G3';
-  c.start(o.cx+R0+E[0],o.cy);L.push('G0 Z1.');levels(o.depth,o.step).forEach(z=>{E.forEach((e,ei)=>{const R=R0+e;L.push(`G1 X${F(o.cx+R)} Y${F(o.cy)} F${t.f}`);if(!ei)L.push(`G1 Z${F(z)} F${c.fp}`);L.push(`${g} X${F(o.cx+R)} Y${F(o.cy)} I${F(-R)} J0. F${t.f}`);});});L.push(`G0 Z${F(c.safe)}`);},
+  const LD=leadOp(o,t)||{},ent=LD.ent,[ux,uy]=LD.u||[1,0],pt=R=>`X${F(o.cx+R*ux)} Y${F(o.cy+R*uy)}`,ij=R=>`I${F(-R*ux||0)} J${F(-R*uy||0)}`;
+  c.start(...(ent||[o.cx+(R0+E[0])*ux,o.cy+(R0+E[0])*uy]));L.push('G0 Z1.');levels(o.depth,o.step).forEach((z,li)=>{if(ent){if(li)L.push(`G1 ${XY(ent)} F${t.f}`);L.push(`G1 Z${F(z)} F${c.fp}`);}E.forEach((e,ei)=>{const R=R0+e;L.push(`G1 ${pt(R)} F${t.f}`);if(!ei&&!ent)L.push(`G1 Z${F(z)} F${c.fp}`);L.push(`${g} ${pt(R)} ${ij(R)} F${t.f}`);});});L.push(`G0 Z${F(c.safe)}`);},
  pocketOval(c,o=c.o,first=true){const{t,r,L}=c,R=rot(o),a=Math.max(0,(o.l-o.w)/2),Q=o.w/2-r;if(Q<0)throw Error('TOOL TOO BIG');if(o.l<o.w)throw Error('L < W');
   const so=Math.max(0.1,t.d*o.over/100),n=Q>0.01?Math.max(1,Math.ceil(Q/so)):0,LV=lvF(c,o);filChk(c,o,Q);let zp=0;
   if(first)c.start(...R.p(-a,0));else L.push(`G0 ${XY(R.p(-a,0))}`);L.push('G0 Z1.');
@@ -1293,14 +1392,14 @@ const G={
    for(let i=1;i<=n;i++){const ob=oval(R,a,(Q-ins)*i/n,true);L.push(`G1 ${XY(ob.s)} F${t.f}`,...ob.c);}
    L.push(`G1 ${XY(R.p(-a,0))}`);zp=z;});L.push(`G0 Z${F(c.safe)}`);},
  contourOval(c){const{o,t,r,L}=c,R=rot(o),a=Math.max(0,(o.l-o.w)/2),E=passes(o,t),Q0=o.w/2+(o.side=='out'?r:-r);if(Q0<=0)throw Error('TOOL TOO BIG');if(o.l<o.w)throw Error('L < W');
-  const ccw=o.side!='out';c.start(...oval(R,a,Q0+E[0],ccw).s);L.push('G0 Z1.');
-  levels(o.depth,o.step).forEach(z=>{E.forEach((e,ei)=>{const ob=oval(R,a,Q0+e,ccw);L.push(`G1 ${XY(ob.s)} F${t.f}`);if(!ei)L.push(`G1 Z${F(z)} F${c.fp}`,`G1 ${XY(ob.s)} F${t.f}`);L.push(...ob.c);});});L.push(`G0 Z${F(c.safe)}`);},
+  const ccw=o.side!='out',ent=(leadOp(o,t)||{}).ent;c.start(...(ent||oval(R,a,Q0+E[0],ccw).s));L.push('G0 Z1.');
+  levels(o.depth,o.step).forEach((z,li)=>{if(ent){if(li)L.push(`G1 ${XY(ent)} F${t.f}`);L.push(`G1 Z${F(z)} F${c.fp}`);}E.forEach((e,ei)=>{const ob=oval(R,a,Q0+e,ccw);L.push(`G1 ${XY(ob.s)} F${t.f}`);if(!ei&&!ent)L.push(`G1 Z${F(z)} F${c.fp}`,`G1 ${XY(ob.s)} F${t.f}`);L.push(...ob.c);});});L.push(`G0 Z${F(c.safe)}`);},
  polygon(c){const{o,t,r,L}=c,N=Math.max(3,Math.round(o.n)),R=rot(o),E=passes({...o,side:'out',wall:+o.blank>0?Math.max(0,o.blank/2-o.sw/2):o.wall},t);if(!(o.sw>0))throw Error('SW = 0');
   if(o.side=='in'){const Am=o.sw/2-r;if(Am<0)throw Error('TOOL TOO BIG');const so=Math.max(0.1,t.d*o.over/100),n=Math.max(1,Math.ceil(Am/so)),LV=lvF(c);filChk(c,o,Am);c.start(o.cx,o.cy);L.push('G0 Z1.');
    LV.forEach(({z,ins})=>{L.push(`G1 X${F(o.cx)} Y${F(o.cy)} F${t.f}`,`G1 Z${F(z)} F${c.fp}`);for(let i=1;i<=n;i++){const Rv=(Am-ins)*i/n/Math.cos(Math.PI/N);for(let k=0;k<=N;k++){const th=(k+.5)*2*Math.PI/N;L.push(`G1 ${XY(R.p(Rv*Math.cos(th),Rv*Math.sin(th)))} F${t.f}`);}}L.push(`G1 X${F(o.cx)} Y${F(o.cy)}`);});L.push(`G0 Z${F(c.safe)}`);return;}
-  const path=e=>{const A=o.sw/2+r+e,Rv=A/Math.cos(Math.PI/N),a=[];for(let k=N;k>=0;k--){const th=((k%N)+.5)*2*Math.PI/N;a.push(R.p(Rv*Math.cos(th),Rv*Math.sin(th)));}return a;};
-  c.start(...path(E[0])[0]);L.push('G0 Z1.');
-  levels(o.depth,o.step).forEach(z=>{E.forEach((e,ei)=>{const P=path(e);L.push(`G1 ${XY(P[0])} F${t.f}`);if(!ei)L.push(`G1 Z${F(z)} F${c.fp}`);P.slice(1).forEach((p,k)=>L.push(`G1 ${XY(p)}${k?'':' F'+t.f}`));});});L.push(`G0 Z${F(c.safe)}`);},
+  const LD=leadOp(o,t)||{},ent=LD.ent,Rr=LD.j?rot({...o,ang:(+o.ang||0)+LD.j*360/N}):R;
+  const path=e=>{const A=o.sw/2+r+e,Rv=A/Math.cos(Math.PI/N),a=[];for(let k=N;k>=0;k--){const th=((k%N)+.5)*2*Math.PI/N;a.push(Rr.p(Rv*Math.cos(th),Rv*Math.sin(th)));}return a;};c.start(...(ent||path(E[0])[0]));L.push('G0 Z1.');
+  levels(o.depth,o.step).forEach((z,li)=>{if(ent){if(li)L.push(`G1 ${XY(ent)} F${t.f}`);L.push(`G1 Z${F(z)} F${c.fp}`);}E.forEach((e,ei)=>{const P=path(e);L.push(`G1 ${XY(P[0])} F${t.f}`);if(!ei&&!ent)L.push(`G1 Z${F(z)} F${c.fp}`);P.slice(1).forEach((p,k)=>L.push(`G1 ${XY(p)}${k?'':' F'+t.f}`));});});L.push(`G0 Z${F(c.safe)}`);},
  groove(c){const{o,t,L}=c,r=t.d/2,cr=toolCR(t),rfl=r-cr,H=Math.abs(+o.h),pr=o.prof||'u';if(!(H>0))throw Error('Задайте глубину');
   const a=pr=='round'?0:(+o.w||0)/2,Rr=Math.max(0,+o.rf||0);if(pr!='round'&&!(a>0))throw Error('Задайте ширину');if(pr=='round'&&!(Rr>0))throw Error('Задайте радиус');
   const Ru=Math.min(Rr,a),ext=pr=='round'?(H<Rr?Math.sqrt(Rr*Rr-(Rr-H)**2):Rr):a;
@@ -1437,13 +1536,14 @@ const M={
   mStart(c,'#1','#2');L.push('G0 Z1.');(fil?mLvF:mLv)(c,4,5);
   L.push('G1 X#1 Y#2 F#22','G1 Z#26 F#23','#13=1','WHILE[#13LE#12]DO2',fil?'#14=[#10-#28]*#13/#12':'#14=#10*#13/#12','G1 X[#1+#14] Y#2 F#22','G3 X[#1+#14] Y#2 I[0-#14] J0','#13=#13+1','END2','END1','G0 Z#24');},
  contourCircle(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.d,'DIAMETER');MV(L,4,SDN(o),'SIDE 1=OUT -1=IN');MV(L,5,Math.abs(o.depth),'DEPTH');MV(L,6,o.step,'STEP Z');MV(L,7,+o.wall||0,'WALL AROUND');MV(L,8,+o.over||45,'STEPOVER PCT D');mTool(c);
-  L.push('#10=#3/2+#25*#4 (PATH R)');mAlarm(c,'#10GT0','TOOL TOO BIG');L.push('#11=#20*#8/100 (STEPOVER)');mPass(c,12,4,7,11);L.push('#13=2.5-#4*0.5 (G2 OUT G3 IN)');
-  mStart(c,'[#1+#10+#12*#11]','#2');L.push('G0 Z1.');mLv(c,5,6);
-  L.push('G1 X[#1+#10+#12*#11] Y#2 F#22','G1 Z#26 F#23','#14=#12','WHILE[#14GE0]DO2','#15=#10+#14*#11','G1 X[#1+#15] Y#2 F#22','G#13 X[#1+#15] Y#2 I[0-#15] J0 F#22','#14=#14-1','END2','END1','G0 Z#24');},
+  L.push('#10=#3/2+#25*#4 (PATH R)');mAlarm(c,'#10GT0','TOOL TOO BIG');L.push('#11=#20*#8/100 (STEPOVER)');mPass(c,12,4,7,11);L.push('#13=2.5-#4*0.5 (G2 OUT G3 IN)');const LD=leadOp(o,c.t)||{},lq=LD.q,lx=lq?'+#19':'',k=LD.k||0;if(lq)MV(L,19,lq,'LEAD-IN OUTSIDE STOCK');
+  const cp=R=>[[`[#1+${R}]`,'#2'],['#1',`[#2+${R}]`],[`[#1-${R}]`,'#2'],['#1',`[#2-${R}]`]][k],cij=R=>[[`I[0-${R}]`,'J0'],['I0',`J[0-${R}]`],[`I[${R}]`,'J0'],['I0',`J[${R}]`]][k],P0=cp(`#10+#12*#11${lx}`),PR=cp('#15'),IJ2=cij('#15');
+  mStart(c,...P0);L.push('G0 Z1.');mLv(c,5,6);
+  L.push(`G1 X${P0[0]} Y${P0[1]} F#22`,'G1 Z#26 F#23','#14=#12','WHILE[#14GE0]DO2','#15=#10+#14*#11',`G1 X${PR[0]} Y${PR[1]} F#22`,`G#13 X${PR[0]} Y${PR[1]} ${IJ2[0]} ${IJ2[1]} F#22`,'#14=#14-1','END2','END1','G0 Z#24');},
  contourRect(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.w,'LENGTH X');MV(L,4,o.h,'WIDTH Y');MV(L,5,SDN(o),'SIDE 1=OUT -1=IN');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,+o.wall||0,'WALL AROUND');MV(L,9,+o.over||45,'STEPOVER PCT D');mTool(c);
-  L.push('#10=#3/2+#25*#5','#11=#4/2+#25*#5');mAlarm(c,'#10GT0','TOOL TOO BIG');mAlarm(c,'#11GT0','TOOL TOO BIG');L.push('#12=#20*#9/100 (STEPOVER)');mPass(c,13,5,8,12);
-  mStart(c,'[#1-#10-#13*#12]','[#2-#11-#13*#12]');L.push('G0 Z1.');mLv(c,6,7);
-  L.push('G1 X[#1-#10-#13*#12] Y[#2-#11-#13*#12] F#22','G1 Z#26 F#23','#14=#13','WHILE[#14GE0]DO2','#15=#10+#14*#12','#16=#11+#14*#12',
+  L.push('#10=#3/2+#25*#5','#11=#4/2+#25*#5');mAlarm(c,'#10GT0','TOOL TOO BIG');mAlarm(c,'#11GT0','TOOL TOO BIG');L.push('#12=#20*#9/100 (STEPOVER)');mPass(c,13,5,8,12);const LD=leadOp(o,c.t),lq=LD&&LD.q,lx=lq?'-#19':'';if(lq)MV(L,19,lq,'LEAD-IN X Y OUTSIDE STOCK');
+  mStart(c,`[#1-#10-#13*#12${lx}]`,`[#2-#11-#13*#12${lx}]`);L.push('G0 Z1.');mLv(c,6,7);
+  L.push(`G1 X[#1-#10-#13*#12${lx}] Y[#2-#11-#13*#12${lx}] F#22`,'G1 Z#26 F#23','#14=#13','WHILE[#14GE0]DO2','#15=#10+#14*#12','#16=#11+#14*#12',
    'G1 X[#1-#15] Y[#2-#16] F#22','G1 X[#1-#15*#5] Y[#2+#16*#5]','G1 X[#1+#15] Y[#2+#16]','G1 X[#1+#15*#5] Y[#2-#16*#5]','G1 X[#1-#15] Y[#2-#16]','#14=#14-1','END2','END1','G0 Z#24');},
  pocketOval(c){const{o,L}=c;if(!c.inLoop){MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.l,'LENGTH L');MV(L,4,o.w,'WIDTH W');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,o.over,'STEPOVER PCT D');mTool(c);}
   L.push('#30=COS[#5]','#31=SIN[#5]','#10=[#3-#4]/2 (HALF STRAIGHT)','#11=#4/2-#25 (PATH Q)');mAlarm(c,'#10GE0','L LESS THAN W');mAlarm(c,'#11GE0','TOOL TOO BIG');const fil=c.inLoop?false:mFil(c,6,['#11']);
@@ -1455,18 +1555,18 @@ const M={
    'G1 X[#1-#10*#30] Y[#2-#10*#31]','#27=#26','END1','G0 Z#24');},
  contourOval(c){const{o,L}=c;MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,o.l,'LENGTH L');MV(L,4,o.w,'WIDTH W');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,SDN(o),'SIDE 1=OUT -1=IN');MV(L,7,Math.abs(o.depth),'DEPTH');MV(L,8,o.step,'STEP Z');MV(L,9,+o.wall||0,'WALL AROUND');MV(L,10,+o.over||45,'STEPOVER PCT D');mTool(c);
   L.push('#30=COS[#5]','#31=SIN[#5]','#11=[#3-#4]/2 (HALF STRAIGHT)','#12=#4/2+#25*#6 (PATH Q)');mAlarm(c,'#11GE0','L LESS THAN W');mAlarm(c,'#12GT0','TOOL TOO BIG');
-  L.push('#13=#20*#10/100 (STEPOVER)');mPass(c,14,6,9,13);L.push('#17=2.5-#6*0.5 (G2 OUT G3 IN)','#16=[#12+#14*#13]*#6');
+  L.push('#13=#20*#10/100 (STEPOVER)');mPass(c,14,6,9,13);const LD=leadOp(o,c.t),lq=LD&&LD.q,lx=lq?'+#19':'';if(lq)MV(L,19,lq,'LEAD-IN OUTSIDE STOCK');L.push('#17=2.5-#6*0.5 (G2 OUT G3 IN)',`#16=[#12+#14*#13]*#6${lx}`);
   mStart(c,'[#1-#11*#30-#16*#31]','[#2-#11*#31+#16*#30]');L.push('G0 Z1.');mLv(c,7,8);
-  L.push('#16=[#12+#14*#13]*#6',`G1 ${RP('-','+','#11','#16')} F#22`,'G1 Z#26 F#23','#15=#14','WHILE[#15GE0]DO2','#16=[#12+#15*#13]*#6',
+  L.push(`#16=[#12+#14*#13]*#6${lx}`,`G1 ${RP('-','+','#11','#16')} F#22`,'G1 Z#26 F#23','#15=#14','WHILE[#15GE0]DO2','#16=[#12+#15*#13]*#6',
    `G1 ${RP('-','+','#11','#16')} F#22`,`G1 ${RP('+','+','#11','#16')}`,`G#17 ${RP('+','-','#11','#16')} ${RIJ('-','#16')}`,`G1 ${RP('-','-','#11','#16')}`,`G#17 ${RP('-','+','#11','#16')} ${RIJ('+','#16')}`,'#15=#15-1','END2','END1','G0 Z#24');},
  polygon(c){const{o,L}=c;if(o.side=='in'){MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,Math.max(3,Math.round(o.n)),'NUMBER OF FACES');MV(L,4,o.sw,'ACROSS FLATS SW');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,o.over,'STEPOVER PCT D');mTool(c);
    L.push('#10=#4/2-#25 (PATH APOTHEM)');mAlarm(c,'#10GE0','TOOL TOO BIG');const fil=mFil(c,6,['#10']);L.push('#11=#20*#8/100 (STEPOVER)','#12=FUP[#10/#11] (RINGS)','IF[#12LT1]THEN#12=1');
    mStart(c,'#1','#2');L.push('G0 Z1.');(fil?mLvF:mLv)(c,6,7);
    L.push('G1 X#1 Y#2 F#22','G1 Z#26 F#23','#13=1','WHILE[#13LE#12]DO2',fil?'#14=[#10-#28]*#13/#12/COS[180/#3] (VERTEX R)':'#14=#10*#13/#12/COS[180/#3] (VERTEX R)','#15=0','WHILE[#15LE#3]DO3','#16=[#15+0.5]*360/#3+#5','G1 X[#1+#14*COS[#16]] Y[#2+#14*SIN[#16]] F#22','#15=#15+1','END3','#13=#13+1','END2','G1 X#1 Y#2','END1','G0 Z#24');return;}
   MV(L,1,o.cx,'CENTER X');MV(L,2,o.cy,'CENTER Y');MV(L,3,Math.max(3,Math.round(o.n)),'NUMBER OF FACES');MV(L,4,o.sw,'ACROSS FLATS SW');MV(L,5,+o.ang||0,'ANGLE');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,+o.wall||0,'WALL AROUND');MV(L,9,+o.over||45,'STEPOVER PCT D');MV(L,18,+o.blank||0,'BLANK DIAMETER');mTool(c);
-  mAlarm(c,'#4GT0','SW IS ZERO');L.push('IF[#18GT0]THEN#8=#18/2-#4/2','IF[#8LT0]THEN#8=0');L.push('#10=#20*#9/100 (STEPOVER)');mPass(c,11,0,8,10);L.push('#13=[#4/2+#25+#11*#10]/COS[180/#3]');
+  mAlarm(c,'#4GT0','SW IS ZERO');L.push('IF[#18GT0]THEN#8=#18/2-#4/2','IF[#8LT0]THEN#8=0');L.push('#10=#20*#9/100 (STEPOVER)');mPass(c,11,0,8,10);const LD=leadOp(o,c.t)||{},lq=LD.q,lx=lq?'+#19':'';if(lq)MV(L,19,lq,'LEAD-IN OUTSIDE STOCK');if(LD.j)L.push(`#5=#5+${F(LD.j*360/Math.max(3,Math.round(o.n)))} (START FROM NEAREST VERTEX)`);L.push(`#13=[#4/2+#25+#11*#10]/COS[180/#3]${lx}`);
   mStart(c,'[#1+#13*COS[180/#3+#5]]','[#2+#13*SIN[180/#3+#5]]');L.push('G0 Z1.');mLv(c,6,7);
-  L.push('#13=[#4/2+#25+#11*#10]/COS[180/#3]','G1 X[#1+#13*COS[180/#3+#5]] Y[#2+#13*SIN[180/#3+#5]] F#22','G1 Z#26 F#23','#12=#11','WHILE[#12GE0]DO2','#13=[#4/2+#25+#12*#10]/COS[180/#3] (VERTEX R)',
+  L.push(`#13=[#4/2+#25+#11*#10]/COS[180/#3]${lx}`,'G1 X[#1+#13*COS[180/#3+#5]] Y[#2+#13*SIN[180/#3+#5]] F#22','G1 Z#26 F#23','#12=#11','WHILE[#12GE0]DO2','#13=[#4/2+#25+#12*#10]/COS[180/#3] (VERTEX R)',
    'G1 X[#1+#13*COS[180/#3+#5]] Y[#2+#13*SIN[180/#3+#5]] F#22','#14=#3','WHILE[#14GT0]DO3','#14=#14-1','#15=[#14+0.5]*360/#3+#5','G1 X[#1+#13*COS[#15]] Y[#2+#13*SIN[#15]]','END3','#12=#12-1','END2','END1','G0 Z#24');},
  slotsRad(c){const{o,L}=c;MV(L,19,Math.max(1,Math.round(o.cnt)),'NUMBER OF SLOTS');MV(L,16,o.cx,'CIRCLE CENTER X');MV(L,17,o.cy,'CIRCLE CENTER Y');MV(L,18,o.pr,'RADIUS TO SLOT CENTER');MV(L,28,+o.ang||0,'FIRST SLOT ANGLE');MV(L,29,+o.orient||0,'0=RADIAL 90=TANGENT');
   MV(L,3,o.l,'LENGTH L');MV(L,4,o.w,'WIDTH W');MV(L,6,Math.abs(o.depth),'DEPTH');MV(L,7,o.step,'STEP Z');MV(L,8,o.over,'STEPOVER PCT D');mTool(c);
@@ -1628,10 +1728,7 @@ function opCode(o){const t=st.tools.find(x=>x.id==o.tool);if(!t)throw Error('Н�
 
 /* ---------- парсер для симуляции ---------- */
 /* диаметр инструмента из комментариев исходного текста: «T06 M06 (FREZA D6)» или комментарий в 4 строках выше («(OTVERST M3 SVERLO 2.5)») */
-function toolDiaFromText(code){const td={},DR=/(?:^|[^A-ZА-Я])(?:D|Ø|DIA|ДИАМ|SVERLO|СВЕРЛО|FREZA|ФРЕЗА|DRILL|MILL)\s*=?\s*(\d+(?:[.,]\d+)?)/i;let lastC=null;
- String(code).split('\n').forEach((raw,ln)=>{const body=raw.replace(/\(.*?\)/g,'').replace(/<[^>]*>/g,'').toUpperCase(),cm=/\(([^)]*)\)/.exec(raw),mt=/T\s*(\d+)/.exec(body);
-  if(mt&&!/#/.test(body)&&td[+mt[1]]==null){const md=(cm&&DR.exec(cm[1]))||(lastC&&ln-lastC.ln<=4&&DR.exec(lastC.t));if(md)td[+mt[1]]=+md[1].replace(',','.');}
-  else if(cm)lastC={t:cm[1],ln};});return td;}
+function toolDiaFromText(code){const td={};codeTools(code).forEach(f=>{if(f.d>0)td[f.num]=f.d;});return td;}
 function parse(code){
  let X;try{X=expand(code)}catch(e){return{segs:[],time:0,len:{f:0,r:0},err:e.message};}
  const WO={};if(mpGet().mode=='wcs')parts().forEach(q=>WO[q.w]={x:q.x,y:q.y});let wo={x:0,y:0},loc={x:0,y:0,z:0};
@@ -1800,7 +1897,7 @@ function openCodeText(txt,name,conv){txt=String(txt).replace(/\r\n?/g,'\n');if(!
  let rodMsg='';{const P=parse(txt);if(P.hasA&&st.stock.shape!='rod'){const F_=P.segs.filter(s=>!s.rapid);let x0=1e9,x1=-1e9;F_.forEach(s=>{x0=Math.min(x0,s.a.x,s.b.x);x1=Math.max(x1,s.a.x,s.b.x);});if(!(x1>x0)){x0=0;x1=50;}
   const md=/DIAM?[^0-9]{0,3}(\d+(?:[.,]\d+)?)|Ø\s*(\d+(?:[.,]\d+)?)|ПРУТ[^0-9]{0,6}(\d+(?:[.,]\d+)?)/i.exec(txt),D=md?+(md[1]||md[2]||md[3]).replace(',','.'):Math.max(10,Math.ceil(2*Math.max(...F_.map(s=>Math.hypot(s.a.y,s.a.z)).filter(v=>v<200),5)));
   st.stock.shape='rod';st.stock.d=D;st.stock.rx=+(x0-2).toFixed(1);st.stock.rl=+(x1-x0+8).toFixed(1);save(true);rodMsg=` Заготовка: пруток Ø${D} × ${st.stock.rl} на оси A (поправьте на вкладке «Проект»).`;}}
- $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;srcSet(txt,name);toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
+ $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;srcSet(txt,name);toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);{const TL=codeTools(txt);if(TL.length&&(ctCmp(TL).some(f=>f.st!='same')||st.tools.some(t=>!TL.some(f=>f.num==t.num))))setTimeout(()=>ctAsk(TL,name),450);}if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
 window.openCodeText=openCodeText;
 window.openCode=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>openCodeText(r.result,f.name);r.readAsText(f);inp.value='';};
 window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
@@ -1809,8 +1906,8 @@ const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+((r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'')+(r.warn?`<span style="color:var(--acc)">⚠ ${esc(r.warn)}</span>`:''));
  clearTimeout(window.__chkT);window.__chkT=setTimeout(()=>{const L=checkProgram($('#code').value),b=$('#chkBox');if(b)b.innerHTML=`<details ${L.some(x=>x.sev=='err')?'open':''}><summary style="cursor:pointer;margin:4px 0 8px;color:${L.some(x=>x.sev=='err')?'var(--bad)':L.some(x=>x.sev=='warn')?'var(--acc)':'var(--ok)'}">Проверка программы: ${L[0].sev=='ok'?'✓ замечаний нет':L.length+' замеч.'}</summary>${chkHTML(L)}</details>`;},350);
- $('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';if(!CV.edit)cvRender();fmtSegUI();}
-$('#code').addEventListener('input',()=>{manual=true;updCodeInfo();});
+ if(!CT.inp)CT.last=codeTools(c);ctBar();$('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';if(!CV.edit)cvRender();fmtSegUI();}
+$('#code').addEventListener('input',()=>{manual=true;CT.inp=true;try{updCodeInfo();}finally{CT.inp=false;}clearTimeout(CT.tm);CT.tm=setTimeout(ctSync,700);});
 const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
 window.downloadCode=e=>{if(saveNative(fname(e),$('#code').value.replace(/\n/g,'\r\n')))return;const b=new Blob([$('#code').value.replace(/\n/g,'\r\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname(e);document.body.appendChild(a);a.click();a.remove();toast('Файл '+fname(e)+' сохранён');};
 window.copyCode=()=>{navigator.clipboard.writeText($('#code').value).then(()=>toast('Скопировано'));};
@@ -2045,7 +2142,8 @@ function checkProgram(code){const out=[],add=(sev,msg,ln)=>{if(out.length<40)out
  /* операции и инструмент */
  st.ops.forEach((o,i)=>{if(!o.on)return;const t=st.tools.find(x=>x.id==o.tool);if(!t){add('err',`Операция ${i+1}: не выбран инструмент`);return;}
   if(!OPS[o.type].k.includes(t.type))add('warn',`Операция ${i+1} «${OPS[o.type].s}»: инструмент T${t.num} (${TT[t.type].n}) не типичен для этого цикла`);
-  if(+o.step>t.d&&!PERREV.includes(t.type)&&t.type!='tap')add('warn',`Операция ${i+1}: шаг по Z ${o.step} мм больше диаметра фрезы Ø${t.d}`);});
+  if(+o.step>t.d&&!PERREV.includes(t.type)&&t.type!='tap')add('warn',`Операция ${i+1}: шаг по Z ${o.step} мм больше диаметра фрезы Ø${t.d}`);
+  try{const LD=leadOp(effOp(o),t);if(LD&&LD.s<0)add('warn',`Операция ${i+1} «${OPS[o.type].s}»: заготовка намного больше контура — фреза опускается прямо в материал. Увеличьте «Съём вокруг», чтобы подвод был снаружи`);}catch(e){}});
  const used=[...new Set(st.ops.filter(o=>o.on).map(o=>o.tool))];st.tools.filter(t=>used.includes(t.id)).forEach(t=>{if(!(t.s>0)||!(t.f>0))add('err',`T${t.num}: не заданы обороты или подача`);});
  if(!out.length)add('ok','Замечаний нет: ускоренные ходы не задевают материал, шпиндель включён, корректоры совпадают');
  return out;}
@@ -2917,7 +3015,7 @@ H.cur=JSON.stringify(st);renderAll();modeUI();show('home');
  <p style="font-size:13px;color:var(--mut)">Данные не собираются: проекты и фото остаются на этом устройстве.<br><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика конфиденциальности</a></p>
  <button class="btn p" id="wOk" style="width:100%;padding:13px">Понятно, принимаю</button></div>`;document.body.appendChild(d);
  $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms2',String(Date.now()));}catch(e){}d.remove();if(!MODE)modeModal();};})();
-window.__fcam={ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
+window.__fcam={codeTools,ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
 </html>
