@@ -488,7 +488,7 @@ nav button svg{width:22px;height:22px;display:block}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.8.3';
+const APP_VERSION='2.9.0';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -1693,7 +1693,7 @@ function expand(code){const raw=code.split('\n');if(!/#|WHILE|GOTO/i.test(code))
  return out;}
 
 /* ---------- пояснения в скобках: транслит / кириллица / English ---------- */
-const CRU={'CONTOUR SIZES':'РАЗМЕРЫ КОНТУРА','PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE Z':'ПАРАМЕТРЫ: #1.. РАЗМЕРЫ, #20 D ФРЕЗЫ, #21 ОБОРОТЫ, #22 ПОДАЧА, #23 ВРЕЗАНИЕ, #24 БЕЗОП. Z',
+const CRU={'CONTOUR SIZES':'РАЗМЕРЫ КОНТУРА','APPROACH GAP':'ЗАЗОР ПОДВОДА НАД ГЛУБИНОЙ','NUMBER OF STRIPS':'КОЛ-ВО ПОЛОС НА ГЛУБИНЕ','STRIP STEP':'ШАГ МЕЖДУ ПОЛОСАМИ','FIRST APPROACH':'ПЕРВЫЙ ПОДВОД','PARAMETRIC: EDIT #1.. SIZES, #20 D #21 S #22 F #23 F PLUNGE #24 SAFE Z':'ПАРАМЕТРЫ: #1.. РАЗМЕРЫ, #20 D ФРЕЗЫ, #21 ОБОРОТЫ, #22 ПОДАЧА, #23 ВРЕЗАНИЕ, #24 БЕЗОП. Z',
  'X FROM':'X ОТ','Y FROM':'Y ОТ','X TO':'X ДО','Y TO':'Y ДО','DEPTH':'ГЛУБИНА','STEP Z':'ШАГ ПО Z','STEPOVER PCT D':'ШАГ ВБОК % ОТ D','TOOL D':'ДИАМЕТР ФРЕЗЫ','SPINDLE S':'ОБОРОТЫ',
  'FEED F':'ПОДАЧА','THICKNESS T':'ТОЛЩИНА T','FLAT LENGTH L':'ДЛИНА ЛЫСКИ L','BAR END X':'X ТОРЦА ПРУТКА','1=FROM LEFT -1=FROM RIGHT':'1=ОТ ЛЕВОГО -1=ОТ ПРАВОГО','BAR RADIUS':'РАДИУС ПРУТКА','AXIS Z':'Z ОСИ','FIRST A':'A ПЕРВОЙ СТОРОНЫ','SIDES':'КОЛ-ВО СТОРОН','TOP Z':'Z ВЕРХА ПРУТКА','FLAT Z':'Z ЛЫСКИ','X START':'X НАЧАЛА','X END':'X КОНЦА','Y END':'Y КОНЦА','COLUMNS':'КОЛ-ВО ПРОХОДОВ','SIDE NO':'НОМЕР СТОРОНЫ','HALF WIDTH':'ПОЛУШИРИНА ПРУТКА НА ЭТОЙ Z','T BIGGER THAN BAR':'ТОЛЩИНА БОЛЬШЕ ПРУТКА','FLAT SHORTER THAN TOOL R':'ЛЫСКА КОРОЧЕ РАДИУСА ФРЕЗЫ','Y START':'Y НАЧАЛА','Y END':'Y КОНЦА','PLUNGE F':'ПОДАЧА ВРЕЗАНИЯ','SAFE Z':'БЕЗОПАСНАЯ Z','TOOL R':'РАДИУС ФРЕЗЫ','X START':'X НАЧАЛА','X END':'X КОНЦА','STEPOVER':'ШАГ ВБОК','CENTER X':'ЦЕНТР X','CENTER Y':'ЦЕНТР Y',
  'LENGTH X':'ДЛИНА X','WIDTH Y':'ШИРИНА Y','RINGS':'КОЛ-ВО ПРОХОДОВ','DIAMETER':'ДИАМЕТР','PATH R':'РАДИУС ТРАЕКТОРИИ','SIDE 1=OUT -1=IN':'1=СНАРУЖИ -1=ВНУТРИ','WALL AROUND':'СЪЕМ ВОКРУГ',
@@ -1785,68 +1785,143 @@ function regen(force){if(force){manual=false;IMP=null;convOrig=null;const cb=$('
 window.regen=regen;
 /* ---------- перевод готовой программы в параметрию: повторяющиеся проходы по Z → цикл WHILE ---------- */
 Object.assign(CRU,{'Z LAST STEP':'Z ПОСЛЕДНЕГО ПРОХОДА С ШАГОМ','Z FINISH PASS':'Z ФИНАЛЬНОГО ПРОХОДА','Z START':'Z ПЕРВОГО ПРОХОДА','Z FINAL':'Z ПОСЛЕДНЕГО ПРОХОДА','CURRENT Z':'ТЕКУЩАЯ Z','PASS NO':'НОМЕР ПРОХОДА','Z LOOP':'ЦИКЛ ПРОХОДОВ ПО Z','PARAMETRIC FROM FILE':'ПАРАМЕТРИЯ: МЕНЯЙТЕ #1 #2 #3 #5 ПЕРЕД ЦИКЛОМ'});
-function toMacro(code){const raw=String(code).replace(/\r\n?/g,'\n').split('\n'),lang=st.prog.cmt||'lat',C=t=>`(${trC(t,lang)})`;
+/* Перевод обычной программы в параметрию (Custom Macro B).
+   Ищет повторяющиеся проходы по Z (тот же контур на разных глубинах) и сворачивает их в цикл WHILE:
+   - подводы «G00 Z… → G01 Z глубина» считаются отдельно от контура: подвод может быть на постоянной высоте,
+     на «глубина + зазор» или отсутствовать в части проходов — проходы всё равно узнаются как одинаковые;
+   - если на каждой глубине несколько одинаковых полос, сдвинутых на один шаг (плоскость, ступенька), — вложенный цикл по полосам;
+   - размеры контура X / Y / R → переменные #101… (одинаковые числа — одна переменная).
+   Результат проверяется: резание (рабочие ходы) должно совпасть с исходным. */
+function toMacro(code,opt={}){const raw=String(code).replace(/\r\n?/g,'\n').split('\n'),lang=st.prog.cmt||'lat',C=t=>`(${trC(t,lang)})`;
  if(raw.some(t=>/[#\[]|WHILE|GOTO/i.test(t.replace(/\(.*?\)/g,''))))return{err:'Программа уже параметрическая (есть # / WHILE / GOTO)'};
- let mode=0,F_=null,cyc=false;
+ let mode=0,F_=null,cyc=false,inc=false,zc=null;
  const A=raw.map((t,i)=>{const cm=(t.match(/\(.*?\)/g)||[]).join(' '),b=t.replace(/\(.*?\)/g,'').toUpperCase().trim();const W=[];b.replace(/([A-Z])\s*([-+]?[\d.]+)/g,(m,k,v)=>{W.push([k,v]);});
   if(!W.length)return{i,t,key:'#'+t.trim(),vals:[],W,cm,blank:true};
-  W.filter(w=>w[0]=='G').forEach(([,v])=>{const g=+v;if(g<=3&&Number.isInteger(g)){mode=g;cyc=false;}if([73,81,82,83,84,85,86].includes(g))cyc=true;if(g==80)cyc=false;});
-  const f=W.find(w=>w[0]=='F');if(f)F_=+f[1];const ax=W.some(w=>'XYZIJR'.includes(w[0]));
+  let spec=false;W.filter(w=>w[0]=='G').forEach(([,v])=>{const g=+v;if(g<=3&&Number.isInteger(g)){mode=g;cyc=false;}if([73,74,76,81,82,83,84,85,86,87,88,89].includes(g))cyc=true;if(g==80)cyc=false;if(g==91)inc=true;if(g==90)inc=false;
+   if([28,29,30,53,52,92,10,65,66,68,69,50,51].includes(Math.floor(g)))spec=true;});
+  const f=W.find(w=>w[0]=='F');if(f)F_=+f[1];const ax=W.some(w=>'XYZIJR'.includes(w[0])),zw=W.find(w=>w[0]=='Z'),zb=zc;
+  if(zw)zc=(inc||spec||cyc)?null:+zw[1];
+  if(inc||spec)return{i,t,key:'!'+i,vals:[],W,cm,mode:-1};
+  const mw=W.filter(w=>w[0]=='M'),mx=ax&&mw.length&&mw.every(w=>[5,7,8,9].includes(+w[1]))?mw.map(w=>'M'+w[1]).join(' '):'';
   const key=[],vals=[];if(ax&&!cyc)key.push('m'+mode);
   W.forEach(([k,v])=>{if(k=='N')return;if(k=='G'){const g=+v;if(Number.isInteger(g)&&g<=3&&!cyc)return;if(g==90)return;key.push('G'+g);return;}
-   if(k=='F')return;if('XYZIJRQA'.includes(k)){key.push(k);vals.push({k,v:+v});return;}key.push(k+v);});
+   if(k=='F')return;if('XYZIJRQA'.includes(k)){key.push(k);vals.push({k,v:+v});return;}if(k=='M'&&mx)return;key.push(k+v);});
   const fe=W.find(w=>w[0]=='F');if(ax&&!cyc&&mode>0||fe){key.push('F');vals.push({k:'F',v:fe?+fe[1]:F_,ex:!!fe});}
-  return{i,t,key:key.join(' '),vals,W,cm,mode:ax&&!cyc?mode:-1,zOnly:ax&&W.filter(w=>'XYZIJR'.includes(w[0])).every(w=>w[0]=='Z')};});
- const n=A.length,eqK=(a,b,P)=>{for(let m=0;m<P;m++)if(A[a+m].key!==A[b+m].key)return false;return true;};
- /* модель прохода: главная Z (врезание), остальные — от неё или постоянные */
- function model(i,P,K){if(K<3)return null;const seq=(m,q)=>[...Array(K)].map((_,k)=>A[i+k*P+m].vals[q].v);let best=null;
-  for(let m=0;m<P;m++)A[i+m].vals.forEach((v,q)=>{if(v.k!='Z')return;const s=seq(m,q),rg=Math.abs(s[0]-s[K-1]);if(rg<1e-6)return;const sc=(A[i+m].mode>=1&&A[i+m].zOnly?2:1)*1e6+rg;if(!best||sc>best.sc)best={m,q,s,sc};});
+  const zOnly=ax&&W.filter(w=>'XYZIJR'.includes(w[0])).every(w=>w[0]=='Z'),other=W.some(w=>!'NGXYZIJRF'.includes(w[0])&&!(mx&&w[0]=='M'));
+  return{i,t,key:key.join(' '),vals,W,cm,mx,mode:ax&&!cyc?mode:-1,zOnly,other,zb,za:zw&&!cyc?+zw[1]:null};});
+ /* врезание: рабочий ход только по Z вниз; подвод: быстрый ход только по Z вниз прямо перед врезанием */
+ A.forEach((p,j)=>{if(p.blank||p.mode<1||!p.zOnly||p.other||p.zb==null||!(p.za<p.zb))return;p.plg=true;p.ap=null;
+  const a=A[j-1];if(opt.noAp||!a||a.blank||a.mode!==0||!a.zOnly||a.other||a.zb==null||!(a.za<a.zb))return;a.appr=true;p.ap=a.za;});
+ const B=A.filter(a=>!a.appr),n=B.length,rawFor=k=>raw.slice(k?B[k-1].i+1:0,B[k].i+1);
+ const eqK=(a,b,P)=>{for(let m=0;m<P;m++)if(B[a+m].key!==B[b+m].key)return false;return true;};
+ /* модель цикла: главная Z (врезание), остальные числа — постоянные, «от глубины» или с шагом */
+ function model(i,P,K){if(K<3)return null;const seq=(m,q)=>[...Array(K)].map((_,k)=>B[i+k*P+m].vals[q].v);let best=null;
+  for(let m=0;m<P;m++)B[i+m].vals.forEach((v,q)=>{if(v.k!='Z')return;const s=seq(m,q),rg=Math.abs(s[0]-s[K-1]);if(rg<1e-6)return;const sc=(B[i+m].mode>=1&&B[i+m].zOnly?2:1)*1e6+rg;if(!best||sc>best.sc)best={m,q,s,sc};});
   if(!best)return null;const z=best.s,d=z[1]-z[0];if(!(d<-1e-6))return null;
   for(let k=1;k<K-1;k++)if(Math.abs(z[k]-(z[0]+k*d))>1e-4)return null;if(!(z[K-1]<z[K-2]-1e-6))return null;
-  const exact=z[K-1]>=z[K-2]+d-1e-4,R={};let notes=[];
-  for(let m=0;m<P;m++)A[i+m].vals.forEach((v,q)=>{const s=seq(m,q);if(s.every(x=>Math.abs(x-s[0])<1e-6)){R[m+'_'+q]={c:s[0]};return;}
+  const exact=z[K-1]>=z[K-2]+d-1e-4,R={};
+  for(let m=0;m<P;m++)B[i+m].vals.forEach((v,q)=>{if(v.k=='F')return;const s=seq(m,q);if(s.every(x=>Math.abs(x-s[0])<1e-6)){R[m+'_'+q]={c:s[0]};return;}
    if(m==best.m&&q==best.q){R[m+'_'+q]={z:0};return;}
    const o=s.map((x,k)=>x-z[k]);if(v.k=='Z'&&o.every(x=>Math.abs(x-o[0])<1e-6)){R[m+'_'+q]={z:o[0]};return;}
    const om=o.slice(1,K-1);if(v.k=='Z'&&K>=4&&om.every(x=>Math.abs(x-om[0])<1e-6)){R[m+'_'+q]={z:om[0],zv:true,z0:Math.abs(o[0]-om[0])>1e-6?o[0]:null,zL:Math.abs(o[K-1]-om[0])>1e-6?o[K-1]:null};return;}
    const dd=s[1]-s[0];if(s.every((x,k)=>Math.abs(x-(s[0]+k*dd))<1e-4)){R[m+'_'+q]={k0:s[0],kd:dd};return;}R.fail=true;});
-  if(R.fail)return null;return{i,P,K,z,d,exact,R,best,notes:[...new Set(notes)]};}
- const out=[],loops=[];let i=0;
+  if(R.fail)return null;
+  /* подачи в одинаковых кадрах должны совпадать */
+  for(let m=0;m<P;m++){const fq=B[i+m].vals.findIndex(v=>v.k=='F');if(fq<0)continue;const s=seq(m,fq);if(!s.every(x=>x==null&&s[0]==null||Math.abs(x-s[0])<1e-9))return null;}
+  const mxm={},tail=[];for(let m=0;m<P;m++){const s=[...Array(K)].map((_,k)=>B[i+k*P+m].mx||'');if(s.every(x=>x==s[0])){mxm[m]=s[0]?'all':'';continue;}
+   if(s.slice(0,K-1).every(x=>!x)){mxm[m]='tail';tail.push(s[K-1]);continue;}return null;}
+  /* подводы перед врезаниями */
+  const AP={};let filled=0;
+  for(let m=0;m<P;m++){if(!B[i+m].plg)continue;const s=[...Array(K)].map((_,k)=>B[i+k*P+m].ap),nn=s.map((v,k)=>[v,k]).filter(([v])=>v!=null);if(!nn.length)continue;const nf=K-nn.length;
+   if(m==0&&nn.length==1&&nn[0][1]==0){AP[m]={pre:nn[0][0]};continue;}
+   if(nn.every(([v])=>Math.abs(v-nn[0][0])<1e-6)){AP[m]={c:nn[0][0]};filled+=nf;continue;}
+   /* иначе — «глубина + зазор»; зазор берём наибольший из исходных: подвод нигде не станет ниже, чем был */
+   const o=nn.map(([v,k])=>v-z[k]),rest=nn.map(([v,k],j)=>[o[j],k]).filter(([,k])=>k>0).map(([x])=>x);
+   const rm=rest.length?Math.round(Math.max(...rest)*1e4)/1e4:0;if(nn[0][1]==0&&rest.length&&rm>0&&o[0]>rm+1e-6){AP[m]={z:rm,first:nn[0][0]};filled+=nf;continue;}
+   const mx=Math.max(...o);if(mx<=0)return null;AP[m]={z:Math.round(mx*1e4)/1e4};filled+=nf;}
+  return{i,P,K,z,d,exact,R,AP,filled,best,mxm,tail};}
+ /* полосы: период = несколько одинаковых кусков, числа в которых идут с постоянным шагом */
+ function nest(c){if(opt.noNest)return null;const{i,P,R,AP}=c;let best=null;
+  for(let Q=1;Q<=P/2;Q++)for(let m0=0;m0+2*Q<=P;m0++){
+   let Ns=1;while(m0+(Ns+1)*Q<=P){let eq=true;for(let m=0;m<Q&&eq;m++){const x=B[i+m0+Ns*Q+m],y=B[i+m0+m];if(x.key!==y.key||!!x.plg!==!!y.plg||(c.mxm[m0+Ns*Q+m]=='all')!==(c.mxm[m0+m]=='all'))eq=false;}if(!eq)break;Ns++;}
+   if(Ns<2||best&&Q*Ns<=best.Q*best.Ns)continue;
+   if(Ns==2&&![...Array(Q)].some((_,m)=>B[i+m0+m].plg))continue;   /* две «полосы» — только если это отдельные проходы с врезанием */
+   let ok=true;const NR={},NA={};
+   for(let m=0;m<Q&&ok;m++){const p0=m0+m,L0=B[i+p0].vals;L0.forEach((v,q)=>{if(!ok||v.k=='F')return;const rs=[...Array(Ns)].map((_,s)=>R[(m0+s*Q+m)+'_'+q]);
+     if(rs.every(r=>r&&r.c!=null)){const b=rs[1].c-rs[0].c;if(rs.every((r,s)=>Math.abs(r.c-(rs[0].c+s*b))<1e-4))NR[p0+'_'+q]={c:rs[0].c,b:Math.abs(b)<1e-9?0:b};else ok=false;return;}
+     const j0=JSON.stringify(rs[0]);if(rs.every(r=>JSON.stringify(r)==j0))NR[p0+'_'+q]={...rs[0]};else ok=false;});
+    const fq=L0.findIndex(v=>v.k=='F');if(fq>=0)for(let s=1;s<Ns;s++){const x=B[i+m0+s*Q+m].vals[fq].v,y=L0[fq].v;if(!(x==null&&y==null||Math.abs(x-y)<1e-9))ok=false;}
+    const a0=JSON.stringify(AP[p0]||null);for(let s=1;s<Ns;s++)if(JSON.stringify(AP[m0+s*Q+m]||null)!==a0)ok=false;if(AP[p0])NA[p0]=AP[p0];}
+   const steps=new Set(Object.values(NR).filter(r=>r.b).map(r=>F(Math.abs(r.b))));
+   if(ok&&steps.size>=1&&steps.size<=3)best={m0,Q,Ns,NR,NA};}   /* полосы сдвинуты на 1–3 шага (обычно по X и/или Y), иначе это не полосы */
+  return best;}
+ const out=[],loops=[];let i=0,filledAll=0;
  while(i<n){let cand=null;
-  if(!A[i].blank)for(let P=2;P<=Math.min(1500,Math.floor((n-i)/3));P++){if(A[i].key!==A[i+P]?.key)continue;let K=1;while(i+(K+1)*P<=n&&eqK(i,i+K*P,P))K++;if(K<3)continue;
-   if(!A.slice(i,i+P).some(a=>a.vals.some(v=>v.k=='Z')))continue;
-   for(let k2=K;k2>=3&&!cand?.full;k2--){const md=P*(k2-1)>14?model(i,P,k2):null;if(md&&(!cand||md.P*md.K>cand.P*cand.K))cand=md;if(md)break;}}
-  if(!cand){out.push(raw[i]);i++;continue;}
-  /* вывод цикла */
-  const o0=out.length;
-  const{P,K,z,d,R}=cand,usesK=Object.values(R).some(r=>r&&r.k0!=null),Fv=(A.slice(i,i+P).flatMap(a=>a.vals).find(v=>v.k=='F'&&v.v>0)||{}).v,hasF=!!Fv;
-  const XV=new Map();if(st.prog.mxy!==false){for(let m=0;m<P;m++){const a=A[i+m];if(a.blank)continue;let q=0;a.W.forEach(([k,v])=>{if(k=='N'||k=='F'||k=='G')return;if(!'XYZIJRQA'.includes(k))return;const r=R[m+'_'+q++];
-    if('XYIJR'.includes(k)&&(!r||r.c!=null)){const val=r?r.c:+v,av=Math.abs(val);if(av>1e-9){const key=k+'|'+F(av);if(!XV.has(key))XV.set(key,{k,av});}}});}
-   if(XV.size>30)XV.clear();const cnt={};let vn2=101;XV.forEach(x=>{cnt[x.k]=(cnt[x.k]||0)+1;x.lab=x.k+cnt[x.k];x.vn='#'+(vn2++);});}
-  const xvOf=(k,val)=>{const x=XV.get(k+'|'+F(Math.abs(val)));return x&&Math.abs(val)>1e-9?(val<0?'-':'')+x.vn:null;};
-  const ex=cand.exact,zl=ex?z[K-1]:z[K-2];out.push(C('Z LOOP'),`#1=${F(z[0])} ${C('Z START')}`,`#2=${F(-d)} ${C('STEP Z')}`,`#3=${F(zl)} ${C(ex?'Z FINAL':'Z LAST STEP')}`);if(!ex)out.push(`#8=${F(z[K-1])} ${C('Z FINISH PASS')}`);if(hasF&&Fv)out.push(`#5=${F(Fv)} ${C('FEED F')}`);if(XV.size){out.push(C('CONTOUR SIZES'));XV.forEach(x=>out.push(`${x.vn}=${F(x.av)} (${x.lab})`));}
-  out.push(`#4=#1+#2`);if(usesK)out.push('#7=-1');out.push(`#6=${ex?'#3':'#8'}+0.001`,`WHILE[#4GT#6]DO1`,`#4=#4-#2`,`IF[#4LT#3]THEN#4=${ex?'#3':'#8'}`);if(usesK)out.push('#7=#7+1');
-  let fDone=false,vn=10;const fin=ex?'#3':'#8',zx=c=>Math.abs(c)<1e-9?'#4':`[#4${c>0?'+':'-'}${F(Math.abs(c))}]`;
-  Object.values(R).forEach(r=>{if(!r||!r.zv)return;r.vn='#'+(vn++);out.push(`${r.vn}=${zx(r.z)}`);if(r.z0!=null)out.push(`IF[#4GT[#1-0.001]]THEN${r.vn}=${zx(r.z0)}`);if(r.zL!=null)out.push(`IF[#4LT[${fin}+0.001]]THEN${r.vn}=${zx(r.zL)}`);});
-  for(let m=0;m<P;m++){const a=A[i+m];if(a.blank){out.push(a.t);continue;}const tk=[];let q=0,hasG=false;
-   a.W.forEach(([k,v])=>{if(k=='N'||k=='F')return;if(k=='G'){const g=+v;if(g<=3&&Number.isInteger(g))hasG=true;tk.push('G'+v);return;}
-    if('XYZIJRQA'.includes(k)){const r=R[m+'_'+q++];
-     if(!r||r.c!=null){const xv=xvOf(k,r?r.c:+v);tk.push(k+(xv||(r?F(r.c):v)));}else if(r.vn)tk.push(k+r.vn);else if(r.z!=null)tk.push(k+zx(r.z));else tk.push(`${k}[${F(r.k0)}${r.kd<0?'-':'+'}#7*${F(Math.abs(r.kd))}]`);return;}
+  if(!B[i].blank)for(let P=2;P<=Math.min(1500,Math.floor((n-i)/3));P++){if(B[i].key!==B[i+P]?.key)continue;let K=1;while(i+(K+1)*P<=n&&eqK(i,i+K*P,P))K++;if(K<3)continue;
+   if(!B.slice(i,i+P).some(a=>a.vals.some(v=>v.k=='Z')))continue;
+   for(let k2=K;k2>=3;k2--){const md=P*(k2-1)>14?model(i,P,k2):null;if(md){if(!cand||md.P*md.K>cand.P*cand.K)cand=md;break;}}}
+  if(!cand){out.push(...rawFor(i));i++;continue;}
+  const o0=out.length,{P,K,z,d,R,AP}=cand,NS=nest(cand);
+  /* какие строки периода выводятся: вне полос — все, из полос — только первая (она в цикле DO2) */
+  const POS=[...Array(P).keys()].filter(p=>!NS||p<NS.m0+NS.Q||p>=NS.m0+NS.Q*NS.Ns),RM={},AM={};
+  POS.forEach(p=>{const inS=NS&&p>=NS.m0&&p<NS.m0+NS.Q;B[i+p].vals.forEach((v,q)=>{const r=inS?NS.NR[p+'_'+q]:R[p+'_'+q];if(r)RM[p+'_'+q]=r;});const ap=inS?NS.NA[p]:AP[p];if(ap)AM[p]=ap;});
+  const usesK=Object.values(RM).some(r=>r&&r.k0!=null);
+  /* подачи: рабочая (#5) и врезания (#9) — самые частые в цикле */
+  const mostF=L=>{const c=new Map();L.forEach(v=>{if(v>0)c.set(v,(c.get(v)||0)+1);});let b=null,bn=0;c.forEach((nn,v)=>{if(nn>bn){b=v;bn=nn;}});return b;};
+  const fOf=a=>(a.vals.find(v=>v.k=='F')||{}).v,BL=POS.map(p=>B[i+p]).filter(a=>!a.blank&&a.mode>0);
+  const Fc=mostF(BL.filter(a=>!a.plg).map(fOf)),Fp=mostF(BL.filter(a=>a.plg).map(fOf)),Fv=Fc||Fp,Fpv=Fp&&Fc&&Math.abs(Fp-Fc)>1e-9?Fp:null;
+  /* размеры контура → #101… (одинаковые числа по одной оси — одна переменная) */
+  const XV=new Map();if(st.prog.mxy!==false){for(const m of POS){const a=B[i+m];if(a.blank)continue;let q=0;a.W.forEach(([k,v])=>{if(k=='N'||k=='F'||k=='G'||!'XYZIJRQA'.includes(k))return;const r=RM[m+'_'+q++];
+    if('XYIJR'.includes(k)&&r&&r.c!=null){const av=Math.abs(r.c);if(av>1e-9){const key=k+'|'+F(av);if(!XV.has(key))XV.set(key,{k,av});}}});}
+   if(XV.size>40)XV.clear();const cnt={};let v2=101;XV.forEach(x=>{cnt[x.k]=(cnt[x.k]||0)+1;x.lab=x.k+cnt[x.k];x.vn='#'+(v2++);});}
+  const cval=(k,val)=>{const x=XV.get(k+'|'+F(Math.abs(val)));return x&&Math.abs(val)>1e-9?{neg:val<0,vn:x.vn}:null;};
+  const ex=cand.exact,zl=ex?z[K-1]:z[K-2],fin=ex?'#3':'#8',zx=c=>Math.abs(c)<1e-9?'#4':`[#4${c>0?'+':'-'}${F(Math.abs(c))}]`;
+  /* шаги полос */
+  const SV=new Map();let sv=13;if(NS)POS.forEach(p=>{let q=0;B[i+p].W.forEach(([k])=>{if(!'XYZIJRQA'.includes(k)||k=='N')return;const r=RM[p+'_'+q++];if(r&&r.b){const key=F(Math.abs(r.b));if(!SV.has(key))SV.set(key,{vn:'#'+(sv++),ax:new Set()});SV.get(key).ax.add(k);}});});
+  /* зазор подвода над глубиной — одна переменная, если у всех подводов он одинаковый */
+  const apz=[...new Set(Object.values(AM).filter(a=>a.pre==null&&a.z!=null).map(a=>F(a.z)))],apVar=apz.length==1?'#10':null;
+  const pre=AP[0]&&AP[0].pre!=null?AP[0].pre:null;if(pre!=null)out.push(`G00 Z${F(pre)}`);
+  out.push(C('Z LOOP'),`#1=${F(z[0])} ${C('Z START')}`,`#2=${F(-d)} ${C('STEP Z')}`,`#3=${F(zl)} ${C(ex?'Z FINAL':'Z LAST STEP')}`);if(!ex)out.push(`#8=${F(z[K-1])} ${C('Z FINISH PASS')}`);
+  if(Fv)out.push(`#5=${F(Fv)} ${C('FEED F')}`);if(Fpv)out.push(`#9=${F(Fpv)} ${C('PLUNGE F')}`);if(apVar)out.push(`${apVar}=${apz[0]} ${C('APPROACH GAP')}`);
+  if(NS){out.push(`#12=${NS.Ns} ${C('NUMBER OF STRIPS')}`);SV.forEach((x,key)=>out.push(`${x.vn}=${key} (${trC('STRIP STEP',lang)} ${[...x.ax].join(' ')})`));}
+  if(XV.size){out.push(C('CONTOUR SIZES'));XV.forEach(x=>out.push(`${x.vn}=${F(x.av)} (${x.lab})`));}
+  out.push(`#4=#1+#2`);if(usesK)out.push('#7=-1');out.push(`#6=${fin}+0.001`,`WHILE[#4GT#6]DO1`,`#4=#4-#2`,`IF[#4LT#3]THEN#4=${fin}`);if(usesK)out.push('#7=#7+1');
+  let vn=20;const zvLines=r=>{r.vn='#'+(vn++);out.push(`${r.vn}=${zx(r.z)}`);if(r.z0!=null)out.push(`IF[#4GT[#1-0.001]]THEN${r.vn}=${zx(r.z0)}`);if(r.zL!=null)out.push(`IF[#4LT[${fin}+0.001]]THEN${r.vn}=${zx(r.zL)}`);};
+  Object.values(RM).forEach(r=>{if(r&&r.zv)zvLines(r);});Object.values(AM).forEach(a=>{if(a.first==null||a.pre!=null)return;a.vn='#'+(vn++);out.push(`${a.vn}=[#4+${apVar||F(a.z)}]`,`IF[#4GT[#1-0.001]]THEN${a.vn}=${F(a.first)} ${C('FIRST APPROACH')}`);});
+  const num=(k,c,b)=>{const x=cval(k,c),base=x?(x.neg?'0-':'')+x.vn:F(c);if(!b)return x?(x.neg?'-':'')+x.vn:F(c);return`[${base}${b<0?'-':'+'}#11*${SV.get(F(Math.abs(b))).vn}]`;};
+  let lastF=null;
+  for(const m of POS){if(NS&&m==NS.m0){out.push('#11=0',`WHILE[#11LT#12]DO2`);lastF=null;}
+   const a=B[i+m];if(a.blank){out.push(a.t);}else{
+   const ap=AM[m];if(a.plg&&ap&&ap.pre==null)out.push(`G00 Z${ap.c!=null?F(ap.c):ap.vn?ap.vn:apVar?`[#4+${apVar}]`:zx(ap.z)}`);
+   const tk=[];let q=0,hasG=false;
+   a.W.forEach(([k,v])=>{if(k=='N'||k=='F')return;if(k=='M'&&a.mx&&cand.mxm[m]!='all')return;if(k=='G'){const g=+v;if(g<=3&&Number.isInteger(g))hasG=true;tk.push('G'+v);return;}
+    if('XYZIJRQA'.includes(k)){const r=RM[m+'_'+q++];
+     if(!r)tk.push(k+v);else if(r.c!=null)tk.push(k+num(k,r.c,r.b));else if(r.vn)tk.push(k+r.vn);else if(r.z!=null)tk.push(k+zx(r.z));else tk.push(`${k}[${F(r.k0)}${r.kd<0?'-':'+'}#7*${F(Math.abs(r.kd))}]`);return;}
     tk.push(k+v);});
-   const fv=a.vals.find(v=>v.k=='F');if(fv&&(fv.ex||(!fDone&&a.mode>0))&&fv.v>0){tk.push(Math.abs(fv.v-Fv)<1e-9?'F#5':'F'+F(fv.v));fDone=true;}
+   const fv=fOf(a);if(a.mode>0&&fv>0&&fv!==lastF){tk.push(Fv&&Math.abs(fv-Fv)<1e-9?'F#5':Fpv&&Math.abs(fv-Fpv)<1e-9?'F#9':'F'+F(fv));lastF=fv;}
    if(a.mode>=0&&!hasG)tk.unshift('G0'+a.mode);out.push(tk.join(' ')+(a.cm?' '+a.cm:''));}
-  out.push('END1');
-  if(out.length-o0>=P*K-2){out.length=o0;for(let k=i;k<i+P*K;k++)out.push(raw[k]);i+=P*K;continue;}
-  loops.push({nv:XV.size,line:out.length,P,K,z0:z[0],step:-d,zf:z[K-1],zl:cand.exact?z[K-1]:z[K-2],exact:cand.exact,np:K,notes:cand.notes,title:(()=>{for(let k=i-1;k>=Math.max(0,i-12);k--){const c=/\((.*?)\)/.exec(raw[k]);if(c)return c[1].trim();}return '';})()});
+   if(NS&&m==NS.m0+NS.Q-1){out.push('#11=#11+1','END2');lastF=null;}}
+  out.push('END1');if(cand.tail.length)out.push(cand.tail.join(' '));
+  const rawLen=B[i+P*K-1].i-(i?B[i-1].i:-1);
+  if(out.length-o0>=rawLen-2||vn>34){out.length=o0;for(let k=i;k<i+P*K;k++)out.push(...rawFor(k));i+=P*K;continue;}
+  filledAll+=cand.filled;
+  loops.push({nv:XV.size,ns:NS?NS.Ns:0,ap:Object.keys(AM).length,line:out.length,P,K,z0:z[0],step:-d,zf:z[K-1],zl,exact:ex,np:K,notes:[],title:(()=>{for(let k=B[i].i-1;k>=Math.max(0,B[i].i-12);k--){const c=/\((.*?)\)/.exec(raw[k]);if(c)return c[1].trim();}return '';})()});
   i+=P*K;}
  if(!loops.length)return{err:'Не нашёл повторяющихся проходов по Z — программа уже короткая или проходы разные'};
- const res=out.join('\n'),P0=parse(code),P1=parse(res);let dev=null;
+ const res=out.join('\n'),P0=parse(code),P1=parse(res);let dev=null,cdev=null;
  if(!P1.err&&P0.segs.length==P1.segs.length){dev=0;for(let k=0;k<P0.segs.length;k++)dev=Math.max(dev,Math.hypot(P0.segs[k].b.x-P1.segs[k].b.x,P0.segs[k].b.y-P1.segs[k].b.y,P0.segs[k].b.z-P1.segs[k].b.z));}
- return{code:res,loops,dev,err1:P1.err,lines0:raw.length,lines1:out.length,t0:P0.time,t1:P1.time};}
+ /* резание: рабочие ходы; у чисто вертикальных сравнивается только конечная Z (подвод мог стать быстрым) */
+ const cut=S=>{const o=[];S.forEach(s=>{if(s.rapid)return;const pz=Math.abs(s.a.x-s.b.x)<1e-6&&Math.abs(s.a.y-s.b.y)<1e-6;const L=o[o.length-1];if(pz&&L&&L.pz&&Math.abs(L.x-s.b.x)<1e-6&&Math.abs(L.y-s.b.y)<1e-6){L.z=s.b.z;return;}o.push({pz,x:s.b.x,y:s.b.y,z:s.b.z});});return o;};
+ if(!P1.err){const c0=cut(P0.segs),c1=cut(P1.segs);if(c0.length==c1.length){cdev=0;for(let k=0;k<c0.length;k++)cdev=Math.max(cdev,c0[k].pz!==c1[k].pz?1e9:Math.hypot(c0[k].x-c1[k].x,c0[k].y-c1[k].y,c0[k].z-c1[k].z));}}
+ const ok=!P1.err&&(dev!=null&&dev<0.002||cdev!=null&&cdev<0.002);
+ if(!ok&&!opt.noNest){const r2=toMacro(code,{...opt,noNest:true});if(!r2.err&&(r2.dev!=null&&r2.dev<0.002||r2.cdev!=null&&r2.cdev<0.002))return r2;}
+ if(!ok&&!opt.noAp){const r3=toMacro(code,{noAp:true,noNest:true});if(!r3.err&&(r3.dev!=null&&r3.dev<0.002||r3.cdev!=null&&r3.cdev<0.002))return r3;}
+ return{code:res,loops,dev,cdev,filled:filledAll,err1:P1.err,lines0:raw.length,lines1:out.length,t0:P0.time,t1:P1.time};}
 let convOrig=null;
 function convHTML(r){if(r.err)return`<div class="hint">${esc(r.err)}</div>`;r.code;
- return `<div class="hint" style="border-left-color:var(--ok)"><b>Переведено в параметрию:</b> циклов ${r.loops.length}, строк ${r.lines0} → ${r.lines1}. ${r.dev!=null&&r.dev<0.002?'✓ Траектория совпадает с исходной.':`Время ${tfmt(r.t0)} → ${tfmt(r.t1)}.`}${r.err1?' ⚠ '+esc(r.err1):''}
-  <ul style="margin:6px 0 0 18px;padding:0">${r.loops.map(l=>`<li>${esc(l.title||'Проходы')}: Z ${F(l.z0)} → ${F(l.zf)}, шаг ${F(l.step)}, проходов ${l.K}${l.exact?'':` (с шагом до Z ${F(l.zl)} — это #3, затем финальный проход Z ${F(l.zf)} — это #8)`}${l.notes.length?' · '+esc(l.notes.join('; ')):''}</li>`).join('')}</ul>
-  Перед каждым циклом меняйте: <b>#1</b> — Z первого прохода, <b>#2</b> — шаг, <b>#3</b> — конечная Z (#8 — финальный проход, если есть), <b>#5</b> — подача${r.loops.some(l=>l.nv)?', <b>#101, #102…</b> — размеры контура X, Y, R (одинаковые числа — одна переменная, знак «−» остаётся в кадре). Меняя размеры, следи, чтобы дуги R сходились — иначе стойка даст аларм; проверь в 3D':''}.</div>
+ return `<div class="hint" style="border-left-color:var(--ok)"><b>Переведено в параметрию:</b> циклов ${r.loops.length}, строк ${r.lines0} → ${r.lines1}. ${r.dev!=null&&r.dev<0.002?'✓ Траектория совпадает с исходной.':r.cdev!=null&&r.cdev<0.002?`✓ Резание совпадает с исходным; подводы выровнены${r.filled?` (в ${r.filled} проходах опускание на подаче заменено быстрым подводом с тем же зазором — проверь в 3D)`:''}. Время ${tfmt(r.t0)} → ${tfmt(r.t1)}.`:`Время ${tfmt(r.t0)} → ${tfmt(r.t1)}.`}${r.err1?' ⚠ '+esc(r.err1):''}
+  <ul style="margin:6px 0 0 18px;padding:0">${r.loops.map(l=>`<li>${esc(l.title||'Проходы')}: Z ${F(l.z0)} → ${F(l.zf)}, шаг ${F(l.step)}, проходов ${l.K}${l.ns?`, по ${l.ns} полосы на каждой глубине (вложенный цикл)`:''}${l.exact?'':` (с шагом до Z ${F(l.zl)} — это #3, затем финальный проход Z ${F(l.zf)} — это #8)`}${l.notes.length?' · '+esc(l.notes.join('; ')):''}</li>`).join('')}</ul>
+  Перед каждым циклом меняйте: <b>#1</b> — Z первого прохода, <b>#2</b> — шаг, <b>#3</b> — конечная Z (#8 — финальный проход, если есть), <b>#5</b> — подача (<b>#9</b> — подача врезания, если другая)${r.loops.some(l=>l.ap)?', <b>#10</b> — зазор подвода над глубиной':''}${r.loops.some(l=>l.ns)?', <b>#12</b> — сколько полос / колец на глубине, <b>#13</b>, <b>#14</b> — шаг между ними по X / Y':''}${r.loops.some(l=>l.nv)?', <b>#101, #102…</b> — размеры контура X, Y, R (одинаковые числа — одна переменная, знак «−» остаётся в кадре). Меняя размеры, следи, чтобы дуги R сходились — иначе стойка даст аларм; проверь в 3D':''}.</div>
   <label class="ctsy" style="margin:6px 0"><input type="checkbox" ${st.prog.mxy!==false?'checked':''} onchange="mxyTog(this.checked)"> Размеры X / Y / R тоже в переменные</label>`;}
 window.mxyTog=v=>{st.prog.mxy=!!v;save(true);if(convOrig!=null){const o=convOrig;$('#code').value=o;convOrig=null;convMacro();}};
 /* исходный код открытого файла хранится всегда — кнопка «↩ Исходный код» возвращает его в любой момент */
@@ -1856,9 +1931,9 @@ function srcUI(){const b=$('#srcB');if(b){b.hidden=!SRC;b.title=SRC?'Верну�
 window.srcBack=()=>{if(!SRC)return toast('Нет открытого файла');$('#code').value=SRC.t;convOrig=null;manual=true;IMP={ops:JSON.stringify(st.ops),n:SRC.n};codeDirty=false;const b=$('#convBox');if(b)b.innerHTML='';updCodeInfo();show('code');toast('Возвращён исходный код «'+SRC.n+'»');};
 let convPend=null;
 window.convMacro=(force)=>{const c=$('#code').value,r=force&&convPend?convPend:toMacro(c);const b=$('#convBox');if(r.err){if(b)b.innerHTML=convHTML(r);return toast(r.err);}
- const same=r.dev!=null&&r.dev<0.002&&!r.err1;
+ const same=!r.err1&&(r.dev!=null&&r.dev<0.002||r.cdev!=null&&r.cdev<0.002);
  if(!same&&!force){convPend=r;if(b)b.innerHTML=`<div class="hint" style="border-left-color:var(--bad)"><b>Перевод не применён:</b> траектория после перевода отличается от исходной${r.err1?' ('+esc(r.err1)+')':r.dev!=null?` (до ${F(r.dev)} мм)`:' (другое число ходов)'}. Код оставлен без изменений.</div><div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convMacro(true)">Всё равно показать перевод</button></div>`;return toast('Перевод меняет траекторию — оставлен исходный код');}
- convPend=null;convOrig=c;$('#code').value=r.code;manual=true;updCodeInfo();if(b)b.innerHTML=convHTML(r)+`<div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convUndo()">↩ Вернуть исходный</button></div>`;toast(same?'Переведено в параметрию':'⚠ Перевод показан, но траектория отличается от исходной');};
+ convPend=null;convOrig=c;$('#code').value=r.code;manual=true;updCodeInfo();if(b)b.innerHTML=convHTML(r)+`<div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convUndo()">↩ Вернуть исходный</button></div>`;toast(same?'Переведено в параметрию':'⚠ Перевод показан, но резание отличается от исходного');};
 window.convUndo=()=>{if(convOrig==null)return;$('#code').value=convOrig;convOrig=null;manual=true;updCodeInfo();$('#convBox').innerHTML='';toast('Возвращён исходный файл');};
 /* ---------- программа с фото: распознавание (Tesseract.js) → чистка → G-код ---------- */
 /* OCR_LOCAL=true ставит сборка APK/EXE: библиотека и словарь лежат внутри приложения в lib/tesseract */
@@ -3040,7 +3115,7 @@ modeUI();show('home');
  <p style="font-size:13px;color:var(--mut)">Данные не собираются: проекты и фото остаются на этом устройстве.<br><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика конфиденциальности</a></p>
  <button class="btn p" id="wOk" style="width:100%;padding:13px">Понятно, принимаю</button></div>`;document.body.appendChild(d);
  $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms2',String(Date.now()));}catch(e){}d.remove();if(!MODE)modeModal();};})();
-window.__fcam={man:()=>manual,imp:()=>IMP,codeTools,ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
+window.__fcam={toMacro:(c,o)=>toMacro(c,o),man:()=>manual,imp:()=>IMP,codeTools,ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
 </html>
