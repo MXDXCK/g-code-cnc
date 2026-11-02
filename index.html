@@ -488,7 +488,7 @@ nav button svg{width:22px;height:22px;display:block}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.8.1';
+const APP_VERSION='2.8.2';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -1781,7 +1781,7 @@ function parse(code){
  const sr=st.stock.shape=='rod';return {segs,time,len,err,tdia,hasA:axA,warn:[axA&&!sr?'Есть поворот оси A — для 3D с поворотом выберите заготовку «Пруток на 4-й оси A» (вкладка «Проект»)':'',uns.size?'Не моделируется: '+[...uns].join(', '):''].filter(Boolean).join(' · ')};}
 
 /* ---------- G-код UI ---------- */
-function regen(force){if(force){manual=false;IMP=null;convOrig=null;const cb=$('#convBox');if(cb)cb.innerHTML='';}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast('G-код пересоздан');}
+function regen(force){if(force){manual=false;IMP=null;convOrig=null;const cb=$('#convBox');if(cb)cb.innerHTML='';}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast(SRC?`G-код собран по плану. Свой файл «${SRC.n}» вернёт кнопка «↩ Исходный код»`:'G-код пересоздан');}
 window.regen=regen;
 /* ---------- перевод готовой программы в параметрию: повторяющиеся проходы по Z → цикл WHILE ---------- */
 Object.assign(CRU,{'Z LAST STEP':'Z ПОСЛЕДНЕГО ПРОХОДА С ШАГОМ','Z FINISH PASS':'Z ФИНАЛЬНОГО ПРОХОДА','Z START':'Z ПЕРВОГО ПРОХОДА','Z FINAL':'Z ПОСЛЕДНЕГО ПРОХОДА','CURRENT Z':'ТЕКУЩАЯ Z','PASS NO':'НОМЕР ПРОХОДА','Z LOOP':'ЦИКЛ ПРОХОДОВ ПО Z','PARAMETRIC FROM FILE':'ПАРАМЕТРИЯ: МЕНЯЙТЕ #1 #2 #3 #5 ПЕРЕД ЦИКЛОМ'});
@@ -1909,8 +1909,16 @@ function openCodeText(txt,name,conv){txt=String(txt).replace(/\r\n?/g,'\n');if(!
  $('#code').value=txt;manual=true;IMP={ops:JSON.stringify(st.ops),n:name||'файл'};codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;srcSet(txt,name);toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);{const TL=codeTools(txt);if(TL.length&&(ctCmp(TL).some(f=>f.st!='same')||st.tools.some(t=>!TL.some(f=>f.num==t.num))))setTimeout(()=>ctAsk(TL,name),450);}if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
 window.openCodeText=openCodeText;
 window.openCode=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>openCodeText(r.result,f.name);r.readAsText(f);inp.value='';};
-window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
-window.setCmt=v=>{st.prog.cmt=v;save();regen(true);if(v=='cyr')toast('Проверьте, что стойка показывает кириллицу');};
+/* своя / исправленная вручную программа: переключатель формата переводит именно её, а не собирает код по плану */
+function fmtManual(v){const c=$('#code').value,mac=/#\d|WHILE|GOTO/i.test(c);
+ if(v=='macro'){if(mac)return toast('Программа уже параметрическая');if(convOrig!=null&&/#\d|WHILE|GOTO/i.test(convOrig))return convUndo();return convMacro();}
+ if(!mac)return toast('Программа уже обычная');
+ if(convOrig!=null&&!/#\d|WHILE|GOTO/i.test(convOrig))return convUndo();
+ let X;try{X=expand(c);}catch(e){return toast('Не удалось развернуть циклы: '+e.message);}
+ const pl=['%',...X.map(x=>x.t.replace(/([A-Z])(?=[-\d.#\[])/g,' $1').trim()).filter(t=>t&&t!='%'),'%'];
+ convOrig=c;$('#code').value=pl.join('\n');manual=true;updCodeInfo();const b=$('#convBox');if(b)b.innerHTML=`<div class="hint">Циклы и переменные развернуты в обычные кадры (${pl.length} строк). Комментарии при этом не сохраняются.</div><div class="row" style="margin:6px 0 10px"><button class="btn s" onclick="convUndo()">↩ Вернуть параметрический</button></div>`;toast('Переведено в обычный G-код');}
+window.setFmt=v=>{st.prog.fmt=v;if(manual){save(true);fmtSegUI();return fmtManual(v);}save();regen(true);};
+window.setCmt=v=>{st.prog.cmt=v;if(manual){save(true);return toast('Язык пояснений применится, когда код собирается по плану. Открытую программу он не меняет');}save();regen(true);if(v=='cyr')toast('Проверьте, что стойка показывает кириллицу');};
 const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+((r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'')+(r.warn?`<span style="color:var(--acc)">⚠ ${esc(r.warn)}</span>`:''));
@@ -3026,7 +3034,7 @@ modeUI();show('home');
  <p style="font-size:13px;color:var(--mut)">Данные не собираются: проекты и фото остаются на этом устройстве.<br><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика конфиденциальности</a></p>
  <button class="btn p" id="wOk" style="width:100%;padding:13px">Понятно, принимаю</button></div>`;document.body.appendChild(d);
  $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms2',String(Date.now()));}catch(e){}d.remove();if(!MODE)modeModal();};})();
-window.__fcam={codeTools,ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
+window.__fcam={man:()=>manual,imp:()=>IMP,codeTools,ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
 </html>
