@@ -342,6 +342,9 @@ nav button svg{width:22px;height:22px;display:block}
 .ctb{display:flex;flex-direction:column;gap:8px}.ctb .btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 14px;height:auto;gap:2px}.ctb small{font-weight:400;opacity:.85;font-size:12px}
 #ctBar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}#ctBar:empty{display:none}#ctBar em{font-style:normal;color:var(--acc)}#ctBar .btn{white-space:normal;text-align:left;height:auto;min-height:34px}
 .ctsy{display:flex!important;flex-direction:row!important;align-items:center;gap:6px;font-size:13px;color:var(--mut);cursor:pointer}.ctsy input{width:auto;margin:0}
+
+#pImp:empty{display:none}.impc{background:linear-gradient(135deg,#1d2a3f,#171a21);border:1px solid #2f4a70;border-radius:16px;padding:12px 14px;margin:10px 0;display:flex;flex-direction:column;gap:10px}
+.impc b{display:block;font-size:15px}.impc small{display:block;color:#aab4c4;font-size:12.5px;line-height:1.45;margin-top:4px}.impc .row{gap:8px;flex-wrap:wrap}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head>
@@ -399,6 +402,7 @@ nav button svg{width:22px;height:22px;display:block}
      <button class="ub" id="uB" onclick="undo()" aria-label="Отменить" title="Отменить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
      <button class="ub" id="rB" onclick="redo()" aria-label="Повторить" title="Повторить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
     <button class="stkc" id="pStock" onclick="show('proj')"></button>
+    <div id="pImp"></div>
     <div id="opList"></div>
     <div class="ptot" id="pTot"></div>
     <div class="pact"><button class="btn p" onclick="cycOpen()">＋ Операция</button><button class="btn" onclick="show('code')">G-код →</button></div>
@@ -484,7 +488,7 @@ nav button svg{width:22px;height:22px;display:block}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const APP_VERSION='2.8.0';
+const APP_VERSION='2.8.1';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -671,11 +675,13 @@ let st;try{st=JSON.parse(localStorage.getItem('fcam'))}catch(e){}
 if(!st||!st.tools)st=defaults();
 let PRE=[];try{PRE=JSON.parse(localStorage.getItem('fcam_presets'))||[]}catch(e){}
 const savePre=()=>{try{localStorage.setItem('fcam_presets',JSON.stringify(PRE))}catch(e){}};
-let selTool=st.tools[0]?.id,selOp=st.ops[0]?.id,manual=false;
+let selTool=st.tools[0]?.id,selOp=st.ops[0]?.id,manual=false,IMP=null;
+/* открытая/исправленная вручную программа переживает перезапуск приложения (iPhone выгружает страницу из памяти) */
+function mcSave(){try{if(manual)localStorage.setItem('fcam_code',JSON.stringify({t:$('#code').value,imp:IMP}));else localStorage.removeItem('fcam_code');}catch(e){}}
 const H={u:[],r:[],cur:null,t:0,mute:false};var CV={edit:false,open:new Set(),sel:-1,key:null};
 const OPC=['#ffc400','#4da3ff','#2ecc71','#c084fc','#ff8a00','#22d3ee','#f472b6','#a3e635'];
 const nf=v=>String(+(+v||0).toFixed(3));
-const save=keep=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(manual&&keep!==true){manual=false;setTimeout(()=>toast('Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}codeDirty=true;if(!H.mute){clearTimeout(H.t);H.t=setTimeout(hCommit,600);}};
+const save=keep=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(manual&&keep!==true&&!(IMP&&JSON.stringify(st.ops)===IMP.ops)){const wasImp=!!IMP;manual=false;IMP=null;setTimeout(()=>toast(wasImp?'Операции плана изменены — G-код собран по плану. Свою программу вернёт кнопка «↩ Исходный код» на вкладке G-код':'Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}if(!manual){IMP=null;mcSave();}codeDirty=true;if(!H.mute){clearTimeout(H.t);H.t=setTimeout(hCommit,600);}};
 let codeDirty=true;
 
 
@@ -933,7 +939,10 @@ function renderCyc(){if(!$('#cycG'))return;const tabs=['Все',...CYC.map(c=>c[
  if(cycTab=='Все'||cycTab=='Мои пресеты')h+=(cycTab=='Все'?`<div class="grp">Мои пресеты</div>`:'')+(PRE.length?`<div class="cyc">${PRE.map(p=>`<button onclick="addPreset('${p.id}')" title="${esc(OPS[p.type]?.n||'')}"><span class="x" onclick="event.stopPropagation();delPreset('${p.id}')">✕</span>${svg(p.type)}<span>${esc(p.name)}</span></button>`).join('')}</div>`:'<div style="color:var(--mut);font-size:12px">Настройте операцию и нажмите «★ В пресеты» — она появится здесь со всеми размерами.</div>');
  $('#cycG').innerHTML=h;{const on=document.querySelector('#cycG .ctabs .on'),bar=on&&on.parentElement;if(bar)bar.scrollLeft=on.offsetLeft-bar.clientWidth/2+on.offsetWidth/2;}}
 function opInfo(o){const t=st.tools.find(x=>x.id==o.tool);return (t?`T${t.num} Ø${t.d}`:'⚠ нет инструмента')+(o.depth!=null?` · глуб. ${o.depth}`:'');}
-function renderOpList(){
+function impUI(){const b=$('#pImp');if(!b)return;if(!manual){b.innerHTML='';return;}const n=$('#code').value.split('\n').length;
+ b.innerHTML=`<div class="impc"><div><b>${IMP?`📄 В G-коде — твоя программа «${esc(IMP.n)}»`:'✏ G-код исправлен вручную'}</b><small>${n} строк. ${IMP?'3D и G-код показывают её. Операции ниже в неё не входят — если их поменять, код соберётся заново по плану.':'Операции ниже не совпадают с кодом — если их поменять, ручные правки сбросятся.'}</small></div>
+ <div class="row"><button class="btn p s" onclick="show('sim')">🧊 3D</button><button class="btn s" onclick="show('code')">G-код</button><button class="btn s" onclick="regen(true)">Собрать по плану</button></div></div>`;}
+function renderOpList(){impUI();
  const tt=[];
  $('#opList').innerHTML=st.ops.map((o,i)=>{const d=OPS[o.type],t=st.tools.find(x=>x.id==o.tool),c=OPC[i%OPC.length],T=opTime(o);tt.push(o.on&&T.t?T.t:0);
   const usr=st.ops.findIndex(q=>['pocketIsl','chamf'].includes(q.type)&&q.src=='op'&&Math.round(+q.opn)==i+1),nm=o.type=='polygon'?(o.side=='in'?'Гнездо ':'Выступ ')+Math.round(o.n)+'-гр.':o.type=='contour'&&!o.on&&usr>=0?`Контур-основа для №${usr+1}`:d.s;
@@ -1015,7 +1024,7 @@ function ctApply(mode,L){if(mode=='none')return;const before=st.tools.length;let
  if(mode=='only'){const keep=new Set(L.map(f=>f.num)),gone=st.tools.filter(t=>!keep.has(t.num)).map(t=>t.id);del=gone.length;st.tools=st.tools.filter(t=>keep.has(t.num));
   st.ops.forEach(o=>{if(gone.includes(o.tool)){const k=OPS[o.type].k,T=st.tools.find(t=>k.includes(t.type));o.tool=T?T.id:null;if(!T)reop++;}});}
  if(!st.tools.some(t=>t.id==selTool))selTool=(st.tools[0]||{}).id;
- CT.last=codeTools($('#code').value);save(true);renderTools();if(typeof renderOpList=='function'&&st.ops.length)try{renderOpList();}catch(e){}updCodeInfo();
+ CT.last=codeTools($('#code').value);if(IMP)IMP.ops=JSON.stringify(st.ops);save(true);renderTools();if(typeof renderOpList=='function'&&st.ops.length)try{renderOpList();}catch(e){}updCodeInfo();
  snack([add?`добавлено ${add}`:'',upd?`обновлено ${upd}`:'',del?`убрано ${del}`:'',reop?`без инструмента осталось операций: ${reop}`:''].filter(Boolean).join(' · ')||'Инструменты без изменений',()=>undo());}
 const ctRow=f=>`<li class="ctr"><b>T${f.num}</b><span>${f.type?esc(TT[f.type].n):'<i>тип не указан — будет концевая</i>'} ${f.d>0?'Ø'+nf(f.d):'<i>Ø не найден</i>'}${f.s?` · S${f.s}`:''}</span><em class="${f.st}">${f.st=='new'?'новый':f.st=='same'?'есть':esc(f.why)}</em></li>`;
 function ctAsk(L,name){L=ctCmp(L);if(!L.length)return toast('В программе не нашёл номеров инструментов T');
@@ -1772,7 +1781,7 @@ function parse(code){
  const sr=st.stock.shape=='rod';return {segs,time,len,err,tdia,hasA:axA,warn:[axA&&!sr?'Есть поворот оси A — для 3D с поворотом выберите заготовку «Пруток на 4-й оси A» (вкладка «Проект»)':'',uns.size?'Не моделируется: '+[...uns].join(', '):''].filter(Boolean).join(' · ')};}
 
 /* ---------- G-код UI ---------- */
-function regen(force){if(force){manual=false;convOrig=null;const cb=$('#convBox');if(cb)cb.innerHTML='';}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast('G-код пересоздан');}
+function regen(force){if(force){manual=false;IMP=null;convOrig=null;const cb=$('#convBox');if(cb)cb.innerHTML='';}if(!manual&&(codeDirty||force)){$('#code').value=gen();codeDirty=false;}updCodeInfo();if(force)toast('G-код пересоздан');}
 window.regen=regen;
 /* ---------- перевод готовой программы в параметрию: повторяющиеся проходы по Z → цикл WHILE ---------- */
 Object.assign(CRU,{'Z LAST STEP':'Z ПОСЛЕДНЕГО ПРОХОДА С ШАГОМ','Z FINISH PASS':'Z ФИНАЛЬНОГО ПРОХОДА','Z START':'Z ПЕРВОГО ПРОХОДА','Z FINAL':'Z ПОСЛЕДНЕГО ПРОХОДА','CURRENT Z':'ТЕКУЩАЯ Z','PASS NO':'НОМЕР ПРОХОДА','Z LOOP':'ЦИКЛ ПРОХОДОВ ПО Z','PARAMETRIC FROM FILE':'ПАРАМЕТРИЯ: МЕНЯЙТЕ #1 #2 #3 #5 ПЕРЕД ЦИКЛОМ'});
@@ -1838,7 +1847,7 @@ function convHTML(r){if(r.err)return`<div class="hint">${esc(r.err)}</div>`;r.co
 let SRC=null;try{SRC=JSON.parse(localStorage.getItem('fcam_src')||'null');}catch(e){}
 function srcSet(t,n){SRC=t==null?null:{t,n:n||'файл',d:Date.now()};try{SRC?localStorage.setItem('fcam_src',JSON.stringify(SRC)):localStorage.removeItem('fcam_src');}catch(e){}srcUI();}
 function srcUI(){const b=$('#srcB');if(b){b.hidden=!SRC;b.title=SRC?'Вернуть файл «'+SRC.n+'» в том виде, как он был открыт':'';}}
-window.srcBack=()=>{if(!SRC)return toast('Нет открытого файла');$('#code').value=SRC.t;convOrig=null;manual=true;codeDirty=false;const b=$('#convBox');if(b)b.innerHTML='';updCodeInfo();show('code');toast('Возвращён исходный код «'+SRC.n+'»');};
+window.srcBack=()=>{if(!SRC)return toast('Нет открытого файла');$('#code').value=SRC.t;convOrig=null;manual=true;IMP={ops:JSON.stringify(st.ops),n:SRC.n};codeDirty=false;const b=$('#convBox');if(b)b.innerHTML='';updCodeInfo();show('code');toast('Возвращён исходный код «'+SRC.n+'»');};
 let convPend=null;
 window.convMacro=(force)=>{const c=$('#code').value,r=force&&convPend?convPend:toMacro(c);const b=$('#convBox');if(r.err){if(b)b.innerHTML=convHTML(r);return toast(r.err);}
  const same=r.dev!=null&&r.dev<0.002&&!r.err1;
@@ -1897,7 +1906,7 @@ function openCodeText(txt,name,conv){txt=String(txt).replace(/\r\n?/g,'\n');if(!
  let rodMsg='';{const P=parse(txt);if(P.hasA&&st.stock.shape!='rod'){const F_=P.segs.filter(s=>!s.rapid);let x0=1e9,x1=-1e9;F_.forEach(s=>{x0=Math.min(x0,s.a.x,s.b.x);x1=Math.max(x1,s.a.x,s.b.x);});if(!(x1>x0)){x0=0;x1=50;}
   const md=/DIAM?[^0-9]{0,3}(\d+(?:[.,]\d+)?)|Ø\s*(\d+(?:[.,]\d+)?)|ПРУТ[^0-9]{0,6}(\d+(?:[.,]\d+)?)/i.exec(txt),D=md?+(md[1]||md[2]||md[3]).replace(',','.'):Math.max(10,Math.ceil(2*Math.max(...F_.map(s=>Math.hypot(s.a.y,s.a.z)).filter(v=>v<200),5)));
   st.stock.shape='rod';st.stock.d=D;st.stock.rx=+(x0-2).toFixed(1);st.stock.rl=+(x1-x0+8).toFixed(1);save(true);rodMsg=` Заготовка: пруток Ø${D} × ${st.stock.rl} на оси A (поправьте на вкладке «Проект»).`;}}
- $('#code').value=txt;manual=true;codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;srcSet(txt,name);toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);{const TL=codeTools(txt);if(TL.length&&(ctCmp(TL).some(f=>f.st!='same')||st.tools.some(t=>!TL.some(f=>f.num==t.num))))setTimeout(()=>ctAsk(TL,name),450);}if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
+ $('#code').value=txt;manual=true;IMP={ops:JSON.stringify(st.ops),n:name||'файл'};codeDirty=false;show('code');updCodeInfo();$('#convBox').innerHTML='';convOrig=null;srcSet(txt,name);toast(`Открыт ${name||'файл'}: ${txt.split('\n').length} строк.`+rodMsg);{const TL=codeTools(txt);if(TL.length&&(ctCmp(TL).some(f=>f.st!='same')||st.tools.some(t=>!TL.some(f=>f.num==t.num))))setTimeout(()=>ctAsk(TL,name),450);}if(conv??st.prog.fmt!='plain')setTimeout(()=>{const r=toMacro($('#code').value);if(!r.err)convMacro();},50);if(rodMsg)renderProj();}
 window.openCodeText=openCodeText;
 window.openCode=inp=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>openCodeText(r.result,f.name);r.readAsText(f);inp.value='';};
 window.setFmt=v=>{st.prog.fmt=v;save();regen(true);};
@@ -1906,7 +1915,7 @@ const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+((r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'')+(r.warn?`<span style="color:var(--acc)">⚠ ${esc(r.warn)}</span>`:''));
  clearTimeout(window.__chkT);window.__chkT=setTimeout(()=>{const L=checkProgram($('#code').value),b=$('#chkBox');if(b)b.innerHTML=`<details ${L.some(x=>x.sev=='err')?'open':''}><summary style="cursor:pointer;margin:4px 0 8px;color:${L.some(x=>x.sev=='err')?'var(--bad)':L.some(x=>x.sev=='warn')?'var(--acc)':'var(--ok)'}">Проверка программы: ${L[0].sev=='ok'?'✓ замечаний нет':L.length+' замеч.'}</summary>${chkHTML(L)}</details>`;},350);
- if(!CT.inp)CT.last=codeTools(c);ctBar();$('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';if(!CV.edit)cvRender();fmtSegUI();}
+ if(!CT.inp)CT.last=codeTools(c);ctBar();mcSave();impUI();$('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';if(!CV.edit)cvRender();fmtSegUI();}
 $('#code').addEventListener('input',()=>{manual=true;CT.inp=true;try{updCodeInfo();}finally{CT.inp=false;}clearTimeout(CT.tm);CT.tm=setTimeout(ctSync,700);});
 const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
 window.downloadCode=e=>{if(saveNative(fname(e),$('#code').value.replace(/\n/g,'\r\n')))return;const b=new Blob([$('#code').value.replace(/\n/g,'\r\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname(e);document.body.appendChild(a);a.click();a.remove();toast('Файл '+fname(e)+' сохранён');};
@@ -3006,7 +3015,9 @@ normStock();
 st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.find(o=>o.id==selOp))selOp=st.ops[0]?.id;
 $('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
 if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
-H.cur=JSON.stringify(st);renderAll();modeUI();show('home');
+H.cur=JSON.stringify(st);renderAll();
+{let mc=null;try{mc=JSON.parse(localStorage.getItem('fcam_code')||'null');}catch(e){}if(mc&&mc.t){$('#code').value=mc.t;manual=true;codeDirty=false;IMP=mc.imp||null;}}
+modeUI();show('home');
 /* первый запуск: короткое предупреждение и согласие с соглашением */
 (()=>{let ok=false;try{ok=!!localStorage.getItem('fcam_terms2');}catch(e){ok=true;}if(navigator.webdriver)return;if(ok){if(!MODE)modeModal();return;}
  const d=document.createElement('div');d.id='welcome';d.innerHTML=`<div class="wb"><img src="icons/icon-192.png" alt=""><h2>Fresa — G-код для ЧПУ</h2>
