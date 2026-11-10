@@ -3125,6 +3125,8 @@ if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator
 H.cur=JSON.stringify(st);renderAll();
 {let mc=null;try{mc=JSON.parse(localStorage.getItem('fcam_code')||'null');}catch(e){}if(mc&&mc.t){$('#code').value=mc.t;manual=true;codeDirty=false;IMP=mc.imp||null;}}
 modeUI();show('home');
+/* IndexedDB для больших данных + резервная копия localStorage (сам localStorage не меняется) — docs/STORAGE_MIGRATION.md */
+setTimeout(()=>{import('./src/storage/idb.js').then(async m=>{window.__store=m;window.__storeBackup=await m.backupLocalStorage();}).catch(e=>{window.__storeBackup={ok:false,reason:String(e&&e.message||e)};});},1200);
 /* первый запуск: короткое предупреждение и согласие с соглашением */
 (()=>{let ok=false;try{ok=!!localStorage.getItem('fcam_terms2');}catch(e){ok=true;}if(navigator.webdriver)return;if(ok){if(!MODE)modeModal();return;}
  const d=document.createElement('div');d.id='welcome';d.innerHTML=`<div class="wb"><img src="icons/icon-192.png" alt=""><h2>Fresa — G-код для ЧПУ</h2>

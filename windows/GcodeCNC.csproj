@@ -16,7 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="app.ico" LogicalName="app.ico" />
-    <EmbeddedResource Include="web\*.*" LogicalName="web/%(Filename)%(Extension)" />
-    <EmbeddedResource Include="web\lib\*.*" LogicalName="web/lib/%(Filename)%(Extension)" />
+    <!-- рекурсивно: lib/tesseract (распознавание фото) и src/ (модули) тоже должны попасть в EXE; '\' в имени Program.cs заменяет на '/' -->
+    <EmbeddedResource Include="web\**\*.*" LogicalName="web/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

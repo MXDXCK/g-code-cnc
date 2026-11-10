@@ -1,0 +1,114 @@
+name: Проверка сборки (без публикации)
+
+# Собирает APK (отладочная подпись) и EXE из рабочей ветки, чтобы убедиться, что новые файлы попадают в приложения.
+# Ничего не публикует: нет Release, нет RuStore. Файлы — только во вкладке Actions на 3 дня.
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'index.html'
+      - 'src/**'
+      - 'android/**'
+      - 'windows/**'
+      - '.github/workflows/build-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Страница + библиотеки (как в build.yml)
+        run: |
+          mkdir -p dist/lib
+          cp index.html version.json manifest.webmanifest privacy.html terms.html dist/
+          cp -r icons dist/icons
+          cp -r src dist/src
+          curl -fsSL https://unpkg.com/three@0.160.0/build/three.module.js -o dist/lib/three.module.js
+          curl -fsSL https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js -o dist/lib/OrbitControls.js
+          T=dist/lib/tesseract; mkdir -p $T
+          curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js -o $T/tesseract.min.js
+          curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js -o $T/worker.min.js
+          for f in tesseract-core-lstm.wasm.js tesseract-core-lstm.wasm tesseract-core-simd-lstm.wasm.js tesseract-core-simd-lstm.wasm; do
+            curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/$f -o $T/$f
+          done
+          curl -fsSL https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int/eng.traineddata.gz -o $T/eng.traineddata.gz
+          gunzip -f $T/eng.traineddata.gz
+          python3 - <<'PY'
+          import re
+          p = 'dist/index.html'
+          s = open(p, encoding='utf-8').read()
+          s, n = re.subn(r'<script type="importmap">.*?</script>',
+                         '<script type="importmap">{"imports":{"three":"./lib/three.module.js","three/addons/controls/OrbitControls.js":"./lib/OrbitControls.js"}}</script>',
+                         s, flags=re.S)
+          assert n == 1
+          s, n = re.subn(r'const OCR_LOCAL=false;', 'const OCR_LOCAL=true;', s)
+          assert n == 1
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+      - uses: actions/upload-artifact@v4
+        with: { name: web, path: dist, retention-days: 3 }
+
+  android:
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: web, path: android/app/src/main/assets }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.7' }
+      - name: APK с отладочной подписью (ключ релиза не используется)
+        run: gradle -p android assembleRelease --no-daemon
+      - name: В APK есть модули и распознавание
+        run: |
+          A=android/app/build/outputs/apk/release/app-release.apk
+          unzip -l $A | tee list.txt | grep -q 'assets/src/storage/idb.js'
+          grep -q 'assets/lib/tesseract/eng.traineddata' list.txt
+          echo "OK: src/ и tesseract в APK"
+      - uses: actions/upload-artifact@v4
+        with: { name: apk-debug-signed, path: android/app/build/outputs/apk/release/app-release.apk, retention-days: 3 }
+
+  windows:
+    needs: web
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: web, path: windows/web }
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '8.0.x' }
+      - name: Сборка и список встроенных файлов
+        shell: pwsh
+        run: |
+          dotnet build windows/GcodeCNC.csproj -c Release -o bout
+          $asm = [System.Reflection.Assembly]::LoadFile((Resolve-Path bout/Fresa.dll))
+          $names = $asm.GetManifestResourceNames() | ForEach-Object { $_.Replace('\','/') }
+          $names | Sort-Object | Out-File res.txt
+          Get-Content res.txt
+          foreach ($need in 'web/index.html','web/lib/three.module.js','web/lib/tesseract/eng.traineddata','web/src/storage/idb.js') {
+            if (-not ($names -contains $need)) { Write-Error "нет в EXE: $need"; exit 1 }
+          }
+          Write-Host "OK: все нужные файлы встроены"
+      - name: Для сравнения — csproj из main (до исправления)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          git fetch --depth=1 origin main
+          git show origin/main:windows/GcodeCNC.csproj | Out-File -Encoding utf8 windows/Old.csproj
+          dotnet build windows/Old.csproj -c Release -o oldout
+          $asm = [System.Reflection.Assembly]::LoadFile((Resolve-Path oldout/Fresa.dll))
+          $old = $asm.GetManifestResourceNames()
+          Write-Host ("в EXE из main встроено файлов: " + $old.Count)
+          if ($old -contains 'web/lib/tesseract/eng.traineddata') { Write-Host "main: распознавание фото встроено" } else { Write-Host "main: распознавание фото НЕ встроено (подтверждение K-01)" }
+      - uses: actions/upload-artifact@v4
+        with: { name: exe-resources, path: res.txt, retention-days: 3 }

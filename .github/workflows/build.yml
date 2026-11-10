@@ -36,6 +36,7 @@ jobs:
           mkdir -p dist/lib
           cp index.html version.json manifest.webmanifest privacy.html terms.html dist/
           cp -r icons dist/icons
+          cp -r src dist/src   # новые модули (хранилище, чертежи) — docs/AI_ARCHITECTURE.md
           curl -fsSL https://unpkg.com/three@0.160.0/build/three.module.js -o dist/lib/three.module.js
           curl -fsSL https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js -o dist/lib/OrbitControls.js
           # распознавание фото (Tesseract.js) — тоже внутрь приложения, чтобы работало без интернета

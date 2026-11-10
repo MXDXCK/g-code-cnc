@@ -76,8 +76,9 @@ class MainForm : Form
         var asm = Assembly.GetExecutingAssembly();
         foreach (var name in asm.GetManifestResourceNames())
         {
-            if (!name.StartsWith("web/")) continue;
-            var path = Path.Combine(dir, name.Substring(4).Replace('/', Path.DirectorySeparatorChar));
+            var n = name.Replace('\\', '/');
+            if (!n.StartsWith("web/")) continue;
+            var path = Path.Combine(dir, n.Substring(4).Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             using var src = asm.GetManifestResourceStream(name)!;
             using var dst = File.Create(path);
