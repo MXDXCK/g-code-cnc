@@ -1,0 +1,43 @@
+name: Автотесты
+
+# Только проверка. Ничего не собирает для магазинов и ничего не публикует.
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Playwright (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Зависимости тестов
+        run: npm install --no-audit --no-fund
+      - name: Браузер для тестов
+        run: npx playwright install --with-deps chromium
+      - name: Тесты
+        env:
+          CI: '1'
+        run: npx playwright test
+      - name: Отчёт
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            test-report
+            test-results
+          retention-days: 7

@@ -1,0 +1,13 @@
+{
+  "name": "fresa-tests",
+  "private": true,
+  "description": "Автотесты Fresa (не входят в приложение)",
+  "scripts": {
+    "test": "playwright test",
+    "test:golden:update": "UPDATE_GOLDEN=1 playwright test tests/e2e/golden.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "three": "0.160.0"
+  }
+}

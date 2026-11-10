@@ -13,3 +13,8 @@ windows/out/
 # ключи подписи никогда не коммитим
 *.jks
 *.keystore
+
+# автотесты
+node_modules/
+test-results/
+test-report/
