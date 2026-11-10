@@ -98,7 +98,7 @@ input[type=range]{padding:0;accent-color:var(--acc);border:0;background:none}
 .mi{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--pan2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:12px;margin-bottom:8px;font:inherit;cursor:pointer}
 .mi:hover{border-color:var(--acc)}.mi i{font-style:normal;font-size:24px}.mi small{display:block;color:var(--mut);font-size:12px}
 table.t{width:100%;border-collapse:collapse;font-size:13px}table.t td,table.t th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}table.t th{color:var(--mut);font-weight:600}
-.chk{padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:13px;overflow:hidden}.chk.err{background:#ff5c5c1c;color:#ffa0a0}.chk.warn{background:#ffc40016;color:#ffd666}.chk.ok{background:#2ecc711c;color:var(--ok)}
+.chk{padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:13px;overflow:hidden}.chk.err{background:#ff5c5c1c;color:#ffa0a0}.chk.warn{background:#ffc40016;color:#ffd666}.chk.ok{background:#2ecc711c;color:var(--ok)}.chk.nv{background:#8b93a314;color:#aab4c4;border:1px dashed #3a4252}.chkh{font-size:12px;color:var(--mut);margin:10px 0 6px}
 .chk .btn{float:right;margin-left:8px}
 .ss{background:#fff;color:#111;border-radius:10px;padding:16px;font:12px/1.35 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
 .ss h2{margin:0 0 2px;font-size:18px}.ss h4{margin:12px 0 4px;font-size:13px}.ss .sub{color:#555;margin-bottom:8px}
@@ -2006,7 +2006,7 @@ window.setCmt=v=>{st.prog.cmt=v;if(manual){save(true);return toast('Язык п�
 const tfmt=m=>`${Math.floor(m)} мин ${Math.round((m%1)*60)} с`;
 function updCodeInfo(){const c=$('#code').value,r=parse(c);
  $('#codeStats').innerHTML=`<span>Строк: <b>${c.split('\n').length}</b></span><span>Рабочий ход: <b>${(r.len.f/1000).toFixed(2)} м</b></span><span>Холостой: <b>${(r.len.r/1000).toFixed(2)} м</b></span><span>Время ≈ <b>${tfmt(r.time)}</b></span>`+((r.err?`<span style="color:var(--bad)">⚠ ${esc(r.err)}</span>`:'')+(r.warn?`<span style="color:var(--acc)">⚠ ${esc(r.warn)}</span>`:''));
- clearTimeout(window.__chkT);window.__chkT=setTimeout(()=>{const L=checkProgram($('#code').value),b=$('#chkBox');if(b)b.innerHTML=`<details ${L.some(x=>x.sev=='err')?'open':''}><summary style="cursor:pointer;margin:4px 0 8px;color:${L.some(x=>x.sev=='err')?'var(--bad)':L.some(x=>x.sev=='warn')?'var(--acc)':'var(--ok)'}">Проверка программы: ${L[0].sev=='ok'?'✓ замечаний нет':L.length+' замеч.'}</summary>${chkHTML(L)}</details>`;},350);
+ clearTimeout(window.__chkT);window.__chkT=setTimeout(()=>{const L=checkProgram($('#code').value),b=$('#chkBox');if(b)b.innerHTML=`<details ${L.some(x=>x.sev=='err')?'open':''}><summary style="cursor:pointer;margin:4px 0 8px;color:${L.some(x=>x.sev=='err')?'var(--bad)':L.some(x=>x.sev=='warn')?'var(--acc)':'var(--ok)'}">Проверка программы: ${chkSum(L)}</summary>${chkHTML(L)}</details>`;},350);
  if(!CT.inp)CT.last=codeTools(c);ctBar();mcSave();impUI();$('#editFlag').innerHTML=manual?'<span class="badge warn">изменён вручную</span>':'<span class="badge">авто</span>';if(!CV.edit)cvRender();fmtSegUI();}
 $('#code').addEventListener('input',()=>{manual=true;CT.inp=true;try{updCodeInfo();}finally{CT.inp=false;}clearTimeout(CT.tm);CT.tm=setTimeout(ctSync,700);});
 const fname=e=>`O${String(Math.round(st.prog.num)).padStart(4,'0')}.${e}`;
@@ -2246,9 +2246,23 @@ function checkProgram(code){const out=[],add=(sev,msg,ln)=>{if(out.length<40)out
   if(+o.step>t.d&&!PERREV.includes(t.type)&&t.type!='tap')add('warn',`Операция ${i+1}: шаг по Z ${o.step} мм больше диаметра фрезы Ø${t.d}`);
   try{const LD=leadOp(effOp(o),t);if(LD&&LD.s<0)add('warn',`Операция ${i+1} «${OPS[o.type].s}»: заготовка намного больше контура — фреза опускается прямо в материал. Увеличьте «Съём вокруг», чтобы подвод был снаружи`);}catch(e){}});
  const used=[...new Set(st.ops.filter(o=>o.on).map(o=>o.tool))];st.tools.filter(t=>used.includes(t.id)).forEach(t=>{if(!(t.s>0)||!(t.f>0))add('err',`T${t.num}: не заданы обороты или подача`);});
- if(!out.length)add('ok','Замечаний нет: ускоренные ходы не задевают материал, шпиндель включён, корректоры совпадают');
+ if(!out.length)add('ok','Ошибок и предупреждений нет: ускоренные ходы не задевают модель заготовки, шпиндель включён, корректоры совпадают');
+ /* «Не проверено» — отдельная категория: чего эта проверка не умеет, говорим прямо, а не молчим */
+ const body=code.replace(/\(.*?\)/g,'').toUpperCase(),nv=m=>out.push({sev:'nv',msg:m});
+ nv('Державка, цанга или патрон, тиски и прижимы не моделируются — столкновения с ними не проверены');
+ nv('Пределы осей и рабочая зона станка не проверены — профиль станка не задан');
+ nv('Значения корректоров H/D в таблице станка и вылет инструмента не проверены');
+ nv(`Модель заготовки упрощённая (сетка ≈ ${F(res)} мм): касания меньше шага сетки могут не обнаружиться`);
+ if(g.rod)nv('Пруток (4-я ось): ускоренные ходы с материалом не сверяются');
+ if(/G1[89](?!\d)/.test(body))nv('Плоскости G18/G19: эти траектории в 3D и проверке не моделируются');
+ if(/M98|M198|G65|G66/.test(body))nv('Подпрограммы и макровызовы (M98, G65, G66) не разворачиваются — их движения не проверены');
+ if(/#\d/.test(body))nv('Параметрическая программа проверена при текущих значениях переменных; при других значениях — нет');
  return out;}
-function chkHTML(list){return list.map(c=>`<div class="chk ${c.sev}">${c.ln!=null?`<button class="btn s" onclick="gotoLine(${c.ln})">стр. ${c.ln+1}</button>`:''}${c.sev=='err'?'⛔ ':c.sev=='warn'?'⚠ ':'✓ '}${esc(c.msg)}</div>`).join('');}
+const CHK_ICO={err:'⛔ ',warn:'⚠ ',nv:'◌ ',ok:'✓ '};
+const chkSum=L=>{const e=L.filter(x=>x.sev=='err').length,w=L.filter(x=>x.sev=='warn').length,n=L.filter(x=>x.sev=='nv').length;
+ return (e||w?[e?e+' ошиб.':'',w?w+' предупр.':''].filter(Boolean).join(', '):'✓ ошибок нет')+(n?` · не проверено: ${n}`:'');};
+function chkHTML(list){const one=c=>`<div class="chk ${c.sev}">${c.ln!=null?`<button class="btn s" onclick="gotoLine(${c.ln})">стр. ${c.ln+1}</button>`:''}${CHK_ICO[c.sev]||''}${esc(c.msg)}</div>`,nv=list.filter(c=>c.sev=='nv');
+ return list.filter(c=>c.sev!='nv').map(one).join('')+(nv.length?`<div class="chkh">Не проверено — проверьте сами в графике стойки и на станке:</div>`+nv.map(one).join(''):'');}
 window.gotoLine=n=>{closeMenu();show('code');if(!CV.edit){cvGo(n);return;}const ta=$('#code'),L=ta.value.split('\n');let p=0;for(let i=0;i<n&&i<L.length;i++)p+=L[i].length+1;ta.focus();ta.setSelectionRange(p,p+(L[n]||'').length);
  const lh=parseFloat(getComputedStyle(ta).lineHeight)||20;ta.scrollTop=Math.max(0,n*lh-ta.clientHeight/3);};
 
@@ -2295,7 +2309,7 @@ const VIEWS={
  lib:()=>{const L=libGet();return `<div class="row" style="margin-bottom:10px"><button class="btn p" onclick="libSave()">💾 Сохранить текущий проект</button><button class="btn" onclick="exportProj()">⬇ Экспорт .nc</button></div>`+
   (L.length?L.map(p=>`<div class="it"><div class="m" onclick="libOpen('${p.id}')"><b>${esc(p.name)}</b><small>${new Date(p.date).toLocaleString('ru')} · операций: ${(p.data.ops||[]).length}</small></div><button class="ib" title="Открыть" onclick="libOpen('${p.id}')">📂</button><button class="ib" title="Удалить" onclick="libDel('${p.id}')">✕</button></div>`).join(''):'<div class="empty">Пока нет сохранённых деталей</div>')+
   '<div class="hint">Детали хранятся на этом устройстве. Чтобы перенести на другое — «Экспорт проекта» на вкладке «Проект».</div>';},
- check:()=>{regen();return chkHTML(checkProgram($('#code').value))+'<div class="hint">Проверяется по 3D-модели заготовки: ускоренные ходы ниже верха детали, работа без шпинделя, H не равен T, обработка ниже дна, шаг по Z больше диаметра фрезы, нулевые режимы. Проверка не заменяет прогон в графике стойки.</div>';},
+ check:()=>{regen();return chkHTML(checkProgram($('#code').value))+'<div class="hint">Три уровня: ⛔ ошибка — нарушение найдено; ⚠ предупреждение — возможно опасно; ◌ не проверено — этого проверка не умеет. Проверяется по упрощённой 3D-модели заготовки: ускоренные ходы в материал, работа без шпинделя, H не равен T, обработка ниже дна, шаг по Z больше диаметра фрезы, нулевые режимы. Проверка не заменяет прогон в графике стойки.</div>';},
  calc:()=>{const opts=Object.keys(MATS).map(k=>`<option ${k==(st.stock.mat||'')?'selected':''}>${esc(k)}</option>`).join('');
   return `<div class="grid" id="cc"><label>Материал<select id="ccM">${opts}</select></label><label>Инструмент<select id="ccT">${['endmill','ball','bull','face','chamfer','thread','drill','center','reamer','tap'].map(k=>`<option value="${k}">${TT[k].n}</option>`).join('')}</select></label>
    <label>Диаметр D, мм<input id="ccD" inputmode="decimal" value="10"></label><label>Зубьев z<input id="ccZ" inputmode="decimal" value="4"></label><label>Шаг вбок ae, % D<input id="ccA" inputmode="decimal" value="50"></label><label>Шаг резьбы P<input id="ccP" inputmode="decimal" value="1.25"></label></div>
@@ -2400,7 +2414,7 @@ function sheetHTML(){regen();const code=$('#code').value,P=parse(code),g=stockSi
    ${usedT.map(t=>`<tr><td><span class="sw" style="background:${col(t.num)}"></span><b>T${t.num}</b> / H${t.num}</td><td>${TT[t.type].n}${t.name?' — '+esc(t.name):''}${t.type=='bull'?` r${t.cr}`:''}${['tap','thread'].includes(t.type)?` P${t.pitch}`:''}</td><td>${t.d}</td><td>${FLUTED.includes(t.type)?t.fl:''}</td><td>${t.s}</td><td>${t.f}</td><td></td></tr>`).join('')}</table>
   <h4>Операции</h4><table><tr><th>№</th><th>Цикл</th><th>Инстр.</th><th>Параметры</th><th>Время</th></tr>
    ${ops.map(r=>`<tr><td>${r.i+1}</td><td>${OPS[r.o.type].n}</td><td>${r.t?'T'+r.t.num:'—'}</td><td>${esc(opBrief(r.o))}${r.err?` <b style="color:#c00">⚠ ${esc(r.err)}</b>`:''}</td><td>${tfmt(r.tm)}</td></tr>`).join('')}</table>
-  <h4>Замечания проверки</h4>${checkProgram(code).map(c=>`<div>${c.sev=='err'?'⛔':c.sev=='warn'?'⚠':'✓'} ${esc(c.msg)}${c.ln!=null?` (стр. ${c.ln+1})`:''}</div>`).join('')}
+  <h4>Замечания проверки</h4>${checkProgram(code).map(c=>`<div>${(CHK_ICO[c.sev]||'').trim()}${c.sev=='nv'?' Не проверено:':''} ${esc(c.msg)}${c.ln!=null?` (стр. ${c.ln+1})`:''}</div>`).join('')}
   <div class="sig"><div>Наладчик</div><div>Оператор</div><div>Дата</div></div></div>`;}
 window.printSheet=()=>{if(NATIVE=='android'){saveSheet();return;}document.body.classList.add('prt');const off=()=>document.body.classList.remove('prt');window.addEventListener('afterprint',off,{once:true});setTimeout(()=>{window.print();setTimeout(off,1500);},50);};
 window.saveSheet=()=>{const n=`naladka_O${String(Math.round(st.prog.num)).padStart(4,'0')}.html`,html=`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Лист наладки O${st.prog.num}</title><style>body{margin:12px;background:#fff}${SSCSS}@media print{body{margin:0}}</style></head><body>${sheetHTML()}</body></html>`;
@@ -3119,7 +3133,7 @@ modeUI();show('home');
  <p style="font-size:13px;color:var(--mut)">Данные не собираются: проекты и фото остаются на этом устройстве.<br><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика конфиденциальности</a></p>
  <button class="btn p" id="wOk" style="width:100%;padding:13px">Понятно, принимаю</button></div>`;document.body.appendChild(d);
  $('#wOk').onclick=()=>{try{localStorage.setItem('fcam_terms2',String(Date.now()));}catch(e){}d.remove();if(!MODE)modeModal();};})();
-window.__fcam={toMacro:(c,o)=>toMacro(c,o),man:()=>manual,imp:()=>IMP,codeTools,ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
+window.__fcam={checkProgram:c=>checkProgram(c),toMacro:(c,o)=>toMacro(c,o),man:()=>manual,imp:()=>IMP,codeTools,ocrClean,ocrPrep,hm:()=>hm,st:()=>st,gen,parse,opCode,show,expand,islBoundary,textStrokes,islPaths,isoLoops,toMacro};
 </script>
 </body>
 </html>
