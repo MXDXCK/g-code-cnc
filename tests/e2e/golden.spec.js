@@ -23,7 +23,8 @@ function compare(name, got) {
   if (process.env.UPDATE_GOLDEN || !fs.existsSync(f)) { fs.mkdirSync(GOLD, { recursive: true }); fs.writeFileSync(f, got); return; }
   const want = fs.readFileSync(f, 'utf8');
   if (got !== want) {
-    const a = want.split('\n'), b = got.split('\n');
+    const a = want.split(/\r?\n/), b = got.split(/\r?\n/);
+    if (a.length === b.length && a.every((line, k) => line === b[k])) return;
     const i = a.findIndex((l, k) => l !== b[k]);
     throw new Error(`${name}: G-код отличается от эталона, первая разница в строке ${i + 1}:\n  было:  ${a[i]}\n  стало: ${b[i]}`);
   }

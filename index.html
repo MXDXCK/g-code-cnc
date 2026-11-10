@@ -681,7 +681,7 @@ function mcSave(){try{if(manual)localStorage.setItem('fcam_code',JSON.stringify(
 const H={u:[],r:[],cur:null,t:0,mute:false};var CV={edit:false,open:new Set(),sel:-1,key:null};
 const OPC=['#ffc400','#4da3ff','#2ecc71','#c084fc','#ff8a00','#22d3ee','#f472b6','#a3e635'];
 const nf=v=>String(+(+v||0).toFixed(3));
-const save=keep=>{try{localStorage.setItem('fcam',JSON.stringify(st))}catch(e){toast('Не удалось сохранить')}if(manual&&keep!==true&&!(IMP&&JSON.stringify(st.ops)===IMP.ops)){const wasImp=!!IMP;manual=false;IMP=null;setTimeout(()=>toast(wasImp?'Операции плана изменены — G-код собран по плану. Свою программу вернёт кнопка «↩ Исходный код» на вкладке G-код':'Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}if(!manual){IMP=null;mcSave();}codeDirty=true;if(!H.mute){clearTimeout(H.t);H.t=setTimeout(hCommit,600);}};
+const save=(keep,next=st)=>{try{localStorage.setItem('fcam',JSON.stringify(next))}catch(e){toast('Не удалось сохранить');if(next!==st)return false;}st=next;if(manual&&keep!==true&&!(IMP&&JSON.stringify(st.ops)===IMP.ops)){const wasImp=!!IMP;manual=false;IMP=null;setTimeout(()=>toast(wasImp?'Операции плана изменены — G-код собран по плану. Свою программу вернёт кнопка «↩ Исходный код» на вкладке G-код':'Ручные правки G-кода сброшены — программа пересоздана по операциям'),50);}if(!manual){IMP=null;mcSave();}codeDirty=true;if(!H.mute){clearTimeout(H.t);H.t=setTimeout(hCommit,600);}return true;};
 let codeDirty=true;
 
 
@@ -1263,9 +1263,13 @@ function ctrChains(o,t){const r=t.d/2,M=ctrMir(o);
 /* ---------- импорт DXF ---------- */
 function bulgeArc(a,b,bu){const th=4*Math.atan(Math.abs(bu)),ch=V2.dist(a,b),r=ch/(2*Math.sin(th/2)),m=V2.mul(V2.add(a,b),.5),u=lft(nrm(V2.sub(b,a)));
  return{k:'A',a,b,c:V2.add(m,V2.mul(u,r*Math.cos(th/2)*(bu>0?1:-1))),cw:bu<0};}
-function dxfPrims(txt){const L=txt.split(/\r?\n/),pr=[];for(let i=0;i+1<L.length;i+=2)pr.push([parseInt(L[i]),L[i+1].trim()]);
- let i=pr.findIndex((q,k)=>q[0]==2&&q[1]=='ENTITIES');if(i<0)throw Error('нет секции ENTITIES');
+function dxfPairs(txt){const L=txt.split(/\r?\n/),pr=[];for(let i=0;i+1<L.length;i+=2)pr.push([parseInt(L[i]),L[i+1].trim()]);return pr;}
+function dxfEntities(pr){
+ let i=pr.findIndex(q=>q[0]==2&&q[1]=='ENTITIES');if(i<0)throw Error('нет секции ENTITIES');
  const ents=[];let cur=null;for(i++;i<pr.length;i++){const[c,v]=pr[i];if(c==0){if(v=='ENDSEC')break;cur={type:v,d:[]};ents.push(cur);}else if(cur)cur.d.push([c,v]);}
+ return ents;
+}
+function dxfPrims(txt){const ents=dxfEntities(dxfPairs(txt));
  const P=[],skip={};const g=(e,c)=>{const q=e.d.find(x=>x[0]==c);return q?parseFloat(q[1]):0;};
  const poly=(V,closed)=>{const n=V.length;for(let k=0;k<(closed?n:n-1);k++){const A=V[k],B=V[(k+1)%n];if(V2.dist(A.p,B.p)<1e-9)continue;P.push(A.bu?bulgeArc(A.p,B.p,A.bu):{k:'L',a:A.p,b:B.p});}};
  for(let k=0;k<ents.length;k++){const e=ents[k];
@@ -1276,6 +1280,140 @@ function dxfPrims(txt){const L=txt.split(/\r?\n/),pr=[];for(let i=0;i+1<L.length
   else if(e.type=='POLYLINE'){const V=[],cl=(g(e,70)&1)==1;while(ents[k+1]&&ents[k+1].type=='VERTEX'){k++;V.push({p:[g(ents[k],10),g(ents[k],20)],bu:g(ents[k],42)});}poly(V,cl);}
   else if(!['SEQEND','VERTEX','TEXT','MTEXT','DIMENSION','HATCH','POINT','SOLID','LEADER','MLEADER'].includes(e.type))skip[e.type]=(skip[e.type]||0)+1;}
  return{P,skip};}
+
+/* ---------- прототип: пластина с четырьмя отверстиями ---------- */
+function plateObservations(txt){
+ const pairs=dxfPairs(txt);
+ const unitsAt=pairs.findIndex(([c,v])=>c===9&&v==='$INSUNITS');
+ const units=unitsAt<0?'0':pairs[unitsAt+1]?.[0]===70?pairs[unitsAt+1][1]:null;
+ if(units!=='0'&&units!=='4')throw Error('Нужен DXF в миллиметрах');
+ const entities=dxfEntities(pairs).filter(e=>!e.d.some(([c,v])=>c===67&&v==='1'||c===410&&v.toUpperCase()!=='MODEL'));
+ const circles=entities.filter(e=>e.type==='CIRCLE');
+ if(circles.length!==4)throw Error(`В модели DXF нужно ровно 4 окружности CIRCLE. Найдено: ${circles.length}`);
+ const observations=circles.map((e,i)=>{
+  const get=c=>e.d.find(([key])=>key===c)?.[1];
+  const n=(c,fallback)=>{const raw=get(c);return raw===undefined?fallback:raw===''?NaN:Number(raw);};
+  const x=n(10),y=n(20),d=2*n(40);
+  if(![x,y,d].every(Number.isFinite)||d<=0||n(30,0)!==0||n(210,0)!==0||n(220,0)!==0||n(230,1)!==1)
+   throw Error(`Окружность ${i+1}: нужны корректные X, Y и радиус в плоскости XY при Z=0`);
+  return {id:'circle-'+(i+1),type:'Circle',status:'observed',geom:{cx:x,cy:y,r:d/2},source:{by:'dxf',handle:get(5)||null}};
+ });
+ return {observations,unitless:units==='0',unmatched:entities.filter(e=>['TEXT','MTEXT','DIMENSION'].includes(e.type)).length};
+}
+function plateView(){
+ const s=st.stock;
+ return `<div class="card"><h3>Пластина с четырьмя отверстиями</h3>
+  <p class="hint">Прототип читает окружности из плоского DXF. Подтверждённые отверстия будут добавлены в конец текущего плана. Подготовь прямоугольную заготовку, ноль и инструменты в проекте.</p>
+  <p>${esc(st.prog.name||'Деталь')} · ${esc(stkShort())} · ${esc(s.wcs)} · ноль XY: ${esc(ORIG[s.origin]||'—')}</p>
+  <div class="row"><button class="btn s" onclick="closeMenu();show('proj')">Заготовка и ноль</button><button class="btn s" onclick="closeMenu();show('tools')">Инструменты</button></div>
+  <label>Исходный файл DXF<input id="plateFile" type="file" accept=".dxf"></label>
+  <p id="plateLoadStatus" role="status"></p><div id="plateReview"></div></div>`;
+}
+function plateForm(data){
+ const field=(name,label,value='')=>`<label>${label}<input name="${name}" inputmode="decimal" value="${value}"></label>`;
+ const tools=(type,label)=>`<label>${label}<select name="${type}"><option value="">Выбери инструмент</option>${st.tools.filter(t=>t.type===type).map(t=>
+  `<option value="${esc(t.id)}">T${esc(t.num)} · Ø${esc(t.d)} · S${esc(t.s)} · F${esc(t.f)}${t.name?' · '+esc(t.name):''}</option>`).join('')}</select></label>`;
+ return `<form id="plateForm">
+  <p>Найдено 4 окружности DXF. Размерных надписей не сопоставлено: ${data.unmatched}.</p>
+  <p class="hint">X и Y вводятся от нуля текущего проекта, Z0 — верх заготовки. Если ноль DXF отличается, исправь координаты. Глубина — до вершины сверла, с учётом выхода для сквозного отверстия.</p>
+  ${data.unitless?'<label class="ctsy"><input type="checkbox" name="mm"> Единицы чертежа — миллиметры</label>':''}
+  ${data.observations.map(({geom:g},i)=>`<fieldset class="card"><legend>Отверстие ${i+1}</legend><div class="grid">
+   ${field('x'+i,'X, мм',nf(g.cx))}${field('y'+i,'Y, мм',nf(g.cy))}${field('d'+i,'Ø, мм',nf(2*g.r))}${field('z'+i,'Глубина, мм')}
+   </div><label class="ctsy"><input type="checkbox" name="ok${i}"> Подтверждаю отверстие ${i+1}</label></fieldset>`).join('')}
+  <h3>Наладка · цикл G81</h3>
+  <div class="grid">${tools('center','Центровка')}${tools('drill','Сверло')}
+   ${field('centerZ','Глубина центровки, мм')}${field('r','Плоскость R, мм')}${field('safe','Безопасная высота Z, мм')}</div>
+  <label class="ctsy"><input type="checkbox" name="setup"> Проверил ноль, инструменты, режимы и высоты</label>
+  ${manual?'<p class="hint">После добавления операций G-код будет пересобран по плану.</p>':''}
+  <p id="plateValidation" role="status"></p><button class="btn p" type="submit" disabled>Добавить операции и открыть G-код</button>
+  </form>`;
+}
+function platePlan(form,data){
+ const fields=new FormData(form);
+ const n=name=>{const s=String(fields.get(name)||'').trim().replace(',','.');return /^[+-]?(?:\d+(?:\.\d{0,3})?|\.\d{1,3})$/.test(s)&&Number.isFinite(+s)?+s:NaN;};
+ if(data.unitless&&!fields.has('mm'))throw Error('Подтверди единицы DXF');
+ const s=st.stock;
+ if(s.shape!=='rect'||+s.rr||+s.rch||!OXY[s.origin]||![s.x,s.y,s.z].every(v=>Number.isFinite(+v)&&+v>0)||st.prog.mp?.mode&&st.prog.mp.mode!=='off')
+  throw Error('Для прототипа нужна одна прямоугольная заготовка без скруглений и фасок');
+ const g=stockGeo();
+ const holes=data.observations.map((ob,i)=>{
+  const [x,y,d,depth]=['x','y','d','z'].map(k=>n(k+i));
+  if(![x,y].every(Number.isFinite)||!(d>0&&depth>0))throw Error(`Отверстие ${i+1}: введи X, Y, Ø и глубину (до 3 знаков после запятой)`);
+  const r=d/2;
+  if(x-r<g.x0||x+r>g.x1||y-r<g.y0||y+r>g.y1)throw Error(`Отверстие ${i+1} выходит за края заготовки. Проверь ноль и размеры`);
+  if(!fields.has('ok'+i))throw Error(`Подтверди отверстие ${i+1}`);
+  return {id:'hole-'+(i+1),type:'Hole',status:'confirmed',units:'mm',geom:{cx:x,cy:y,d,depth},source:{by:'user',observationId:ob.id}};
+ });
+ if(holes.some(({geom:a},i)=>holes.slice(0,i).some(({geom:b})=>Math.hypot(a.cx-b.cx,a.cy-b.cy)<(a.d+b.d)/2)))
+  throw Error('Отверстия пересекаются. Проверь X, Y и диаметры');
+ const [center,drill]=['center','drill'].map(type=>st.tools.find(t=>t.id===fields.get(type)&&t.type===type));
+ const ready=t=>t&&[t.d,t.s,t.f].every(v=>Number.isFinite(+v)&&+v>0)&&Math.round(t.s)>0&&Number.isInteger(+t.num)&&+t.num>0&&st.tools.filter(q=>+q.num===+t.num).length===1;
+ if(!ready(center)||!ready(drill))throw Error('Выбери центровку и сверло с заданными оборотами, подачей и уникальными номерами T');
+ if(holes.some(h=>Math.abs(h.geom.d-drill.d)>1e-9))throw Error('Диаметр сверла должен совпадать с каждым подтверждённым Ø');
+ const [centerZ,rp,safe]=['centerZ','r','safe'].map(n);
+ if(!(centerZ>0&&centerZ<=Math.min(...holes.map(h=>h.geom.depth),g.z)&&rp>0&&safe>=rp))
+  throw Error('Проверь глубину центровки и высоты: безопасная Z ≥ R > 0');
+ if(!fields.has('setup'))throw Error('Подтверди наладку');
+ return {holes,center,drill,centerZ,rp,safe};
+}
+function bindPlate(){
+ const input=$('#plateFile'),review=$('#plateReview'),status=$('#plateLoadStatus');
+ let sequence=0;
+ input.onchange=async()=>{
+  const token=++sequence,file=input.files[0];
+  review.replaceChildren();status.textContent='';
+  if(!file)return;
+  const current=()=>token===sequence&&input.isConnected&&$('#sheet').classList.contains('on');
+  try{
+   if(file.size>5*1024*1024)throw Error('Файл DXF больше 5 МБ');
+   const data=plateObservations(await file.text());
+   if(!current())return;
+   review.innerHTML=plateForm(data);
+   const form=$('#plateForm'),validation=$('#plateValidation'),button=form.querySelector('button[type=submit]');
+   const check=()=>{try{platePlan(form,data);validation.textContent='';button.disabled=false;}catch(e){validation.textContent=e.message;button.disabled=true;}};
+   form.oninput=e=>{
+    const m=/^[xydz]([0-3])$/.exec(e.target.name);
+    if(m)form.elements['ok'+m[1]].checked=false;
+    form.elements.setup.checked=e.target.name==='setup'&&e.target.checked;
+    check();
+   };
+   form.onsubmit=async e=>{
+    e.preventDefault();
+    if(button.disabled)return;
+    let store,id,linked=false;
+    try{
+     const p=platePlan(form,data),before=JSON.stringify(st);
+     button.disabled=true;input.disabled=true;
+     form.querySelectorAll('input,select').forEach(el=>el.disabled=true);
+     validation.textContent='Сохраняю чертёж…';
+     store=await import('./src/storage/idb.js');
+     id='plate-'+uid()+uid();
+     const source={kind:'dxf',name:file.name,sha256:await store.sha256(file)};
+     const list=H=>H.map(({geom:g})=>`${g.cx} ${g.cy}`).join('; ');
+     const op=(tool,depth,H)=>Object.assign(newOp('drill'),{tool:tool.id,cycle:'G81',pat:'list',list:list(H),depth,rp:p.rp,safe:p.safe});
+     const ops=[op(p.center,p.centerZ,p.holes)];
+     for(const depth of new Set(p.holes.map(h=>h.geom.depth)))ops.push(op(p.drill,depth,p.holes.filter(h=>h.geom.depth===depth)));
+     const drawing={schema:'fresa.drawing/1',id,sources:[source],observations:data.observations,confirmed:p.holes,
+      operations:ops.map(o=>o.id),unmatched:data.unmatched};
+     await store.put('drawings',id,{drawing,file});
+     if(!current())return;
+     if(JSON.stringify(st)!==before)throw Error('Проект изменился. Проверь наладку и открой DXF снова');
+     const next={...st,ops:[...st.ops,...ops],drawings:[...(st.drawings||[]),drawing]};
+     if(!save(false,next))throw Error('Не удалось сохранить проект');
+     linked=true;selOp=ops[0].id;
+     closeMenu();renderAll();show('code');
+    }catch(err){
+     if(current()){
+      input.disabled=false;form.querySelectorAll('input,select').forEach(el=>el.disabled=false);
+      check();validation.textContent=err.message;
+     }
+    }finally{if(store&&id&&!linked)await store.del('drawings',id).catch(()=>{});}
+   };
+   status.textContent=file.name;
+   check();
+  }catch(e){if(current())status.textContent=e.message;}
+ };
+}
 function chainPrims(P,tol=0.02){const used=P.map(()=>false),out=[],rev=e=>({...e,a:e.b,b:e.a,cw:e.k=='A'?!e.cw:e.cw});
  for(let s=0;s<P.length;s++){if(used[s])continue;used[s]=true;const ch=[P[s]];let grow=true;
   while(grow){grow=false;const end=ch[ch.length-1].b,st0=ch[0].a;
@@ -2267,7 +2405,7 @@ window.gotoLine=n=>{closeMenu();show('code');if(!CV.edit){cvGo(n);return;}const 
  const lh=parseFloat(getComputedStyle(ta).lineHeight)||20;ta.scrollTop=Math.max(0,n*lh-ta.clientHeight/3);};
 
 /* ---------- меню ☰ ---------- */
-const MENU=[['draw','✏','Чертёж 2D','Начертить деталь или обвести фото чертежа — как в КОМПАС'],['mode','🎚','Режим работы','Новичок — подсказки и шаги · Опытный — все параметры'],['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['ocr','📷','Программа с фото','Сфотографировать программу — распознать и перевести в параметрию'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
+const MENU=[['plate','⊞','По чертежу DXF','Прототип для пластины с четырьмя отверстиями'],['draw','✏','Чертёж 2D','Начертить деталь или обвести фото чертежа — как в КОМПАС'],['mode','🎚','Режим работы','Новичок — подсказки и шаги · Опытный — все параметры'],['sheet','📋','Лист наладки','Инструмент, операции, схема детали — печать или PDF'],['ocr','📷','Программа с фото','Сфотографировать программу — распознать и перевести в параметрию'],['lib','📁','Мои детали','Сохранённые проекты: открыть, сохранить, удалить'],
  ['check','✅','Проверка программы','Столкновения G0, шпиндель, корректоры, режимы'],['calc','🧮','Калькулятор режимов','По материалу и инструменту, утончение стружки'],
  ['ref','📖','Справочник Fanuc','G- и M-коды, коды тревог'],['thr','🔩','Резьбы','Метрические: шаг, сверло под резьбу'],['tol','📏','Допуски','H / h / js по квалитетам IT6–IT14'],['upd','⟳','Обновления','Проверить и установить новую версию'],['about','ℹ️','О программе','Версия, соглашение, политика конфиденциальности, связь']];
 const MENUX={cyc:['cyc','＋','Добавить операцию',''],thrw:['thrw','🔩','Отверстие под резьбу',''],ocr:['ocr','📷','Программа с фото','']};
@@ -2276,6 +2414,7 @@ window.openMenu=v=>{if(v=='upd'||v=='draw'){closeMenu();show(v);return;}$('#shee
  B.innerHTML=VIEWS[v]();if(VIEW_AFTER[v])VIEW_AFTER[v]();B.scrollTop=0;};
 window.closeMenu=()=>$('#sheet').classList.remove('on');
 const VIEW_AFTER={};
+VIEW_AFTER.plate=bindPlate;
 VIEW_AFTER.cyc=()=>renderCyc();
 VIEW_AFTER.ocr=()=>{const ta=$('#ocrT');if(ta)ta.oninput=()=>{ocrText=ta.value;};};
 /* мастер: отверстие под резьбу → центровка (+фаска), сверление, метчик или резьбофреза */
@@ -2303,6 +2442,7 @@ window.wzAdd=()=>{const c=wzCalc();if(!c.n)return toast('Нет точек от�
  else mk('tap',{depth:c.dep,rp:5},need('tap',c.D,c.P));
  st.ops.push(...add);selOp=add[0].id;save();closeMenu();show('ops');toast(`Добавлено переходов: ${add.length}`+(newT.length?' · в магазин: '+newT.join(', '):''));};
 const VIEWS={
+ plate:plateView,
  mode:()=>modeHTML(),
  cyc:()=>`<button class="dpromo" style="margin-bottom:12px" onclick="closeMenu();show('draw')"><span class="pi">✏</span><span><b>Начертить контур</b><small>Своя форма — в чертеже 2D, потом «Обработать»</small></span></button>`+(easy()?'<div class="hint" style="margin:0 0 12px">Обычный порядок: <b>Торцовка → Контур или Карман → Отверстия → Фаска</b>. Нажми цикл — откроются его размеры.</div>':'')+'<div id="cycG"></div>',
  sheet:()=>`<div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="printSheet()">🖨 Печать / PDF</button><button class="btn" onclick="saveSheet()">⬇ Сохранить HTML</button></div><div id="ssWrap">${sheetHTML()}</div>`,
@@ -2451,6 +2591,7 @@ function libRefresh(){if($('#sheet').classList.contains('on'))openMenu('lib');el
 function renderHome(){const h=$('#home');if(!h)return;const L=libGet(),tot=st.ops.filter(o=>o.on).reduce((a,o)=>a+(opTime(o).t||0),0);
  h.innerHTML=`<button class="hnew" onclick="wizOpen()"><span class="pl">${HIC.plus}</span><span class="m"><b>Новая деталь</b><small>Заготовка → ноль → операции</small></span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
  <div class="h2"><button class="hb" onclick="document.getElementById('impF').click()">${HIC.file}Открыть файл .nc</button><button class="hb" onclick="openMenu('ocr')">${HIC.cam}Код с фото</button></div>
+ <button class="dpromo" onclick="openMenu('plate')"><span class="pi">⊞</span><span><b>По чертежу DXF</b><small>Пластина с четырьмя отверстиями</small></span></button>
  <button class="dpromo" onclick="show('draw')"><span class="pi"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></span><span><b>Чертёж 2D</b><small>Начерти деталь или обведи фото чертежа — потом обработка в один тап</small></span><em>НОВОЕ</em></button>
  <div class="hh"><b>Сейчас открыта</b></div>
  <button class="pc cur" onclick="show('ops')"><span class="pi">${stockIco(26)}</span><span class="m"><b>${esc(st.prog.name||'Деталь')} · O${st.prog.num}</b><small>${esc(stkShort())} · ${st.ops.length} опер.${tot?' · ≈ '+tshort(tot):''}</small></span><em>Открыть →</em></button>
