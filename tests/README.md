@@ -29,7 +29,13 @@ npx playwright test              # все тесты
 | `e2e/plate.spec.js` | «По чертежу» с DXF Codex: блокировка до подтверждения, сброс при правке, G81, сохранение и экспорт |
 | `e2e/drawing-import.spec.js` | PDF и фото эталона №1: окружности, привязка размеров, ухудшенное фото — без выдуманных значений |
 | `e2e/drawing-scenario.spec.js` | сквозной сценарий PDF/фото/DXF → подтверждение → G-код → проверка → 3D → исходник из проекта; «Не обрабатывать» |
-| `unit/*.test.mjs` | `npm run test:unit` — разбор надписей и DXF, привязка размеров без браузера |
+| `e2e/regression-drawing.spec.js` | настоящий 3D (карта высот после сверления), ноль, конфликт, неизвестные размеры, экспорт/импорт, офлайн (сайт) |
+| `e2e/check-safety.spec.js` | проверка программы: 15 испорченных вариантов ловятся; эталоны — без ложных тревог |
+| `e2e/drawing-set.spec.js` | матрица эталонов №01–09 × форматы; таблица — `node tests/matrix-report.js` → `docs/DRAWING_TEST_MATRIX.md` |
+| `e2e/storage-quota.spec.js` | нехватка места в IndexedDB: план не меняется, понятное сообщение, повтор |
+| `e2e/ai-helper.spec.js` | ИИ-помощник: выключен по умолчанию, Ollama недоступна, подменённый ответ модели — только подсказки |
+| `e2e/ai-ollama-real.spec.js` | настоящая Ollama (только в `ai-bench.yml`, иначе пропускается) |
+| `unit/*.test.mjs` | `npm run test:unit` — разбор надписей и DXF, привязка размеров, проверка ответа ИИ — без браузера |
 
 Фото-тесты используют Tesseract: в CI — с jsDelivr, локально без сети — `TESS_DIR` (папка с tesseract.min.js, worker.min.js, core и eng.traineddata). PDF — `PDFJS_DIR` (пакет pdfjs-dist 6.2.108).
 

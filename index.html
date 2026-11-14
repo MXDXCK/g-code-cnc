@@ -1436,6 +1436,13 @@ function platePlan(form,data){
  if(!fields.has('setup'))throw Error('Подтверди наладку');
  return {holes,skipped,center,drill,centerZ,rp,safe};
 }
+/** Ошибка сохранения — по-русски и с тем, что делать. Сырые сообщения браузера пользователю не показываем. */
+function plateErr(e){
+ const n=e&&e.name||'',m=String(e&&e.message||e||'');
+ if(n==='QuotaExceededError'||/quota|exceeded|no space|disk full/i.test(m))return 'Не хватает места в памяти устройства для сохранения чертежа. Освободи место (удали ненужные проекты, фото или файлы) и нажми «Добавить операции» ещё раз. План не изменён.';
+ if(n==='InvalidStateError'||n==='SecurityError'||/indexeddb|idb|database/i.test(m))return 'Хранилище браузера недоступно (например, приватный режим Safari) — чертёж не сохранить. Открой Fresa в обычном режиме. План не изменён.';
+ return m;
+}
 function bindPlate(){
  const input=$('#plateFile'),review=$('#plateReview'),status=$('#plateLoadStatus');
  let sequence=0;
@@ -1487,6 +1494,7 @@ function bindPlate(){
       association:a?{units:a.units,scale:a.scale,outline:a.outline&&{w:a.outline.w,h:a.outline.h},thickness:a.thickness,conflicts:a.conflicts}:null,
       ai:data.ai?{provider:data.ai.provider,model:data.ai.model,ms:data.ai.ms,ignored:data.ai.check.ignored.length,unread:data.ai.check.unread,hints:data.ai.check.perHole.map(h=>h.ai?{x:h.x,y:h.y,d:h.d}:null)}:null};
      await store.put('drawings',id,{drawing,file});
+     store.requestPersist().catch(()=>{});   // попросить браузер не удалять данные сам (Safari: правило 7 дней, нехватка места)
      if(!current())return;
      if(JSON.stringify(st)!==before)throw Error('Проект изменился. Проверь наладку и открой чертёж снова');
      const next={...st,ops:[...st.ops,...ops],drawings:[...(st.drawings||[]),drawing]};
@@ -1496,7 +1504,7 @@ function bindPlate(){
     }catch(err){
      if(current()){
       input.disabled=false;form.querySelectorAll('input,select').forEach(el=>el.disabled=false);
-      check();validation.textContent=err.message;
+      check();validation.textContent=plateErr(err);
      }
     }finally{if(store&&id&&!linked)await store.del('drawings',id).catch(()=>{});}
    };
