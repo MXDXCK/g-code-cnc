@@ -27,8 +27,8 @@ export const SCHEMA = {
 
 const KEY = 'fcam_ai';
 export function loadSettings() {
-  try { return Object.assign({ provider: 'none', url: 'http://127.0.0.1:11434', model: 'qwen3-vl:2b' }, JSON.parse(localStorage.getItem(KEY) || '{}')); }
-  catch (e) { return { provider: 'none', url: 'http://127.0.0.1:11434', model: 'qwen3-vl:2b' }; }
+  try { return Object.assign({ provider: 'none', url: 'http://127.0.0.1:11434', model: 'qwen3-vl:2b-instruct' }, JSON.parse(localStorage.getItem(KEY) || '{}')); }
+  catch (e) { return { provider: 'none', url: 'http://127.0.0.1:11434', model: 'qwen3-vl:2b-instruct' }; }
 }
 export function saveSettings(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* без хранилища — только на сеанс */ } }
 
@@ -53,7 +53,7 @@ export const none = {
 
 /** Ollama: http://127.0.0.1:11434. Для страницы с другим адресом Ollama должна разрешить источник (OLLAMA_ORIGINS). */
 export function ollama(cfg) {
-  const url = (cfg.url || 'http://127.0.0.1:11434').replace(/\/+$/, ''), model = cfg.model || 'qwen3-vl:2b';
+  const url = (cfg.url || 'http://127.0.0.1:11434').replace(/\/+$/, ''), model = cfg.model || 'qwen3-vl:2b-instruct';
   return {
     id: 'ollama', name: `Ollama на этом ПК · ${model}`,
     async status() {
@@ -77,8 +77,11 @@ export function ollama(cfg) {
       if (!r.ok) throw new Error(`Ollama: ошибка ${r.status}${r.status === 400 ? ' (старая версия Ollama? нужна 0.12 или новее)' : ''}`);
       const j = await r.json(), m = j.message || {}, text = m.content || '';
       // запасной путь: JSON оказался в рассуждении
-      const json = parseJSON(text) || (m.thinking ? parseJSON(m.thinking) : null);
-      return { json, raw: text || m.thinking || '', ms: Math.round(performance.now() - t0), model, done: j.done_reason };
+      const after = text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '');
+      const json = parseJSON(after) || (m.thinking ? parseJSON(m.thinking) : null);
+      const thinking = !json && (/^\s*<think>/.test(text) || m.thinking);
+      return { json, raw: text || m.thinking || '', ms: Math.round(performance.now() - t0), model, done: j.done_reason,
+        hint: thinking ? `модель ${model} — «думающая»: рассуждает вместо ответа. Выбери вариант instruct (например qwen3-vl:2b-instruct)` : null };
     },
   };
 }

@@ -35,7 +35,7 @@ test('ответ модели: подсказки под полями, выду�
   let asked = null;
   await page.context().route('http://127.0.0.1:11434/**', async r => {
     const u = r.request().url();
-    if (u.endsWith('/api/tags')) return r.fulfill({ json: { models: [{ name: 'qwen3-vl:2b' }] } });
+    if (u.endsWith('/api/tags')) return r.fulfill({ json: { models: [{ name: 'qwen3-vl:2b-instruct' }] } });
     asked = JSON.parse(r.request().postData());
     return r.fulfill({ json: { message: { content: JSON.stringify({ plate: { w: 120, h: 80 },
       holes: [{ x: 15, y: 15, d: 10 }, { x: 105, y: 15, d: 12 }, { x: 60, y: 40, d: 10 }], dims: ['15', '90', 'Ra 3,2'] }) } } });
@@ -48,7 +48,7 @@ test('ответ модели: подсказки под полями, выду�
   await page.locator('#aiRun').click();
   await expect(page.locator('#aiOut')).toContainText('Подсказки — под отверстиями');
   // запрос: картинка, схема JSON, температура 0, модель из настроек
-  expect(asked.model).toBe('qwen3-vl:2b');
+  expect(asked.model).toBe('qwen3-vl:2b-instruct');
   expect(asked.messages[0].images[0].length).toBeGreaterThan(1000);
   expect(asked.format.required).toEqual(['holes', 'dims']);
   expect(asked.options.temperature).toBe(0);
@@ -62,5 +62,19 @@ test('ответ модели: подсказки под полями, выду�
   const after = await page.locator('#plateForm input').evaluateAll(els => els.map(e => e.type === 'checkbox' ? e.checked : e.value));
   expect(after).toEqual(before);
   await expect(page.locator('#plateForm button[type=submit]')).toBeDisabled();
+  expect(errors).toEqual([]);
+});
+
+test('«думающая» модель без JSON — понятный совет выбрать instruct', async ({ page }) => {
+  const errors = await prepare(page);
+  await page.context().route('http://127.0.0.1:11434/**', r => r.request().url().endsWith('/api/tags')
+    ? r.fulfill({ json: { models: [{ name: 'qwen3-vl:2b-instruct' }] } })
+    : r.fulfill({ json: { message: { content: '<think>\nGot it, let\'s analyze the drawing. First, the plate size is 120 by 80…' }, done_reason: 'length' } }));
+  await page.locator('#plateFile').setInputFiles(fixture('drawings', '01-plate-4-holes', 'plate.pdf'));
+  await page.locator('#aiProv').selectOption('ollama');
+  await expect(page.locator('#aiStatus')).toContainText('Ollama готова');
+  await page.locator('#aiRun').click();
+  await expect(page.locator('#aiOut')).toContainText('«думающая»');
+  await expect(page.locator('#aiOut')).toContainText('instruct');
   expect(errors).toEqual([]);
 });

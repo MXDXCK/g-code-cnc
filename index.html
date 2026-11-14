@@ -1552,7 +1552,7 @@ function bindPlateAI(data){
   try{
    const V=await import('./src/ai/validate.js'),prov=P.current(),img=await plateAIImage(data),r=await prov.analyze(img);
    window.__fresaLastAI=r&&{raw:String(r.raw||'').slice(0,2000),ms:r.ms,model:r.model,done:r.done,ok:!!r.json};   // для диагностики и тестов
-   if(!r||!r.json)throw Error('модель не вернула JSON — ответ не использован');
+   if(!r||!r.json)throw Error(r&&r.hint?r.hint:'модель не вернула JSON — ответ не использован');
    const ai=V.normalizeAI(r.json),check=V.crossCheck(data.assoc||{holes:[]},ai);
    data.ai={provider:prov.id,model:r.model,ms:r.ms,check};
    data.observations.forEach((o,i)=>{const k=(data.assoc&&data.assoc.holes||[]).findIndex(h=>Math.abs(h.du.cx-o.geom.cx)<1e-6&&Math.abs(h.du.cy-o.geom.cy)<1e-6),

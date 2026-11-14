@@ -103,8 +103,10 @@ jobs:
           OLLAMA_ORIGINS='*' nohup ollama serve > ollama.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:11434/api/tags && break; sleep 2; done
           ollama --version | tee ollama-version.txt
-          ollama pull qwen3-vl:2b
-          ollama list
+          # нужен instruct-вариант: «qwen3-vl:2b» в Ollama — думающий (рассуждает до конца лимита, JSON не выдаёт)
+          M=""; for t in qwen3-vl:2b-instruct qwen3-vl:2b-instruct-q4_K_M qwen3-vl:2b-instruct-q8_0 qwen3-vl:2b; do
+            if ollama pull "$t"; then M="$t"; break; fi; done
+          test -n "$M"; echo "FRESA_OLLAMA_MODEL=$M" >> $GITHUB_ENV; ollama list; ollama show "$M" | head -30
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - name: Fresa в браузере → Ollama → подсказки

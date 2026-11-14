@@ -4,7 +4,7 @@ const { test, expect } = require('playwright/test');
 const fs = require('fs'), path = require('path');
 const { openApp, FIX } = require('../helpers');
 
-const REAL = !!process.env.FRESA_REAL_OLLAMA, MODEL = process.env.FRESA_OLLAMA_MODEL || 'qwen3-vl:2b';
+const REAL = !!process.env.FRESA_REAL_OLLAMA, MODEL = process.env.FRESA_OLLAMA_MODEL || 'qwen3-vl:2b-instruct';
 const CASES = [['01-plate-4-holes', 'plate.png'], ['02-contour-radii', 'drawing.png'], ['06-chains', 'drawing.png'], ['07-tolerances', 'drawing.pdf'], ['09-conflict', 'drawing.png'], ['08-bad-scan', 'scan.jpg']];
 const OUT = [];
 
