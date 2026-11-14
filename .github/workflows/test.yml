@@ -28,6 +28,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Браузер для тестов
         run: npx playwright install --with-deps chromium
+      - name: Модульные тесты (без браузера)
+        run: npm run test:unit
       - name: Тесты
         env:
           CI: '1'

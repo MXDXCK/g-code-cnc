@@ -2081,8 +2081,13 @@ window.convUndo=()=>{if(convOrig==null)return;$('#code').value=convOrig;convOrig
 const OCR_LOCAL=false;
 const OCR_LIB=()=>new URL('lib/tesseract/',location.href).href,OCR_SRC=OCR_LOCAL?'lib/tesseract/tesseract.min.js':'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',OCR_WL='0123456789.,-+#[]()=<>%/;:*ABCDEFGHIJKLMNOPQRSTUVWXYZ_ ';
 let ocrW=null,ocrLog=null,ocrText='';
-async function ocrLoad(){if(!window.Tesseract)await new Promise((ok,no)=>{const s=document.createElement('script');s.src=OCR_SRC;s.onload=ok;s.onerror=()=>no(Error('Не удалось загрузить распознавание — нужен интернет при первом запуске'));document.head.appendChild(s);});
- if(!ocrW){ocrW=await Tesseract.createWorker('eng',1,Object.assign({logger:m=>ocrLog&&ocrLog(m)},OCR_LOCAL?{workerPath:OCR_LIB()+'worker.min.js',corePath:OCR_LIB(),langPath:OCR_LIB().replace(/\/$/,''),gzip:false,workerBlobURL:false}:{}));await ocrW.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1',tessedit_char_whitelist:OCR_WL});}return ocrW;}
+async function ocrScript(){if(!window.Tesseract)await new Promise((ok,no)=>{const s=document.createElement('script');s.src=(window.__fresaOcrPaths||{}).script||OCR_SRC;s.onload=ok;s.onerror=()=>no(Error('Не удалось загрузить распознавание — нужен интернет при первом запуске'));document.head.appendChild(s);});}
+/* __fresaOcrPaths — только для автотестов без сети (tests/helpers.js) */
+const ocrOpts=log=>Object.assign({logger:m=>log&&log(m)},window.__fresaOcrPaths?{workerPath:__fresaOcrPaths.worker,corePath:__fresaOcrPaths.core,langPath:__fresaOcrPaths.lang,gzip:false,workerBlobURL:false}:OCR_LOCAL?{workerPath:OCR_LIB()+'worker.min.js',corePath:OCR_LIB(),langPath:OCR_LIB().replace(/\/$/,''),gzip:false,workerBlobURL:false}:{});
+/* отдельный распознаватель для чертежей (src/drawing/import-raster.js): свои настройки, общий движок */
+window.__fresaOcrWorker=async(params,log)=>{await ocrScript();const w=await Tesseract.createWorker('eng',1,ocrOpts(log));if(params)await w.setParameters(params);return w;};
+async function ocrLoad(){await ocrScript();
+ if(!ocrW){ocrW=await Tesseract.createWorker('eng',1,ocrOpts(m=>ocrLog&&ocrLog(m)));await ocrW.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1',tessedit_char_whitelist:OCR_WL});}return ocrW;}
 /* подготовка снимка: серый, светлый текст на тёмном экране → инвертировать, растянуть контраст, локальный порог */
 async function ocrPrep(file){const bm=await createImageBitmap(file),k=Math.min(2.5,Math.max(1,2000/Math.max(bm.width,bm.height)*1.2)),W=Math.round(bm.width*k),H=Math.round(bm.height*k);
  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(bm,0,0,W,H);const im=g.getImageData(0,0,W,H),d=im.data,N=W*H,Y=new Float32Array(N);

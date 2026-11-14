@@ -4,6 +4,7 @@
   "description": "Автотесты Fresa (не входят в приложение)",
   "scripts": {
     "test": "playwright test",
+    "test:unit": "node --test tests/unit/*.test.mjs",
     "test:golden:update": "UPDATE_GOLDEN=1 playwright test tests/e2e/golden.spec.js"
   },
   "devDependencies": {

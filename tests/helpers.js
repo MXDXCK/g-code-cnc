@@ -20,6 +20,10 @@ function threeFiles() {
   return { three: stub, orbit: stub, real: false };
 }
 const THREE = threeFiles();
+const LOCAL = {
+  pdfjs: process.env.PDFJS_DIR || (() => { try { return path.dirname(require.resolve('pdfjs-dist/package.json')); } catch (e) { return null; } })(),
+  tess: process.env.TESS_DIR || null,
+};
 
 /** Открыть приложение с чистым состоянием. opts.mode: 'pro'|'easy'; opts.keepStorage — не чистить localStorage. */
 async function openApp(page, opts = {}) {
@@ -30,8 +34,15 @@ async function openApp(page, opts = {}) {
     status: 200, contentType: 'application/javascript',
     body: r.request().url().includes('OrbitControls') ? THREE.orbit : THREE.three,
   }));
-  // распознавание текста (Tesseract с CDN) в тестах не загружаем
-  await page.route('https://cdn.jsdelivr.net/**', r => r.abort());
+  // pdf.js и Tesseract: в CI — с CDN как у пользователей; без сети — из локальных копий (PDFJS_DIR, TESS_DIR), иначе запрос отклоняется
+  await page.context().route('https://cdn.jsdelivr.net/**', r => {        // context.route: перехватывает и запросы из воркеров (Tesseract)
+    const u = r.request().url();
+    const pm = /pdfjs-dist@[^/]+\/(.+)$/.exec(u);
+    if (pm && LOCAL.pdfjs) { const f = path.join(LOCAL.pdfjs, pm[1]); if (fs.existsSync(f)) return r.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(f) }); }
+    const tm = /tesseract[^/]*\/(?:dist\/)?([^/]+)$|\/eng[@/].*\/([^/]+)$/.exec(u);
+    if (tm && LOCAL.tess) { const f = path.join(LOCAL.tess, (tm[1] || tm[2]).replace(/\.gz$/, '')); if (fs.existsSync(f)) return r.fulfill({ status: 200, body: fs.readFileSync(f) }); }
+    return process.env.CI ? r.continue() : r.abort();
+  });
   const mode = opts.mode || 'pro';
   await page.addInitScript(([mode, keep]) => {
     // флаг в самом localStorage: при перезагрузке страницы данные не стираются
@@ -42,6 +53,7 @@ async function openApp(page, opts = {}) {
       localStorage.setItem('fcam_mode', mode); localStorage.setItem('fcam_safe1', '1');
     }
   }, [mode, !!opts.keepStorage]);
+  if (LOCAL.tess && !process.env.CI) await page.addInitScript(() => { window.__fresaOcrPaths = { script: '/__tess/tesseract.min.js', worker: '/__tess/worker.min.js', core: '/__tess/', lang: '/__tess' }; });
   await page.goto(APP);
   await page.waitForFunction(() => !!window.__fcam, null, { timeout: 15000 });
   return errors;
