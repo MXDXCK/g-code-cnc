@@ -1331,7 +1331,7 @@ async function plateRead(file,say){
 const plateZero0=data=>data.kind==='dxf'?'dxf':'part';
 /** Предложенные X, Y, Ø (в координатах проекта) — только как начальные значения полей. */
 function plateGuess(data,o,zero){
- const v=q=>q&&q.value!=null&&Number.isFinite(+q.value)?+q.value:NaN;
+ const v=q=>q&&q.value!=null&&!q.conflict&&Number.isFinite(+q.value)?+q.value:NaN;   // спорное значение не подставляем
  const d=data.kind==='dxf'?2*o.geom.r:v(o.dims&&o.dims.d);
  if(zero==='dxf')return [o.geom.cx,o.geom.cy,d];
  if(!data.assoc||!data.assoc.outline)return [NaN,NaN,d];
@@ -1339,7 +1339,7 @@ function plateGuess(data,o,zero){
 }
 const plateVal=x=>Number.isFinite(x)?nf(x):'';
 function plateSrcNote(data,o,zero){
- const s=q=>!q||q.value==null?'нет данных — введи':q.source==='dimension'?'по размеру'+(q.note&&/^размер /.test(q.note)?' '+q.note.slice(7):''):'≈ измерено по рисунку — проверь';
+ const s=q=>!q||q.value==null?'нет данных — введи':q.conflict?`⚠ по размеру ${nf(q.value)}, на рисунке ≈ ${nf(q.conflict.measured)} — реши и введи сам`:q.source==='dimension'?'по размеру'+(q.note&&/^размер /.test(q.note)?' '+q.note.slice(7):''):'≈ измерено по рисунку — проверь';
  const xy=zero==='dxf'?'X, Y — из файла DXF':!data.assoc||!data.assoc.outline?'X, Y — контур детали не найден, введи сам':`X: ${s(o.dims&&o.dims.x)} · Y: ${s(o.dims&&o.dims.y)}`;
  const d=data.kind==='dxf'?(o.dims&&o.dims.d&&o.dims.d.source==='dimension'?'Ø: из файла, совпадает с надписью':'Ø: из файла'):'Ø: '+s(o.dims&&o.dims.d);
  return xy+' · '+d+(o.conflict?' · ⚠ надпись не совпадает с рисунком':'');

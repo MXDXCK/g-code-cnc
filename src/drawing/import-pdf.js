@@ -64,9 +64,14 @@ export async function importPDF(data, pdfjs, { page: pageNo = 1 } = {}) {
       if (!STROKE.has(paint) || !path) continue;                          // заливки (стрелки, штриховка) не нужны
       const d = Array.from(path); let k = 0, cur = null, start = null, curves = [], lines = [];
       const flush = () => {
-        if (curves.length >= 4) {                                           // замкнутая фигура из кривых → окружность?
+        if (curves.length >= 2) {                                           // замкнутая фигура из кривых → окружность?
           const pts = []; for (const c of curves) for (let t = 0; t < 1; t += 0.125) pts.push(bez(c[0], c[1], c[2], c[3], t));
-          const f = fitCircle(pts); if (f && f.r > 0 && f.err < Math.max(0.01 * f.r, 0.05)) { circles.push({ cx: f.cx * PT2MM, cy: f.cy * PT2MM, r: f.r * PT2MM, src: 'pdf' }); curves = []; return; }
+          const f = fitCircle(pts);
+          // окружность — только если кривые обходят центр почти целиком (≥ 330°) и путь замкнут;
+          // дуга скругления угла или торец паза тоже «круглые», но это не отверстие
+          const first = curves[0][0], last = curves[curves.length - 1][3], closed = f && Math.hypot(last[0] - first[0], last[1] - first[1]) < Math.max(0.02 * f.r, 0.05);
+          const bins = new Set(); if (f) for (const [x, y] of pts) bins.add(Math.floor((Math.atan2(y - f.cy, x - f.cx) + Math.PI) / (2 * Math.PI) * 36) % 36);
+          if (f && f.r > 0 && closed && bins.size >= 33 && f.err < Math.max(0.01 * f.r, 0.05)) { circles.push({ cx: f.cx * PT2MM, cy: f.cy * PT2MM, r: f.r * PT2MM, src: 'pdf' }); curves = []; return; }
         }
         for (const c of curves) { let p = c[0]; for (let t = 0.125; t <= 1.0001; t += 0.125) { const q = bez(c[0], c[1], c[2], c[3], t); lines.push([p, q]); p = q; } }
         curves = [];

@@ -61,15 +61,20 @@ export function importDXF(txt) {
         dimPts.push({ kind: 'linear', axis, value, text, tol: parsed && parsed.tol, p1, p2, textId: 'dim' + dimPts.length });
       } else if (type === 3) {
         const a = p(10), b = p(15);
-        dimPts.push({ kind: parsed && parsed.kind === 'thread' ? 'thread' : 'dia', value: parsed && parsed.kind === 'dia' || !parsed ? value : parsed.value, pitch: parsed && parsed.pitch, count: parsed && parsed.count,
+        dimPts.push({ kind: parsed && parsed.kind === 'thread' ? 'thread' : 'dia', value: parsed && parsed.kind === 'dia' || !parsed ? value : parsed.value, pitch: parsed && parsed.pitch, count: parsed && parsed.count, tol: parsed && parsed.tol,
           text, center: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], r: Math.hypot(b[0] - a[0], b[1] - a[1]) / 2, textId: 'dim' + dimPts.length });
       } else if (type === 4) {
         dimPts.push({ kind: 'rad', value, text, center: p(10), textId: 'dim' + dimPts.length });
       } else { skipped['DIMENSION тип ' + type] = (skipped['DIMENSION тип ' + type] || 0) + 1; }
     } else if (!['SEQEND', 'VERTEX', 'POINT', 'HATCH', 'SOLID', 'LEADER', 'MLEADER'].includes(t)) skipped[t] = (skipped[t] || 0) + 1;
   }
-  // полная дуга 360° из ARC — тоже окружность
-  for (const a of arcs) if (Math.abs(((a.a2 - a.a1) % 360 + 360) % 360) < 1e-6) circles.push({ cx: a.cx * k, cy: a.cy * k, r: a.r * k, src: 'ARC' });
+  // полная дуга 360° из ARC — тоже окружность; остальные дуги (скругления, торцы пазов) — ломаной, чтобы контур и выноски их «видели»
+  for (const a of arcs) {
+    const sw = ((a.a2 - a.a1) % 360 + 360) % 360;
+    if (sw < 1e-6) { circles.push({ cx: a.cx * k, cy: a.cy * k, r: a.r * k, src: 'ARC' }); continue; }
+    const n = Math.max(4, Math.ceil(sw / 7.5)), P = i => { const t = (a.a1 + sw * i / n) * Math.PI / 180; return [a.cx + a.r * Math.cos(t), a.cy + a.r * Math.sin(t)]; };
+    for (let i = 0; i < n; i++) { const [x1, y1] = P(i), [x2, y2] = P(i + 1); seg(x1, y1, x2, y2, 'ARC'); }
+  }
   if (Object.keys(skipped).length) warn.push('пропущено: ' + Object.entries(skipped).map(([a, b]) => a + ' ×' + b).join(', '));
   return { units: 'mm', segs, circles, arcs, texts, dimPts, warnings: [...new Set(warn)] };
 }

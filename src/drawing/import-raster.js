@@ -59,6 +59,20 @@ function linkPieces(pieces) {
   return out;
 }
 
+/** Угол наклона по длинным отрезкам: взвешенная по длине медиана угла к ближайшей оси (−45°…45°). */
+function estimateSkew(segs, minLen) {
+  const A = [];
+  for (const g of segs) {
+    const L = Math.hypot(g.x2 - g.x1, g.y2 - g.y1); if (L < minLen) continue;
+    let a = Math.atan2(g.y2 - g.y1, g.x2 - g.x1); while (a > Math.PI / 4) a -= Math.PI / 2; while (a <= -Math.PI / 4) a += Math.PI / 2;
+    A.push([a, L]);
+  }
+  if (A.length < 3) return 0;
+  A.sort((p, q) => p[0] - q[0]); const tot = A.reduce((t, x) => t + x[1], 0); let acc = 0;
+  for (const [a, L] of A) { acc += L; if (acc >= tot / 2) return a; }
+  return 0;
+}
+
 async function decode(blob, maxSide) {
   const bm = await createImageBitmap(blob), k = Math.min(1, maxSide / Math.max(bm.width, bm.height));
   const W = Math.round(bm.width * k), H = Math.round(bm.height * k), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -198,7 +212,10 @@ export async function importRaster(blob, env) {
   const polys = [];
   for (const { P, circle } of raw) {
     if (circle) continue;
-    if (P.every(([x, y]) => inText(x, y))) continue;                               // штрихи букв и цифр
+    // штрихи букв и цифр — внутри рамок слов; но длинная линия (больше 2,5 высоты шрифта) — не буква,
+    // даже если OCR ошибочно положил на неё рамку «слова» (так бывает на углах и выносных)
+    const ext = P.length > 1 ? Math.max(Math.abs(P[P.length - 1][0] - P[0][0]), Math.abs(P[P.length - 1][1] - P[0][1])) : 0;
+    if (P.every(([x, y]) => inText(x, y)) && !(hMed && ext > 2.5 * hMed)) continue;
     let cur = [];                                                                    // части, лежащие на окружности, — не отрезки
     for (const q of P) { if (onCircle(q[0], q[1])) { if (cur.length > 1) polys.push(cur); cur = []; } else cur.push(q); }
     if (cur.length > 1) polys.push(cur);
@@ -218,5 +235,14 @@ export async function importRaster(blob, env) {
   const C1 = C.filter(c => 2 * c.r >= small || mark(c));
   if (C1.length < C.length) warn.push('пропущено мелких колец без осевых линий (похожи на буквы): ' + (C.length - C1.length));
   const texts = words.map(w => ({ s: w.s, x: (w.x0 + w.x1) / 2, y: H - (w.y0 + w.y1) / 2, h: w.ang ? w.x1 - w.x0 : w.y1 - w.y0, ang: w.ang, conf: w.conf, guess: w.guess, src: 'ocr' }));
-  return { units: 'px', segs, circles: C1, texts, image: { W, H, k, srcW, srcH }, warnings: warn };
+  // наклон снимка: длинные линии чертежа почти всегда идут по осям — по ним находим угол и выравниваем всё вместе
+  const skew = estimateSkew(segs, 0.05 * Math.min(W, H));
+  if (Math.abs(skew) > 0.1 * Math.PI / 180 && Math.abs(skew) < 10 * Math.PI / 180) {
+    const c = Math.cos(-skew), sn = Math.sin(-skew), ox = W / 2, oy = H / 2, R = (x, y) => [ox + (x - ox) * c - (y - oy) * sn, oy + (x - ox) * sn + (y - oy) * c];
+    for (const g of segs) { [g.x1, g.y1] = R(g.x1, g.y1); [g.x2, g.y2] = R(g.x2, g.y2); }
+    for (const q of C1) [q.cx, q.cy] = R(q.cx, q.cy);
+    for (const t of texts) [t.x, t.y] = R(t.x, t.y);
+    warn.push(`снимок наклонён на ${(skew * 180 / Math.PI).toFixed(1)}° — выровнен по линиям чертежа`);
+  }
+  return { units: 'px', skewDeg: +(skew * 180 / Math.PI).toFixed(2), segs, circles: C1, texts, image: { W, H, k, srcW, srcH }, warnings: warn };
 }

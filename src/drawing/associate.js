@@ -18,33 +18,84 @@ function ptSeg(px, py, s) {
   return { d: Math.hypot(px - cx, py - cy), u, cx, cy };
 }
 
-/** Найти контур пластины: наибольший прямоугольник, все 4 стороны которого покрыты отрезками (≥97%). */
-export function findOutline(segs, circles, tol) {
-  const H = segs.filter(s => Math.abs(s.y2 - s.y1) <= tol && len(s) > tol * 4).sort((a, b) => len(b) - len(a)).slice(0, 40);
-  const V = segs.filter(s => Math.abs(s.x2 - s.x1) <= tol && len(s) > tol * 4).sort((a, b) => len(b) - len(a)).slice(0, 40);
+/**
+ * Найти контур пластины: наибольший прямоугольник, каждая сторона которого — ОДНА непрерывная линия.
+ * Углы могут быть острыми, скруглёнными (R) или со срезом (фаска): тогда обе стороны не доходят до угла на одну
+ * и ту же величину, а через точку на 45° проходит дуга или срез. Возвращает {x0,x1,y0,y1, corners:[{at,kind,r}]}.
+ */
+export function findOutline(segs, circles, tol, units = 'mm') {
+  // стороны — только отрезки по оси: кусочки дуг скругления сюда не входят и не «склеивают» сторону с выносной
+  // в векторе — строго (кусочки дуг идеально ровные); на фото концы сторон у углов скелет слегка закругляет — допуск целиком
+  const ax = s => units === 'px' ? tol : Math.min(tol, Math.max(0.02 * len(s), tol / 2));
+  const H = segs.filter(s => Math.abs(s.y2 - s.y1) <= ax(s) && len(s) > tol * 4).sort((a, b) => len(b) - len(a)).slice(0, 40);
+  const V = segs.filter(s => Math.abs(s.x2 - s.x1) <= ax(s) && len(s) > tol * 4).sort((a, b) => len(b) - len(a)).slice(0, 40);
   const uniq = (a) => a.sort((x, y) => x - y).filter((v, i, b) => !i || v - b[i - 1] > tol);
   const xs = uniq(V.map(s => (s.x1 + s.x2) / 2)), ys = uniq(H.map(s => (s.y1 + s.y2) / 2));
-  const cover = (list, axis, at, a, b) => {                       // доля [a,b], покрытая ОДНОЙ непрерывной линией (разрыв ≤ tol)
+  const run = (list, axis, at, a, b) => {                         // лучший непрерывный участок стороны на [a,b] (разрыв ≤ tol)
     const iv = list.filter(s => near(axis === 'h' ? (s.y1 + s.y2) / 2 : (s.x1 + s.x2) / 2, at, tol))
       .map(s => axis === 'h' ? [Math.min(s.x1, s.x2), Math.max(s.x1, s.x2)] : [Math.min(s.y1, s.y2), Math.max(s.y1, s.y2)])
       .sort((u, v) => u[0] - v[0]);
-    // разрыв больше допуска допустим только там, где сторону пересекает другая линия (узел скелета на фото, выноска)
+    // разрыв больше допуска перекрывается только там, где сторону пересекает наклонная линия (узел скелета на фото, выноска)
+    // перпендикулярная линия у конца стороны (угол, выносная) — не повод перекрывать разрыв; в середине стороны (полка выноски
+    // или линия детали пересекает сторону) — повод
+    const mid = (m) => m > a + 3 * tol && m < b - 3 * tol;
     const crossed = (m) => segs.some(o => { const q = axis === 'h' ? ptSeg(m, at, o) : ptSeg(at, m, o), [dx, dy] = dir(o);
-      const k = axis === 'h' ? Math.abs(dy) : Math.abs(dx);                      // перпендикулярная линия (угол, выносная) — не повод перекрывать разрыв
-      return q.d <= tol && q.u > 0 && q.u < 1 && k > 0.3 && k < 0.95; });
-    const runs = []; for (const [p, q] of iv) { const L = runs[runs.length - 1]; if (L && (p <= L[1] + tol || p <= L[1] + 3 * tol && crossed((L[1] + p) / 2))) L[1] = Math.max(L[1], q); else runs.push([p, q]); }
+      const k = axis === 'h' ? Math.abs(dy) : Math.abs(dx);
+      if (q.d <= tol && q.u > 0 && q.u < 1 && k > 0.3 && (k < 0.95 || mid(m))) return true;
+      // в середине стороны узел на фото бывает «рваным»: пересекающая линия разбита на обрывки — достаточно обрывка рядом с разрывом.
+      // Конец ДЛИННОЙ перпендикулярной линии у разрыва — это угол другого прямоугольника, а не узел: не перекрываем
+      if (!mid(m) || k <= 0.3 || len(o) > 4 * tol) return false;
+      const P = axis === 'h' ? [m, at] : [at, m];
+      return [[o.x1, o.y1], [o.x2, o.y2]].some(([x, y]) => Math.hypot(x - P[0], y - P[1]) <= 2 * tol); });
+    const runs = []; for (const [p, q] of iv) { const L = runs[runs.length - 1]; if (L && (p <= L[1] + tol || p <= L[1] + 5 * tol && crossed((L[1] + p) / 2))) L[1] = Math.max(L[1], q); else runs.push([p, q]); }
     // выносная линия, продолжающая сторону с зазором, не должна «удлинять» контур — поэтому берётся лучший непрерывный участок
-    return Math.max(0, ...runs.map(([p, q]) => Math.max(0, Math.min(q, b) - Math.max(p, a)))) / (b - a || 1);
+    let best = null; for (const [p, q] of runs) { const c = Math.max(0, Math.min(q, b) - Math.max(p, a)); if (!best || c > best.c) best = { c, p: Math.max(p, a), q: Math.min(q, b), o0: a - p, o1: q - b }; }
+    return best && best.c > 0 ? { g0: best.p - a, g1: b - best.q, o0: best.o0, o1: best.o1 } : null;
+  };
+  const onLine = (x, y) => segs.some(o => ptSeg(x, y, o).d <= tol * 1.5 && ptSeg(x, y, o).u >= -0.05 && ptSeg(x, y, o).u <= 1.05);
+  // угол: оба зазора малы — острый; равны — скругление (точка на дуге под 45°) или фаска (середина среза)
+  // oa/ob — насколько сторона продолжается ЗА угол: на фото выносная, стоящая продолжением стороны, иногда срастается
+  // с ней через начало дуги скругления; тогда отступ этой стороны неизвестен и радиус берётся по второй стороне
+  const corner = (at, ga, gb, cx, cy, sx, sy, oa = 0, ob = 0) => {
+    if (ga <= tol && oa > 2 * tol && gb > 2 * tol) ga = gb;
+    else if (gb <= tol && ob > 2 * tol && ga > 2 * tol) gb = ga;
+    if (ga <= tol && gb <= tol || ga <= 2.5 * tol && gb <= 2.5 * tol && Math.min(ga, gb) <= tol) return { at, kind: 'sharp', r: 0 };   // размытый угол на фото
+    const r = (ga + gb) / 2;
+    if (!near(ga, gb, Math.max(2 * tol, 0.1 * r))) return null;
+    if (r < 2 * tol) return null;                                                // «скругление» меньше двух допусков — это шум, а не угол детали
+    // дуга должна проходить через точки на 30°, 45° и 60°; срез (фаска) — через ¼, ½ и ¾ своей длины
+    if ([30, 45, 60].every(a => onLine(cx + sx * r * (1 - Math.cos(a * DEG)), cy + sy * r * (1 - Math.sin(a * DEG))))) {
+      // уточнить радиус: точка дуги, касающейся обеих сторон, даёт r = u + v + √(2uv) (u, v — расстояния до сторон)
+      const est = [];
+      for (const o of segs) for (const [px, py] of [[o.x1, o.y1], [o.x2, o.y2], [(o.x1 + o.x2) / 2, (o.y1 + o.y2) / 2]]) {
+        const u = sx * (px - cx), v = sy * (py - cy);
+        if (u > tol && v > tol && u < 1.5 * r && v < 1.5 * r && Math.hypot(u, v) < 1.5 * r) { const e = u + v + Math.sqrt(2 * u * v); if (e > 0.6 * r && e < 1.6 * r) est.push(e); }
+      }
+      return { at, kind: 'fillet', r: est.length >= 3 ? median(est) : r };
+    }
+    if ([0.25, 0.5, 0.75].every(t => onLine(cx + sx * r * t, cy + sy * r * (1 - t)))) return { at, kind: 'chamfer', r };
+    return null;
   };
   let best = null;
   for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) for (let k = 0; k < ys.length; k++) for (let l = k + 1; l < ys.length; l++) {
     const [x0, x1, y0, y1] = [xs[i], xs[j], ys[k], ys[l]], area = (x1 - x0) * (y1 - y0);
     if (best && area <= best.area * 0.5) continue;
-    if (cover(H, 'h', y0, x0, x1) < 0.97 || cover(H, 'h', y1, x0, x1) < 0.97 || cover(V, 'v', x0, y0, y1) < 0.97 || cover(V, 'v', x1, y0, y1) < 0.97) continue;
+    const B = run(H, 'h', y0, x0, x1), T = run(H, 'h', y1, x0, x1), Lf = run(V, 'v', x0, y0, y1), R = run(V, 'v', x1, y0, y1);
+    if (!B || !T || !Lf || !R) continue;
+    const w = x1 - x0, h = y1 - y0, sd = Math.min(w, h);
+    const C = [corner('ll', B.g0, Lf.g0, x0, y0, 1, 1, B.o0, Lf.o0), corner('lr', B.g1, R.g0, x1, y0, -1, 1, B.o1, R.o0),
+      corner('ur', T.g1, R.g1, x1, y1, -1, -1, T.o1, R.o1), corner('ul', T.g0, Lf.g1, x0, y1, 1, -1, T.o0, Lf.o1)];
+    if (C.some(c => !c)) continue;
+    // без скруглений и фасок — как раньше: сторона покрыта на ≥ 97%
+    if (C.every(c => c.kind === 'sharp') && [B.g0 + B.g1 > 0.03 * w, T.g0 + T.g1 > 0.03 * w, Lf.g0 + Lf.g1 > 0.03 * h, R.g0 + R.g1 > 0.03 * h].some(Boolean)) continue;
+    if (C.some(c => c.r > 0.35 * sd)) continue;
     const inside = circles.filter(c => c.cx > x0 && c.cx < x1 && c.cy > y0 && c.cy < y1).length;
     const score = area * (circles.length && inside === circles.length ? 1 : 0.1);
-    if (!best || score > best.score) best = { x0, x1, y0, y1, area, score };
+    if (!best || score > best.score) best = { x0, x1, y0, y1, area, score, corners: C, inside };
   }
+  // прямоугольник, внутри которого нет всех найденных отверстий, — скорее полоса между размерными линиями, чем деталь.
+  // Неверная база опаснее отсутствующей: тогда «контур не найден», координаты вводит человек
+  if (best && circles.length && best.inside < Math.max(1, circles.length / 2)) return null;
   return best;
 }
 
@@ -61,7 +112,7 @@ export function associate(inp) {
   const conflicts = [], notes = [];
   const T = texts.map((t, i) => ({ ...t, id: t.id || 'txt' + i, ang: t.ang || 0, p: parseDimText(t.s) }));
   const C = circles.map((c, i) => ({ ...c, id: c.id || 'c' + i }));
-  const outline = findOutline(segs, C, tol);
+  const outline = findOutline(segs, C, tol, units);
 
   /* ---------- 1. Линейные размеры: размерная линия + выносные ---------- */
   const lin = [];
@@ -154,8 +205,28 @@ export function associate(inp) {
   const onOutline = sg => outline && (near(sg.y1, outline.y0, tol) && near(sg.y2, outline.y0, tol) || near(sg.y1, outline.y1, tol) && near(sg.y2, outline.y1, tol)
     || near(sg.x1, outline.x0, tol) && near(sg.x2, outline.x0, tol) || near(sg.x1, outline.x1, tol) && near(sg.x2, outline.x1, tol));
   const leaderSegs = segs.filter(sg => !onOutline(sg));
+  // скругления углов контура: центр дуги и радиус в единицах рисунка
+  const fillets = outline ? outline.corners.filter(c => c.kind === 'fillet').map(c => {
+    const sx = c.at[1] === 'l' ? 1 : -1, sy = c.at[0] === 'l' ? 1 : -1, x = c.at[1] === 'l' ? outline.x0 : outline.x1, y = c.at[0] === 'l' ? outline.y0 : outline.y1;
+    return { ...c, cx: x + sx * c.r, cy: y + sy * c.r }; }) : [];
+  const onFillet = (x, y) => fillets.find(f => Math.abs(Math.hypot(x - f.cx, y - f.cy) - f.r) <= tol * 2);
+  const radDims = {};
   for (const t of T.filter(t => ['dia', 'thread', 'count', 'rad'].includes(t.p.kind))) {
     let hit = null, how = '';
+    if (t.p.kind === 'rad' && fillets.length) {                                  // «R8» — к скруглению угла по выноске
+      const st0 = segs.filter(s => ptSeg(t.x, t.y, s).d <= 1.6 * t.h), seen0 = new Set(st0); let q = [...st0], f = null;
+      for (let depth = 0; depth < 3 && !f && q.length; depth++) { const nx = [];
+        for (const s of q) { for (const [x, y] of [[s.x1, s.y1], [s.x2, s.y2]]) { f = onFillet(x, y); if (f) break; } if (f) break;
+          for (const o of segs) if (!seen0.has(o) && [[o.x1, o.y1], [o.x2, o.y2]].some(([x, y]) => Math.hypot(x - s.x1, y - s.y1) <= tol * 2 || Math.hypot(x - s.x2, y - s.y2) <= tol * 2)) { seen0.add(o); nx.push(o); } }
+        q = nx; }
+      if (f) {
+        const meas = Number.isFinite(s) ? f.r * s : null, bad = meas != null && Math.abs(meas - t.p.value) > Math.max(units === 'mm' ? 0.02 : 0.5, t.p.value * (units === 'mm' ? 0.01 : 0.08));
+        if (bad) conflicts.push({ textId: t.id, msg: `${t.p.raw}: скругление на рисунке ≈ R${meas.toFixed(2)}` });
+        else radDims[f.at] = { value: t.p.value, source: 'dimension', textId: t.id };
+        dims.push({ textId: t.id, text: t.p.raw, kind: 'rad', value: t.p.value, refs: [{ type: 'corner', id: f.at }], how: 'выноска', status: bad ? 'conflict' : 'associated', conf: (t.conf ?? 1) * 0.9 });
+        continue;
+      }
+    }
     // а) выноска: отрезки, связанные с надписью (полка под текстом → наклонная к окружности); ближние — первыми
     const start = leaderSegs.filter(s => ptSeg(t.x, t.y, s).d <= 1.6 * t.h).sort((a, b) => ptSeg(t.x, t.y, a).d - ptSeg(t.x, t.y, b).d);
     const seen = new Set(start), queue = [...start];
@@ -196,6 +267,12 @@ export function associate(inp) {
       const meas = Math.abs(q[k] - p[k]) * s, st = Math.abs(meas - d.value) <= Math.max(0.01, d.value * 0.002) ? 'associated' : 'conflict';
       if (st === 'conflict') conflicts.push({ textId: d.textId, msg: `Размер ${d.text}: в файле ${meas.toFixed(3)} мм — не совпадает с надписью` });
       dims.push({ textId: d.textId, text: d.text, kind: 'linear', value: d.value, tol: d.tol || null, axis: d.axis, refs: [refPt(p, d.axis), refPt(q, d.axis)], measured: meas, status: st, conf: 1, how: 'DIMENSION' });
+    } else if (d.kind === 'rad' && fillets.length) {
+      const f = fillets.find(f => Math.hypot(f.cx - d.center[0], f.cy - d.center[1]) <= tol * 1.5);
+      if (!f) { dims.push({ textId: d.textId, text: d.text, kind: 'rad', value: d.value, status: 'unassociated', why: 'нет скругления в точке размера' }); continue; }
+      const bad = Math.abs(f.r * s - d.value) > Math.max(0.01, d.value * 0.002);
+      if (bad) conflicts.push({ textId: d.textId, msg: `${d.text}: скругление в файле R${(f.r * s).toFixed(3)}` }); else radDims[f.at] = { value: d.value, source: 'dimension', textId: d.textId };
+      dims.push({ textId: d.textId, text: d.text, kind: 'rad', value: d.value, refs: [{ type: 'corner', id: f.at }], how: 'DIMENSION', status: bad ? 'conflict' : 'associated', conf: 1 });
     } else if (d.kind === 'dia' || d.kind === 'thread') {
       const c = C.find(c => Math.hypot(c.cx - d.center[0], c.cy - d.center[1]) <= tol * 1.5);
       if (!c) { dims.push({ textId: d.textId, text: d.text, kind: d.kind, value: d.value, status: 'unassociated', why: 'нет окружности в точке размера' }); continue; }
@@ -203,7 +280,7 @@ export function associate(inp) {
       const st = d.kind === 'dia' && Math.abs(2 * c.r * s - d.value) > Math.max(0.01, d.value * 0.002) ? 'conflict' : 'associated';
       if (st === 'conflict') conflicts.push({ textId: d.textId, msg: `${d.text}: окружность в файле Ø${(2 * c.r * s).toFixed(3)}` });
       if (d.count && d.count !== ids.length) conflicts.push({ textId: d.textId, msg: `«${d.text}»: указано ${d.count} шт., в файле ${ids.length}` });
-      dims.push({ textId: d.textId, text: d.text, kind: d.kind, value: d.value, count: d.count || null, pitch: d.pitch || null, refs: ids.map(id => ({ type: 'circle', id })), how: 'DIMENSION', status: st, conf: 1 });
+      dims.push({ textId: d.textId, text: d.text, kind: d.kind, value: d.value, count: d.count || null, pitch: d.pitch || null, tol: d.tol || null, refs: ids.map(id => ({ type: 'circle', id })), how: 'DIMENSION', status: st, conf: 1 });
     }
   }
 
@@ -231,10 +308,14 @@ export function associate(inp) {
     const res = {};
     col.forEach((g, i) => {
       const k = val.get('col:' + i), meas = (g.at - (axis === 'x' ? ox : oy)) * s;
-      for (const id of g.ids) res[id] = k ? { value: +k.v.toFixed(3), source: 'dimension', note: k.src, measured: Number.isFinite(meas) ? +meas.toFixed(3) : null }
-        : { value: Number.isFinite(meas) ? +meas.toFixed(units === 'mm' ? 3 : 1) : null, source: 'measured', note: units === 'mm' ? 'по геометрии файла' : 'измерено по фото — проверьте', measured: meas };
-      if (k && Number.isFinite(meas) && Math.abs(meas - k.v) > (units === 'mm' ? 0.05 : Math.max(0.5, k.v * 0.03)))
+      // без контура детали нет базы: «измерять» не от чего — значение неизвестно, а не выдумано от случайной точки
+      const mOk = outline && Number.isFinite(meas);
+      for (const id of g.ids) res[id] = k ? { value: +k.v.toFixed(3), source: 'dimension', note: k.src, measured: mOk ? +meas.toFixed(3) : null }
+        : { value: mOk ? +meas.toFixed(units === 'mm' ? 3 : 1) : null, source: 'measured', note: !outline ? 'контур детали не найден — введите' : units === 'mm' ? 'по геометрии файла' : 'измерено по фото — проверьте', measured: mOk ? meas : null };
+      if (k && mOk && Math.abs(meas - k.v) > (units === 'mm' ? 0.05 : Math.max(0.5, k.v * 0.03))) {
         conflicts.push({ msg: `Отверстие ${g.ids[0]}: по размеру ${axis.toUpperCase()}=${k.v}, по рисунку ≈ ${meas.toFixed(2)}` });
+        for (const id of g.ids) res[id].conflict = { measured: +meas.toFixed(3) };    // значение спорное: решает человек
+      }
     });
     return { res, edge1: val.get(axis + '1') };
   };
@@ -254,6 +335,7 @@ export function associate(inp) {
   const thick = T.find(t => t.p.kind === 'thick');
   const plate = outline ? {
     du: outline,
+    corners: outline.corners.map(c => ({ at: c.at, kind: c.kind, r: c.kind === 'sharp' ? null : radDims[c.at] || { value: Number.isFinite(s) ? +(c.r * s).toFixed(units === 'mm' ? 3 : 2) : null, source: 'measured' } })),
     w: SX.edge1 ? { value: SX.edge1.v, source: 'dimension', note: SX.edge1.src } : { value: Number.isFinite(s) ? +((outline.x1 - outline.x0) * s).toFixed(2) : null, source: 'measured' },
     h: SY.edge1 ? { value: SY.edge1.v, source: 'dimension', note: SY.edge1.src } : { value: Number.isFinite(s) ? +((outline.y1 - outline.y0) * s).toFixed(2) : null, source: 'measured' },
   } : null;
