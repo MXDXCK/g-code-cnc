@@ -32,6 +32,15 @@ android {
             minifyEnabled false
             signingConfig ksFile ? signingConfigs.release : signingConfigs.debug
         }
+        // Тестовая сборка: ОТДЕЛЬНОЕ приложение (app.fresa.cnc.test) — ставится рядом с Fresa из RuStore,
+        // свои данные, отладочная подпись. Рабочие applicationId и ключ не меняются. Собирает build-check.yml.
+        beta {
+            initWith release
+            applicationIdSuffix '.test'
+            versionNameSuffix System.getenv('FRESA_TEST_SUFFIX') ?: '-test'
+            signingConfig signingConfigs.debug
+            matchingFallbacks = ['release']
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

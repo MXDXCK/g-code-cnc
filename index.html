@@ -489,6 +489,8 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 const APP_VERSION='2.9.2';
+/* BUILD_TAG ставит только тестовая сборка (build-check.yml): «test.N+коммит». Пусто — обычная версия. */
+const BUILD_TAG='';
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const F=v=>{v=Math.round((+v||0)*1000)/1000;if(Math.abs(v)<1e-9)v=0;return v.toFixed(3).replace(/0+$/,'');};
@@ -2407,7 +2409,7 @@ window.fitCam=()=>aimCam(CAM,CTL,1.7,stockSim());
 
 /* ---------- обновления ---------- */
 const cmpV=(a,b)=>{a=a.split('.').map(Number);b=b.split('.').map(Number);for(let i=0;i<3;i++){if((a[i]||0)!=(b[i]||0))return (a[i]||0)-(b[i]||0);}return 0;};
-window.checkUpd=async()=>{const el=$('#updRes');el.innerHTML='Проверка…';
+window.checkUpd=async()=>{const el=$('#updRes');if(BUILD_TAG){el.innerHTML='<span class="badge warn">Это тестовая сборка '+esc(BUILD_TAG)+' — обновления не предлагаются. Рабочая Fresa обновляется как обычно (RuStore).</span>';return;}el.innerHTML='Проверка…';
  try{const r=await fetch((NATIVE?PAGES:'')+'version.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
   if(cmpV(availV(j),APP_VERSION)>0&&NATIVE)el.innerHTML=`<p>Доступна версия <b>v${esc(availV(j))}</b></p><p style="color:var(--mut)">${(j.notes||[]).map(n=>'• '+esc(n)).join('<br>')}</p><div class="row">${updBtn()}</div>`;
   else if(cmpV(j.version,APP_VERSION)>0)el.innerHTML=`<p>Доступна версия <b>v${esc(j.version)}</b></p><p style="color:var(--mut)">${(j.notes||[]).map(n=>'• '+esc(n)).join('<br>')}</p><button class="btn p" onclick="doUpdate()">⬇ Обновить сейчас</button>`;
@@ -2417,7 +2419,8 @@ window.checkUpd=async()=>{const el=$('#updRes');el.innerHTML='Проверка�
   $('#commits').innerHTML='<h3 style="margin-top:8px">Последние изменения</h3>'+c.map(x=>`<div class="commit">${esc(x.commit.message.split('\n')[0])}<br><small>${new Date(x.commit.author.date).toLocaleString('ru')}</small></div>`).join('');}catch(e){}}};
 /* баннер «вышло обновление» на главном экране: при запуске и при возврате в приложение */
 let updSeen=0,updHide='';window.updClose=v=>{updHide=v;};
-async function updBanner(force){if(!force&&Date.now()-updSeen<20*60e3)return;updSeen=Date.now();
+async function updBanner(force){if(BUILD_TAG)return;   // тестовая сборка не зовёт ставить рабочую версию
+ if(!force&&Date.now()-updSeen<20*60e3)return;updSeen=Date.now();
  try{const r=await fetch((NATIVE?PAGES:'')+'version.json?t='+Date.now(),{cache:'no-store'});const j=await r.json(),b=$('#updBar');
   const v=availV(j);if(!b||!(cmpV(v,APP_VERSION)>0)||updHide==v){if(b)b.hidden=true;return;}
   b.innerHTML=`<span class="sp">🎉 Вышло обновление <b>v${esc(v)}</b> <a href="#" style="color:var(--mut);white-space:nowrap" onclick="this.closest('.updbar').querySelector('ul').hidden^=1;return false">что нового</a></span>`+
@@ -3416,7 +3419,7 @@ function renderAll(){renderHome();renderProj();renderTools();renderOps();codeDir
 document.querySelectorAll('.stkChk').forEach(c=>c.checked=showStock);
 normStock();
 st.ops=st.ops.filter(o=>OPS[o.type]);PRE=PRE.filter(p=>OPS[p.type]);if(!st.ops.find(o=>o.id==selOp))selOp=st.ops[0]?.id;
-$('#ver').textContent=$('#ver2').textContent=APP_VERSION;$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
+$('#ver').textContent=$('#ver2').textContent=APP_VERSION+(BUILD_TAG?' · ТЕСТ '+BUILD_TAG:'');$('#repo').value=localStorage.getItem('fcam_repo')||'MXDXCK/g-code-cnc';
 if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{});
 H.cur=JSON.stringify(st);renderAll();
 {let mc=null;try{mc=JSON.parse(localStorage.getItem('fcam_code')||'null');}catch(e){}if(mc&&mc.t){$('#code').value=mc.t;manual=true;codeDirty=false;IMP=mc.imp||null;}}

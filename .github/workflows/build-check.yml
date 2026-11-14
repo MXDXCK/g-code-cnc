@@ -1,7 +1,8 @@
 name: Проверка сборки (без публикации)
 
-# Собирает APK (отладочная подпись) и EXE из рабочей ветки, чтобы убедиться, что новые файлы попадают в приложения.
-# Ничего не публикует: нет Release, нет RuStore. Файлы — только во вкладке Actions на 3 дня.
+# ТЕСТОВЫЕ сборки из рабочей ветки: APK «Fresa ТЕСТ» (app.fresa.cnc.test — отдельное приложение рядом с Fresa из RuStore,
+# отладочная подпись, свои данные) и EXE «Fresa-TEST» (свои данные). Проверяет, что новые файлы попадают в приложения.
+# Ничего не публикует: нет Release, нет RuStore. Файлы — только во вкладке Actions, 14 дней. Инструкция — docs/TEST_BUILD.md.
 on:
   push:
     branches-ignore: [main]
@@ -10,6 +11,7 @@ on:
       - 'src/**'
       - 'android/**'
       - 'windows/**'
+      - 'sw.js'
       - '.github/workflows/build-check.yml'
   workflow_dispatch:
 
@@ -23,9 +25,20 @@ concurrency:
 jobs:
   web:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+      - name: Номер тестовой сборки
+        id: tag
+        run: |
+          V=$(python3 -c "import json;print(json.load(open('version.json'))['version'])")
+          echo "version=$V" >> $GITHUB_OUTPUT
+          echo "tag=test.${{ github.run_number }}+${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
       - name: Страница + библиотеки (как в build.yml)
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           mkdir -p dist/lib
           cp index.html version.json manifest.webmanifest privacy.html terms.html dist/
@@ -56,6 +69,9 @@ jobs:
           assert n == 1
           s, n = re.subn(r'const OCR_LOCAL=false;', 'const OCR_LOCAL=true;', s)
           assert n == 1
+          import os
+          s, n = re.subn(r"const BUILD_TAG='';", "const BUILD_TAG='" + os.environ['TAG'] + "';", s)
+          assert n == 1, 'BUILD_TAG not found'
           open(p, 'w', encoding='utf-8').write(s)
           PY
       - uses: actions/upload-artifact@v4
@@ -72,18 +88,25 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.7' }
-      - name: APK с отладочной подписью (ключ релиза не используется)
-        run: gradle -p android assembleRelease --no-daemon
-      - name: В APK есть модули и распознавание
+      - name: APK «Fresa ТЕСТ» (app.fresa.cnc.test, отладочная подпись; ключ релиза не используется)
+        env:
+          FRESA_TEST_SUFFIX: -${{ needs.web.outputs.tag }}
+        run: gradle -p android assembleBeta --no-daemon
+      - name: В APK есть модули и распознавание, applicationId — тестовый
         run: |
-          A=android/app/build/outputs/apk/release/app-release.apk
+          A=android/app/build/outputs/apk/beta/app-beta.apk
+          BT=$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)
+          $ANDROID_HOME/build-tools/$BT/aapt dump badging $A | tee badging.txt | head -3
+          grep -q "package: name='app.fresa.cnc.test'" badging.txt
+          grep -q "versionName='${{ needs.web.outputs.version }}-${{ needs.web.outputs.tag }}'" badging.txt
+          mkdir -p out && cp $A "out/Fresa-TEST-${{ needs.web.outputs.version }}-${{ needs.web.outputs.tag }}.apk"
           unzip -l $A | tee list.txt | grep -q 'assets/src/storage/idb.js'
           grep -q 'assets/lib/tesseract/eng.traineddata' list.txt
           grep -q 'assets/lib/pdfjs/pdf.min.js' list.txt
           grep -q 'assets/src/drawing/pipeline.js' list.txt
           echo "OK: src/, tesseract и pdf.js в APK"
       - uses: actions/upload-artifact@v4
-        with: { name: apk-debug-signed, path: android/app/build/outputs/apk/release/app-release.apk, retention-days: 3 }
+        with: { name: Fresa-TEST-android, path: out/*.apk, retention-days: 14 }
 
   windows:
     needs: web
@@ -97,8 +120,8 @@ jobs:
       - name: Сборка и список встроенных файлов
         shell: pwsh
         run: |
-          dotnet build windows/GcodeCNC.csproj -c Release -o bout
-          $asm = [System.Reflection.Assembly]::LoadFile((Resolve-Path bout/Fresa.dll))
+          dotnet build windows/GcodeCNC.csproj -c Release -o bout -p:FresaTest=true
+          $asm = [System.Reflection.Assembly]::LoadFile((Resolve-Path bout/Fresa-TEST.dll))
           $names = $asm.GetManifestResourceNames() | ForEach-Object { $_.Replace('\','/') }
           $names | Sort-Object | Out-File res.txt
           Get-Content res.txt
@@ -117,5 +140,15 @@ jobs:
           $old = $asm.GetManifestResourceNames()
           Write-Host ("в EXE из main встроено файлов: " + $old.Count)
           if ($old -contains 'web/lib/tesseract/eng.traineddata') { Write-Host "main: распознавание фото встроено" } else { Write-Host "main: распознавание фото НЕ встроено (подтверждение K-01)" }
+      - name: Тестовый EXE одним файлом (как в build.yml, но «Fresa-TEST», свои данные)
+        shell: pwsh
+        run: |
+          dotnet publish windows/GcodeCNC.csproj -c Release -r win-x64 --self-contained true -p:FresaTest=true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
+            -p:DebugType=none -o out
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item out/Fresa-TEST.exe ("dist/Fresa-TEST-${{ needs.web.outputs.version }}-${{ needs.web.outputs.tag }}.exe".Replace('+', '_'))
+      - uses: actions/upload-artifact@v4
+        with: { name: Fresa-TEST-windows, path: dist/*.exe, retention-days: 14 }
       - uses: actions/upload-artifact@v4
         with: { name: exe-resources, path: res.txt, retention-days: 3 }

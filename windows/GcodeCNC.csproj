@@ -11,6 +11,11 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
+  <!-- тестовая сборка: dotnet build -p:FresaTest=true (свои данные и заголовок окна) -->
+  <PropertyGroup Condition="'$(FresaTest)'=='true'">
+    <DefineConstants>$(DefineConstants);FRESA_TEST</DefineConstants>
+    <AssemblyName>Fresa-TEST</AssemblyName>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
   </ItemGroup>

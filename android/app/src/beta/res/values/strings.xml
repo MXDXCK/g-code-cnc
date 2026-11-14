@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- тестовая сборка: другое имя на экране телефона, чтобы не спутать с рабочей Fresa -->
+<resources><string name="app_name">Fresa ТЕСТ</string></resources>

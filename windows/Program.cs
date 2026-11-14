@@ -19,13 +19,22 @@ static class Program
 class MainForm : Form
 {
     readonly WebView2 web = new() { Dock = DockStyle.Fill, DefaultBackgroundColor = Color.FromArgb(15, 17, 21) };
+#if FRESA_TEST
+    // тестовая сборка: свои данные, рабочие проекты не трогаются
+    readonly string dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GcodeCNC-Test");
+#else
     readonly string dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GcodeCNC");
+#endif
     FormWindowState prevState;
     FormBorderStyle prevBorder;
 
     public MainForm()
     {
+#if FRESA_TEST
+        Text = "Fresa ТЕСТ — G-код для ЧПУ (тестовая сборка, данные отдельно)";
+#else
         Text = "Fresa — G-код для ЧПУ";
+#endif
         BackColor = Color.FromArgb(15, 17, 21);
         Width = 1400; Height = 900;
         StartPosition = FormStartPosition.CenterScreen;
