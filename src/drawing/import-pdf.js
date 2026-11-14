@@ -3,12 +3,25 @@
 
 const PT2MM = 25.4 / 72;
 
-/** Загрузить pdf.js: из приложения (lib/pdfjs, сборка APK/EXE) или с CDN (сайт). */
+/**
+ * Загрузить pdf.js: из приложения (lib/pdfjs, сборка APK/EXE — файлы сохранены как .js, чтобы WebView отдал их как скрипт)
+ * или с CDN (сайт).
+ */
 export async function loadPdfjs(local) {
-  const base = local ? new URL('lib/pdfjs/', location.href).href : 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/legacy/build/';
-  const lib = await import(/* @vite-ignore */ base + 'pdf.min.mjs');
-  lib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.mjs';
+  const base = local ? new URL('lib/pdfjs/', location.href).href : 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/legacy/build/', ext = local ? '.js' : '.mjs';
+  const lib = await import(/* @vite-ignore */ base + 'pdf.min' + ext);
+  lib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min' + ext;
   return lib;
+}
+
+/** Отрисовать страницу PDF в картинку (для сканов без векторных линий). */
+export async function renderPdfPage(data, pdfjs, { page: pageNo = 1, maxSide = 1600 } = {}) {
+  const doc = await pdfjs.getDocument({ data: data instanceof Uint8Array ? data : new Uint8Array(data), isEvalSupported: false }).promise;
+  const page = await doc.getPage(pageNo), v1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: maxSide / Math.max(v1.width, v1.height) });
+  const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+  const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  return await new Promise(res => cv.toBlob(res, 'image/png'));
 }
 
 const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];

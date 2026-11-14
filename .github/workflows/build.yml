@@ -48,6 +48,11 @@ jobs:
           done
           curl -fsSL https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int/eng.traineddata.gz -o $T/eng.traineddata.gz
           gunzip -f $T/eng.traineddata.gz   # Android-сборщик всё равно распаковывает .gz — храним сразу распакованным
+          # чертежи PDF (pdf.js, Apache-2.0) — внутрь приложения; .js вместо .mjs, чтобы WebView отдал файл как скрипт
+          P=dist/lib/pdfjs; mkdir -p $P
+          curl -fsSL https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/legacy/build/pdf.min.mjs -o $P/pdf.min.js
+          curl -fsSL https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/legacy/build/pdf.worker.min.mjs -o $P/pdf.worker.min.js
+          curl -fsSL https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/LICENSE -o $P/LICENSE
           ls -la $T
           python3 - <<'PY'
           import re

@@ -11,7 +11,7 @@ async function openPlate(page) {
     s.prog.fmt = 'plain';
   });
   await page.getByRole('button', { name: 'Меню', exact: true }).click();
-  await page.locator('#shBody').getByRole('button', { name: /По чертежу DXF/ }).click();
+  await page.locator('#shBody').getByRole('button', { name: /По чертежу/ }).click();
   return errors;
 }
 
@@ -81,7 +81,7 @@ test('DXF → подтверждение → центровка и сверле�
   expect(errors).toEqual([]);
 });
 
-test('DXF с другими единицами или неполным набором окружностей не меняет план', async ({ page }) => {
+test('DXF с другими единицами или без окружностей не меняет план', async ({ page }) => {
   await openPlate(page);
   const dxf = readFixture('plate-4-holes.dxf');
   const load = buffer => page.locator('#plateFile').setInputFiles({
@@ -92,8 +92,12 @@ test('DXF с другими единицами или неполным набо�
   await expect(page.locator('#plateValidation')).toContainText('Подтверди единицы DXF');
   await load(dxf.replace(/\$INSUNITS\r?\n70\r?\n4/, '$INSUNITS\n70\n1'));
   await expect(page.locator('#plateLoadStatus')).toContainText('в миллиметрах');
-  await load(dxf.replace('CIRCLE', 'POINT'));
-  await expect(page.locator('#plateLoadStatus')).toContainText('Найдено: 3');
+  await load(dxf.replace(/CIRCLE/g, 'POINT'));
+  await expect(page.locator('#plateLoadStatus')).toContainText('нет окружностей');
   await expect(page.locator('#plateForm')).toHaveCount(0);
+  // три окружности — форма на три отверстия; без решения по каждому план не меняется
+  await load(dxf.replace('CIRCLE', 'POINT'));
+  await expect(page.locator('#plateForm fieldset')).toHaveCount(3);
+  await expect(page.locator('#plateForm button[type=submit]')).toBeDisabled();
   expect(await page.evaluate(() => __fcam.st().ops)).toEqual([]);
 });
