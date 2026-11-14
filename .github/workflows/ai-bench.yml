@@ -1,0 +1,90 @@
+name: Замер локальных моделей на чертежах
+
+# Сравнение открытых Vision-моделей на эталонных чертежах Fresa (tests/fixtures/drawings).
+# Только замер для разработки: модели не попадают в приложение и никуда не публикуются.
+# Бесплатно: публичный репозиторий, обычные раннеры GitHub (4 ядра CPU, 16 ГБ). Сеть нужна только здесь —
+# для скачивания llama.cpp (GitHub Releases) и моделей (Hugging Face). Результат — артефакт ai-bench-report.
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths: ['tests/ai-bench/**', '.github/workflows/ai-bench.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-bench-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vlm:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: qwen3-vl-2b,    repo: Qwen/Qwen3-VL-2B-Instruct-GGUF }
+          - { name: qwen3-vl-4b,    repo: Qwen/Qwen3-VL-4B-Instruct-GGUF }
+          - { name: qwen2.5-vl-3b,  repo: ggml-org/Qwen2.5-VL-3B-Instruct-GGUF }
+          - { name: smolvlm2-500m,  repo: ggml-org/SmolVLM2-500M-Video-Instruct-GGUF }
+          - { name: smolvlm2-2.2b,  repo: ggml-org/SmolVLM2-2.2B-Instruct-GGUF }
+          - { name: internvl3-1b,   repo: ggml-org/InternVL3-1B-Instruct-GGUF }
+    steps:
+      - uses: actions/checkout@v4
+      - name: llama.cpp (последний релиз, CPU, Linux x64)
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          mkdir -p llama && cd llama
+          gh release download --repo ggml-org/llama.cpp --pattern '*bin-ubuntu-x64.*' --clobber
+          ls -la
+          for f in *; do case "$f" in *.zip) unzip -q "$f";; *.tar.gz) tar xzf "$f";; esac; done
+          CLI=$(find "$PWD" -name llama-mtmd-cli -type f | head -1); echo "CLI=$CLI" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(dirname "$CLI")" >> $GITHUB_ENV
+          gh release view --repo ggml-org/llama.cpp --json tagName -q .tagName | tee ../llama-version.txt
+      - name: Модель ${{ matrix.name }} (Hugging Face)
+        id: m
+        run: python3 tests/ai-bench/fetch_model.py '${{ matrix.repo }}' models
+      - name: Замер на эталонных чертежах
+        run: |
+          pip install --quiet pillow
+          mkdir -p results
+          python3 tests/ai-bench/run_llama.py --cli "$CLI" --model '${{ steps.m.outputs.model }}' --mmproj '${{ steps.m.outputs.mmproj }}' \
+            --name '${{ matrix.name }}' --out results --threads 4 --ctx 16384
+          cp models/meta.json 'results/${{ matrix.name }}.meta.json'
+          cp llama-version.txt 'results/${{ matrix.name }}.llama.txt'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'ai-bench-${{ matrix.name }}', path: results, retention-days: 30 }
+
+  paddleocr:
+    name: paddleocr (PP-OCRv5)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install --quiet paddlepaddle paddleocr
+      - run: cd tests/ai-bench && python3 run_paddle.py ../../results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: ai-bench-paddleocr, path: results, retention-days: 30 }
+
+  report:
+    needs: [vlm, paddleocr]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'ai-bench-*', path: results, merge-multiple: true }
+      - name: Сводка
+        run: |
+          python3 tests/ai-bench/report.py results | tee report.md
+          { echo '## Локальные модели на эталонных чертежах'; echo; cat report.md; } >> $GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@v4
+        with: { name: ai-bench-report, path: 'report.md', retention-days: 30 }
