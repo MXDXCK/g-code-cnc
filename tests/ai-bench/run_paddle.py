@@ -7,7 +7,8 @@ from run_llama import DRAW, norm, nums
 out = sys.argv[1] if len(sys.argv) > 1 else 'results'
 os.makedirs(out, exist_ok=True)
 from paddleocr import PaddleOCR
-ocr = PaddleOCR(use_doc_orientation_classify=False, use_doc_unwarping=False, use_textline_orientation=True, lang='ru')
+ocr = PaddleOCR(use_doc_orientation_classify=False, use_doc_unwarping=False, use_textline_orientation=True, lang='ru',
+                device='cpu', enable_mkldnn=False)   # oneDNN на раннере GitHub падает (NotImplementedError ConvertPirAttribute)
 rows = []
 for img in sorted(glob.glob(os.path.join(DRAW, '*', 'drawing.png')) + glob.glob(os.path.join(DRAW, '*', 'plate.png')) + glob.glob(os.path.join(DRAW, '*', 'scan.jpg'))):
     E = json.load(open(os.path.join(os.path.dirname(img), 'expected.json'), encoding='utf-8'))

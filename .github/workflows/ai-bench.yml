@@ -34,16 +34,24 @@ jobs:
           - { name: internvl3-1b,   repo: ggml-org/InternVL3-1B-Instruct-GGUF }
     steps:
       - uses: actions/checkout@v4
-      - name: llama.cpp (последний релиз, CPU, Linux x64)
+      - name: llama.cpp (последний релиз, CPU, Linux x64; если сборки под Linux нет — из исходников)
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           mkdir -p llama && cd llama
-          gh release download --repo ggml-org/llama.cpp --pattern '*bin-ubuntu-x64.*' --clobber
-          ls -la
-          for f in *; do case "$f" in *.zip) unzip -q "$f";; *.tar.gz) tar xzf "$f";; esac; done
-          CLI=$(find "$PWD" -name llama-mtmd-cli -type f | head -1); echo "CLI=$CLI" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$(dirname "$CLI")" >> $GITHUB_ENV
-          gh release view --repo ggml-org/llama.cpp --json tagName -q .tagName | tee ../llama-version.txt
+          gh release view --repo ggml-org/llama.cpp --json tagName,assets -q '.tagName, .assets[].name' | tee assets.txt
+          A=$(tail -n +2 assets.txt | grep -i ubuntu | grep -iE 'x64|x86_64|amd64' | grep -viE 'vulkan|cuda|rocm|hip|sycl|s390|arm|aarch|openvino|kleidi' | head -1 || true)
+          if [ -n "$A" ]; then
+            gh release download --repo ggml-org/llama.cpp --pattern "$A" --clobber
+            case "$A" in *.zip) unzip -q "$A";; *.tar.gz) tar xzf "$A";; esac
+          else
+            echo "готовой сборки нет — собираю llama-mtmd-cli из исходников"
+            git clone --depth 1 https://github.com/ggml-org/llama.cpp src
+            cmake -S src -B build -DLLAMA_CURL=OFF -DGGML_NATIVE=ON -DCMAKE_BUILD_TYPE=Release
+            cmake --build build -j 4 --target llama-mtmd-cli
+          fi
+          CLI=$(find "$PWD" -name llama-mtmd-cli -type f | head -1); test -n "$CLI"; echo "CLI=$CLI" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(dirname "$CLI"):$(find "$PWD" -name 'libggml*.so' -printf '%h\n' | sort -u | tr '\n' ':')" >> $GITHUB_ENV
+          head -1 assets.txt > ../llama-version.txt; echo "файл: ${A:-из исходников}" >> ../llama-version.txt
       - name: Модель ${{ matrix.name }} (Hugging Face)
         id: m
         run: python3 tests/ai-bench/fetch_model.py '${{ matrix.repo }}' models
