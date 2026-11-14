@@ -9,7 +9,10 @@ const FIX = path.join(__dirname, 'fixtures');
 
 function threeFiles() {
   const cands = [];
-  try { cands.push(path.dirname(require.resolve('three/package.json'))); } catch (e) { /* нет в node_modules */ }
+  // папка пакета напрямую: require.resolve('three/package.json') не работает — three закрывает этот путь в "exports",
+  // из-за этого в CI долго подставлялась заглушка (найдено тестом «настоящий 3D», 15.11.2026)
+  cands.push(path.join(ROOT, 'node_modules', 'three'));
+  try { cands.push(path.dirname(require.resolve('three'))); cands.push(path.join(path.dirname(require.resolve('three')), '..')); } catch (e) { /* нет в node_modules */ }
   if (process.env.THREE_DIR) cands.push(process.env.THREE_DIR);
   for (const d of cands) {
     const a = [path.join(d, 'build/three.module.js'), path.join(d, 'three.module.js')].find(fs.existsSync);
