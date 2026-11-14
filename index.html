@@ -1377,13 +1377,15 @@ function plateForm(data){
   ${data.observations.map((o,i)=>{const [x,y,d]=plateGuess(data,o,zero);return `<fieldset class="card"><legend>Отверстие ${i+1}</legend><div class="grid">
    ${field('x'+i,'X, мм',plateVal(x))}${field('y'+i,'Y, мм',plateVal(y))}${field('d'+i,'Ø, мм',plateVal(d))}${field('z'+i,'Глубина, мм')}
    </div><p class="hint" id="plateSrc${i}">${esc(plateSrcNote(data,o,zero))}</p>
-   <label class="ctsy"><input type="checkbox" name="ok${i}"> Подтверждаю отверстие ${i+1}: сверлить</label>
+   <label class="ctsy"><input type="checkbox" name="ok${i}"> Подтверждаю отверстие ${i+1}: сверлить (центровка + G81)</label>
    <label class="ctsy"><input type="checkbox" name="skip${i}"> Не обрабатывать</label></fieldset>`;}).join('')}
   ${data.unitless?'<label class="ctsy"><input type="checkbox" name="mm"> Единицы чертежа — миллиметры</label>':''}
   <h3>Наладка · цикл G81</h3>
+  <p class="hint">Тип обработки в прототипе — только сверление G81 (центровка, затем сверло на заданную глубину). Резьба, зенковка, глухие с плоским дном — пока нет.<br>
+  Заготовка и материал: <b>${esc(stkShort())}</b> · система координат <b>${esc(st.stock.wcs||'G54')}</b> · ноль XY: <b>${esc(ORIG[st.stock.origin]||'—')}</b>, Z0 — верх. Если что-то не так — исправь в «Заготовка и ноль» и открой чертёж снова.</p>
   <div class="grid">${tools('center','Центровка')}${tools('drill','Сверло')}
    ${field('centerZ','Глубина центровки, мм')}${field('r','Плоскость R, мм')}${field('safe','Безопасная высота Z, мм')}</div>
-  <label class="ctsy"><input type="checkbox" name="setup"> Проверил ноль, инструменты, режимы и высоты</label>
+  <label class="ctsy"><input type="checkbox" name="setup"> Проверил заготовку, материал, ноль и систему координат, инструменты, обороты, подачи и высоты</label>
   ${manual?'<p class="hint">После добавления операций G-код будет пересобран по плану.</p>':''}
   <p id="plateValidation" role="status"></p><button class="btn p" type="submit" disabled>Добавить операции и открыть G-код</button>
   </form>`;
@@ -1447,7 +1449,9 @@ function bindPlate(){
    review.innerHTML=plateForm(data);
    const form=$('#plateForm'),validation=$('#plateValidation'),button=form.querySelector('button[type=submit]');
    const redraw=()=>plateDraw($('#plateCv'),data,i=>form.elements['ok'+i].checked?'ok':form.elements['skip'+i].checked?'skip':'');
-   const check=()=>{try{platePlan(form,data);validation.textContent='';button.disabled=false;}catch(e){validation.textContent=e.message;button.disabled=true;}};
+   const check=()=>{try{const p=platePlan(form,data),z=stockGeo().z,deep=p.holes.filter(h=>h.geom.depth>z);
+     validation.textContent=deep.length?`⚠ Сверло выйдет из заготовки снизу на ${nf(Math.max(...deep.map(h=>h.geom.depth))-z)} мм (толщина ${nf(z)}) — проверь подкладку или зазор под деталью`:'';button.disabled=false;}
+    catch(e){validation.textContent=e.message;button.disabled=true;}};
    form.oninput=e=>{
     const nm=e.target.name,m=/^(?:[xydz]|ok|skip)(\d+)$/.exec(nm);
     if(nm==='zero')data.observations.forEach((o,i)=>{const v=plateGuess(data,o,nm&&e.target.value);form.elements['x'+i].value=plateVal(v[0]);form.elements['y'+i].value=plateVal(v[1]);
@@ -2458,6 +2462,54 @@ window.matAll=()=>{if(!st.tools.length)return toast('Магазин пуст');s
 window.matTool=()=>{const t=st.tools.find(x=>x.id==selTool);if(!t)return;applyMat(t,st.stock.mat);save();renderTools();toast(`По материалу: S${t.s} F${t.f}`);};
 
 /* ---------- проверка программы ---------- */
+/* Модальные режимы Fanuc: G90/G91, G54–G59, G43 по инструменту, S, F, цикл G8x/G80, конец программы.
+   Подтверждённые ошибки (err) — то, что на Fanuc даёт тревогу или заведомо неверное движение; предупреждения (warn) — зависит от станка/привычки.
+   Строки с макропеременными и управляющими операторами по значениям не оцениваются. */
+function modalChecks(raw,add){
+ const W=(l,c)=>{const m=new RegExp('(?:^|[^A-Z#])'+c+'\\s*(-?[\\d.]+)','g'),r=[];let x;while((x=m.exec(l)))r.push(+x[1]);return r;};
+ const body=raw.map(l=>l.replace(/\(.*?\)/g,'').replace(/;.*$/,'').toUpperCase().trim());
+ const anyG43=body.some(l=>W(l,'G').includes(43));
+ let abs=null,wcs=null,T=null,pendT=null,h43=false,S=null,F=null,fTool=null,mot=0,cyc=null,cycImpl=false,ended=false,first=true;
+ const once=new Set(),one=(k,sev,msg,ln)=>{if(!once.has(k)){once.add(k);add(sev,msg,ln);}};
+ body.forEach((l,i)=>{
+  if(!l||l=='%'||/^O\d+/.test(l))return;
+  const macro=/#|\bIF\b|WHILE|GOTO|\bEND\d|\bDO\d/.test(l);
+  const G=W(l,'G'),M=W(l,'M');
+  if(G.includes(90))abs='abs';if(G.includes(91))abs='inc';
+  const g5=G.find(g=>g>=54&&g<=59);if(g5!=null||/G54\.1/.test(l))wcs=g5!=null?'G'+g5:'G54.1';
+  const t=W(l,'T');if(t.length)pendT=t[0];
+  if(M.includes(6)){if(cyc){one('cycT','err',`Смена инструмента при активном цикле G${cyc} — нет G80`,i);cyc=null;}T=pendT;h43=false;fTool=null;mot=0;}
+  if(G.includes(43)){h43=true;}if(G.includes(49))h43=false;
+  const sv=W(l,'S');if(sv.length||(macro&&/S/.test(l)))S=sv.length?sv[0]:'#';
+  const fv=W(l,'F');if(fv.length||(macro&&/F/.test(l))){F=fv.length?fv[0]:'#';fTool=T;}
+  if((M.includes(3)||M.includes(4))&&!macro&&(S==null||S===0))one('s0','err','Шпиндель включается без оборотов S',i);
+  const cy=G.find(g=>g>=73&&g<=89&&g!=80);
+  if(G.includes(80)){cyc=null;}
+  const m01=G.find(g=>g>=0&&g<=3);
+  if(m01!=null){if(cyc&&!cy){cycImpl=true;one('cycImpl','warn',`Цикл G${cyc} отменён ходом G${m01}, а не G80 — лучше явно G80`,i);cyc=null;}mot=m01;}
+  if(cy){cyc=cy;}
+  const ref=[4,10,11,28,30,52,53,65,66,92].some(g=>G.includes(g));   // не перемещения по программе: G52/G92 — системы координат, G28/G30/G53 — машинные
+  const moves=!ref&&/[XYZ]\s*-?[\d.#[]/.test(l);
+  if(!moves)return;
+  if(first){first=false;
+   if(abs==null)one('g90','warn','Нет G90 до первого перемещения — режим (абсолютный или в приращениях) останется от станка или прошлой программы',i);
+   if(wcs==null)one('wcs','warn','Не выбрана система координат G54–G59 до первого перемещения — станок возьмёт ту, что активна',i);}
+  const feed=cyc!=null||mot>=1;
+  const zMove=/Z\s*-?[\d.#[]/.test(l);
+  if((feed||zMove)&&T!=null&&!h43){
+   if(anyG43)one('g43T'+T,'err',`T${T}: нет G43 H… до работы инструмента — Z без учёта вылета`,i);
+   else one('g43none','warn','В программе нет G43: коррекция длины не включается. Если на станке вылет задаётся корректорами (обычно на Fanuc — да), Z будет без учёта вылета',i);}
+  if(feed&&!macro){
+   if(F==null)one('f0','err','Рабочая подача без F — на Fanuc тревога (подача не задана)',i);
+   else if(T!=null&&fTool!==T&&F!=='#')one('fT'+T,'warn',`T${T}: подача F не задана после смены инструмента — работает F${F} от предыдущего`,i);
+   if(S==null)one('s1','err','Рабочая подача без оборотов S',i);}
+ });
+ body.forEach((l,i)=>{const M=W(l,'M');if(M.includes(30)||M.includes(2)||M.includes(99))ended=true;});
+ if(!ended)add('warn','Нет конца программы M30 (или M02/M99)');
+ else if(abs==='inc')add('warn','Программа заканчивается в режиме G91 (приращения) — следующая программа без G90 поедет не туда');
+ if(cyc)add('warn',`Цикл G${cyc} не отменён (G80) до конца программы`);
+ const sw=st&&st.stock&&st.stock.wcs;if(sw&&wcs&&wcs!==sw)add('warn',`В программе ${wcs}, а в наладке проекта — ${sw}`);
+}
 function checkProgram(code){const out=[],add=(sev,msg,ln)=>{if(out.length<40)out.push({sev,msg,ln});};
  const P=parse(code);if(P.err)add('err','Макро: '+P.err);
  const raw=code.split('\n');
@@ -2469,6 +2521,7 @@ function checkProgram(code){const out=[],add=(sev,msg,ln)=>{if(out.length<40)out
   const mh=/G43[^H]*H(\d+)/.exec(l);if(mh&&T!=null&&+mh[1]!=T)add('warn',`Корректор H${mh[1]} не совпадает с инструментом T${T}`,i);
   spAt[i]=sp||rig;});
  let spRep=false;P.segs.forEach(s=>{if(!s.rapid&&!spAt[s.ln]&&!spRep&&Math.min(s.a.z,s.b.z)<0){spRep=true;add('err','Рабочий ход в материале при остановленном шпинделе',s.ln);}});
+ modalChecks(raw,add);
  /* столкновения ускоренных ходов с материалом — по карте высот */
  const g=stockSim(),res=Math.max(g.w,g.h)/150,nx=Math.ceil(g.w/res)+1,ny=Math.ceil(g.h/res)+1,H=new Float32Array(nx*ny);
  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)H[j*nx+i]=g.PS.some(Q=>pip(Q,g.x0+i*res,g.y0+j*res))||g.rect?0:-1e9;

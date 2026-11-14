@@ -30,8 +30,9 @@ async function openApp(page, opts = {}) {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('dialog', d => d.dismiss().catch(() => {}));
-  await page.route('https://unpkg.com/**', r => r.fulfill({
-    status: 200, contentType: 'application/javascript',
+  // context.route — чтобы перехватывались и запросы service worker (офлайн-кэш сайта)
+  await page.context().route('https://unpkg.com/**', r => r.fulfill({
+    status: 200, contentType: 'application/javascript', headers: { 'Access-Control-Allow-Origin': '*' },
     body: r.request().url().includes('OrbitControls') ? THREE.orbit : THREE.three,
   }));
   // pdf.js и Tesseract: в CI — с CDN как у пользователей; без сети — из локальных копий (PDFJS_DIR, TESS_DIR), иначе запрос отклоняется

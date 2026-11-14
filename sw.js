@@ -2,8 +2,17 @@
    Страница: сеть, но не дольше 3 с — иначе сохранённая копия (белого экрана при слабой связи нет).
    three.js и распознавание фото (unpkg/jsdelivr) — из кэша. */
 const C = 'gcnc-v1';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/apple-touch-icon.png'];
-self.addEventListener('install', e => e.waitUntil(caches.open(C).then(c => c.addAll(CORE)).catch(() => {}).then(() => self.skipWaiting())));
+const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/apple-touch-icon.png',
+  // модули «По чертежу» и хранилища — заранее, иначе без сети мастер не откроется, если им ни разу не пользовались онлайн
+  './src/storage/idb.js', './src/drawing/pipeline.js', './src/drawing/import-dxf.js', './src/drawing/import-pdf.js',
+  './src/drawing/import-raster.js', './src/drawing/associate.js', './src/drawing/dimtext.js'];
+// three.js нужен уже при запуске страницы. При первом визите страница ещё не под управлением этого файла,
+// поэтому без предзагрузки офлайн-запуск работал только со второго визита.
+const LIBS = ['https://unpkg.com/three@0.160.0/build/three.module.js', 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js'];
+self.addEventListener('install', e => e.waitUntil(caches.open(C).then(c => Promise.all([
+  c.addAll(CORE).catch(() => {}),
+  Promise.all(LIBS.map(u => c.match(u).then(hit => hit || fetch(u, { mode: 'cors' }).then(r => r.ok && c.put(u, r))).catch(() => {}))),
+])).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 const offline = () => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <body style="margin:0;background:#0f1115;color:#e6e8ec;font:16px -apple-system,Segoe UI,Roboto,sans-serif;padding:80px 24px;text-align:center">
