@@ -1551,6 +1551,7 @@ function bindPlateAI(data){
   run.disabled=true;out.textContent='ИИ смотрит чертёж… (на ПК без видеокарты — до нескольких минут)';
   try{
    const V=await import('./src/ai/validate.js'),prov=P.current(),img=await plateAIImage(data),r=await prov.analyze(img);
+   window.__fresaLastAI=r&&{raw:String(r.raw||'').slice(0,2000),ms:r.ms,model:r.model,done:r.done,ok:!!r.json};   // для диагностики и тестов
    if(!r||!r.json)throw Error('модель не вернула JSON — ответ не использован');
    const ai=V.normalizeAI(r.json),check=V.crossCheck(data.assoc||{holes:[]},ai);
    data.ai={provider:prov.id,model:r.model,ms:r.ms,check};

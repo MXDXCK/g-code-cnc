@@ -33,6 +33,16 @@ export function loadSettings() {
 export function saveSettings(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* без хранилища — только на сеанс */ } }
 
 const toB64 = async blob => { const b = new Uint8Array(await blob.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+/** Уменьшить картинку до maxSide по длинной стороне (PNG); маленькие и неизвестные — как есть. */
+async function shrink(blob, maxSide) {
+  try {
+    const bm = await createImageBitmap(blob), k = Math.min(1, maxSide / Math.max(bm.width, bm.height));
+    if (k >= 1) return blob;
+    const cv = document.createElement('canvas'); cv.width = Math.round(bm.width * k); cv.height = Math.round(bm.height * k);
+    const c = cv.getContext('2d'); c.fillStyle = '#fff'; c.fillRect(0, 0, cv.width, cv.height); c.drawImage(bm, 0, 0, cv.width, cv.height);
+    return await new Promise(r => cv.toBlob(r, 'image/png'));
+  } catch (e) { return blob; }
+}
 const parseJSON = t => { try { return JSON.parse(t); } catch (e) { const m = /\{[\s\S]*\}/.exec(t || ''); if (m) try { return JSON.parse(m[0]); } catch (e2) { /* нет */ } return null; } };
 
 export const none = {
@@ -57,14 +67,18 @@ export function ollama(cfg) {
     },
     async analyze(blob, { signal } = {}) {
       const t0 = performance.now();
+      // think:false — у «думающих» вариантов qwen3-vl рассуждение занимало минуты, а поле ответа оставалось пустым
+      // (найдено сквозным тестом с настоящей Ollama, 15.11). Картинка — не больше 1280 пикс., ответ — не длиннее 1500 токенов.
       const r = await fetch(url + '/api/chat', {
         method: 'POST', signal, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, stream: false, format: SCHEMA, options: { temperature: 0 },
-          messages: [{ role: 'user', content: PROMPT, images: [await toB64(blob)] }] }),
+        body: JSON.stringify({ model, stream: false, think: false, format: SCHEMA, options: { temperature: 0, num_predict: 1500, num_ctx: 8192 },
+          messages: [{ role: 'user', content: PROMPT, images: [await toB64(await shrink(blob, 1280))] }] }),
       });
-      if (!r.ok) throw new Error(`Ollama: ошибка ${r.status}`);
-      const j = await r.json(), text = j.message && j.message.content || '';
-      return { json: parseJSON(text), raw: text, ms: Math.round(performance.now() - t0), model };
+      if (!r.ok) throw new Error(`Ollama: ошибка ${r.status}${r.status === 400 ? ' (старая версия Ollama? нужна 0.12 или новее)' : ''}`);
+      const j = await r.json(), m = j.message || {}, text = m.content || '';
+      // запасной путь: JSON оказался в рассуждении
+      const json = parseJSON(text) || (m.thinking ? parseJSON(m.thinking) : null);
+      return { json, raw: text || m.thinking || '', ms: Math.round(performance.now() - t0), model, done: j.done_reason };
     },
   };
 }

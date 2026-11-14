@@ -6,6 +6,10 @@ name: Замер локальных моделей на чертежах
 # для скачивания llama.cpp (GitHub Releases) и моделей (Hugging Face). Результат — артефакт ai-bench-report.
 on:
   workflow_dispatch:
+    inputs:
+      only:
+        description: 'all — всё; ollama — только сквозной тест Fresa + Ollama'
+        default: all
   push:
     branches-ignore: [main]
     paths: ['tests/ai-bench/**', '.github/workflows/ai-bench.yml']
@@ -20,6 +24,7 @@ concurrency:
 jobs:
   vlm:
     name: ${{ matrix.name }}
+    if: github.event_name != 'workflow_dispatch' || inputs.only != 'ollama'
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
@@ -69,6 +74,7 @@ jobs:
 
   paddleocr:
     name: paddleocr (PP-OCRv5)
+    if: github.event_name != 'workflow_dispatch' || inputs.only != 'ollama'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     continue-on-error: true
@@ -86,7 +92,6 @@ jobs:
     name: Fresa + Ollama (настоящая модель, сквозной тест)
     runs-on: ubuntu-latest
     timeout-minutes: 150
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -111,7 +116,7 @@ jobs:
 
   report:
     needs: [vlm, paddleocr]
-    if: always()
+    if: always() && (github.event_name != 'workflow_dispatch' || inputs.only != 'ollama')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
