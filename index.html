@@ -1378,7 +1378,7 @@ function plateForm(data){
   <p class="hint">X и Y — от нуля текущего проекта, Z0 — верх заготовки. Если ноль чертежа другой, исправь координаты. Глубина — до вершины сверла, с учётом выхода для сквозного отверстия. Лишнюю окружность (не отверстие, или не сверлим) отметь «Не обрабатывать».</p>
   ${data.observations.map((o,i)=>{const [x,y,d]=plateGuess(data,o,zero);return `<fieldset class="card"><legend>Отверстие ${i+1}</legend><div class="grid">
    ${field('x'+i,'X, мм',plateVal(x))}${field('y'+i,'Y, мм',plateVal(y))}${field('d'+i,'Ø, мм',plateVal(d))}${field('z'+i,'Глубина, мм')}
-   </div><p class="hint" id="plateSrc${i}">${esc(plateSrcNote(data,o,zero))}</p>
+   </div><p class="hint" id="plateSrc${i}">${esc(plateSrcNote(data,o,zero))}</p><p class="hint" id="plateAi${i}" hidden></p>
    <label class="ctsy"><input type="checkbox" name="ok${i}"> Подтверждаю отверстие ${i+1}: сверлить (центровка + G81)</label>
    <label class="ctsy"><input type="checkbox" name="skip${i}"> Не обрабатывать</label></fieldset>`;}).join('')}
   ${data.unitless?'<label class="ctsy"><input type="checkbox" name="mm"> Единицы чертежа — миллиметры</label>':''}
@@ -1448,7 +1448,9 @@ function bindPlate(){
    status.textContent='Читаю чертёж…';
    const data=await plateRead(file,m=>{if(current())status.textContent=m;});
    if(!current())return;
-   review.innerHTML=plateForm(data);
+   data.file=file;
+   review.innerHTML=plateForm(data)+plateAIBox();
+   bindPlateAI(data);
    const form=$('#plateForm'),validation=$('#plateValidation'),button=form.querySelector('button[type=submit]');
    const redraw=()=>plateDraw($('#plateCv'),data,i=>form.elements['ok'+i].checked?'ok':form.elements['skip'+i].checked?'skip':'');
    const check=()=>{try{const p=platePlan(form,data),z=stockGeo().z,deep=p.holes.filter(h=>h.geom.depth>z);
@@ -1482,7 +1484,8 @@ function bindPlate(){
      const a=data.assoc;
      const drawing={schema:'fresa.drawing/1',id,sources:[source],observations:data.observations,confirmed:p.holes,skipped:p.skipped,
       operations:ops.map(o=>o.id),unmatched:data.unmatched,
-      association:a?{units:a.units,scale:a.scale,outline:a.outline&&{w:a.outline.w,h:a.outline.h},thickness:a.thickness,conflicts:a.conflicts}:null};
+      association:a?{units:a.units,scale:a.scale,outline:a.outline&&{w:a.outline.w,h:a.outline.h},thickness:a.thickness,conflicts:a.conflicts}:null,
+      ai:data.ai?{provider:data.ai.provider,model:data.ai.model,ms:data.ai.ms,ignored:data.ai.check.ignored.length,unread:data.ai.check.unread,hints:data.ai.check.perHole.map(h=>h.ai?{x:h.x,y:h.y,d:h.d}:null)}:null};
      await store.put('drawings',id,{drawing,file});
      if(!current())return;
      if(JSON.stringify(st)!==before)throw Error('Проект изменился. Проверь наладку и открой чертёж снова');
@@ -1501,6 +1504,58 @@ function bindPlate(){
    redraw();check();
   }catch(e){if(current())status.textContent=e.message;}
  };
+}
+/* ---------- ИИ-помощник в «По чертежу» (необязательно; по умолчанию выключен) ---------- */
+// Ответ модели — только подсказки под полями: ничего не подставляется, всё сверяется с рисунком (src/ai/validate.js).
+function plateAIBox(){
+ return `<div class="card" id="aiBox"><h3>ИИ-помощник · необязательно</h3>
+  <p class="hint">Локальная нейросеть на этом устройстве или ПК может перепроверить надписи. Её ответы — <b>только подсказки</b>: в поля ничего не подставляется, всё сверяется с рисунком. Координаты ИИ — от левого нижнего угла детали. Без ИИ мастер работает полностью.</p>
+  <label>Где работает ИИ<select id="aiProv"><option value="none">Без ИИ</option><option value="ollama">Ollama на этом ПК</option><option value="android">На телефоне (llama.cpp)</option><option value="browser">В браузере (WebGPU)</option></select></label>
+  <div id="aiCfg"></div><p class="hint" id="aiStatus" role="status"></p>
+  <button class="btn s" type="button" id="aiRun" disabled>Проверить чертёж ИИ</button><div id="aiOut"></div></div>`;
+}
+/** Картинка чертежа для модели: фото — как есть, PDF — страница, DXF — отрисовка линий, окружностей и надписей. */
+async function plateAIImage(data){
+ if(data.kind==='image')return data.file;
+ if(data.kind==='pdf'){const P=await import('./src/drawing/import-pdf.js');return P.renderPdfPage(new Uint8Array(await data.file.arrayBuffer()),await P.loadPdfjs(pdfLocal()),{maxSide:1280});}
+ const v=data.view||{segs:[],circles:[],texts:[]},xs=[],ys=[];
+ for(const g of v.segs){xs.push(g.x1,g.x2);ys.push(g.y1,g.y2);}for(const c of v.circles||[]){xs.push(c.cx-c.r,c.cx+c.r);ys.push(c.cy-c.r,c.cy+c.r);}for(const t of v.texts||[]){xs.push(t.x);ys.push(t.y);}
+ const x0=Math.min(...xs)-10,x1=Math.max(...xs)+10,y0=Math.min(...ys)-10,y1=Math.max(...ys)+10,k=Math.min(1280/(x1-x0),1280/(y1-y0),10);
+ const cv=document.createElement('canvas');cv.width=Math.ceil((x1-x0)*k);cv.height=Math.ceil((y1-y0)*k);const c=cv.getContext('2d');
+ c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);c.strokeStyle='#000';c.fillStyle='#000';c.lineWidth=Math.max(1,k*0.35);
+ const X=x=>(x-x0)*k,Y=y=>(y1-y)*k;c.beginPath();for(const g of v.segs){c.moveTo(X(g.x1),Y(g.y1));c.lineTo(X(g.x2),Y(g.y2));}for(const q of v.circles||[]){c.moveTo(X(q.cx+q.r),Y(q.cy));c.arc(X(q.cx),Y(q.cy),q.r*k,0,2*Math.PI);}c.stroke();
+ for(const t of v.texts||[]){c.save();c.translate(X(t.x),Y(t.y));c.rotate(-(t.ang||0)*Math.PI/180);c.font=`${Math.max(10,(t.h||3.5)*k)}px DejaVu Sans, Arial, sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(t.s,0,0);c.restore();}
+ for(const d of v.dimPts||[])if(d.text){const p=d.center||d.p2;if(p){c.font=`${Math.max(10,3.5*k)}px sans-serif`;c.fillText(d.text,X(p[0]),Y(p[1]));}}
+ return new Promise(r=>cv.toBlob(r,'image/png'));
+}
+function bindPlateAI(data){
+ const sel=$('#aiProv'),run=$('#aiRun'),stat=$('#aiStatus'),cfg=$('#aiCfg'),out=$('#aiOut');if(!sel)return;
+ let P=null,S=null;
+ const refresh=async()=>{
+  P=P||await import('./src/ai/provider.js');S=P.loadSettings();sel.value=S.provider;
+  cfg.innerHTML=S.provider==='ollama'?`<div class="grid"><label>Адрес Ollama<input id="aiUrl" value="${esc(S.url)}"></label><label>Модель<input id="aiModel" value="${esc(S.model)}"></label></div>`:'';
+  if(S.provider==='ollama'){$('#aiUrl').onchange=$('#aiModel').onchange=()=>{S.url=$('#aiUrl').value.trim();S.model=$('#aiModel').value.trim();P.saveSettings(S);refresh();};}
+  stat.textContent='Проверяю…';run.disabled=true;
+  const st0=await P.current().status();stat.textContent=(st0.ok?'✓ ':'— ')+st0.reason;run.disabled=!st0.ok||S.provider==='none';
+ };
+ sel.onchange=async()=>{P=P||await import('./src/ai/provider.js');S=P.loadSettings();S.provider=sel.value;P.saveSettings(S);refresh();};
+ run.onclick=async()=>{
+  run.disabled=true;out.textContent='ИИ смотрит чертёж… (на ПК без видеокарты — до нескольких минут)';
+  try{
+   const V=await import('./src/ai/validate.js'),prov=P.current(),img=await plateAIImage(data),r=await prov.analyze(img);
+   if(!r||!r.json)throw Error('модель не вернула JSON — ответ не использован');
+   const ai=V.normalizeAI(r.json),check=V.crossCheck(data.assoc||{holes:[]},ai);
+   data.ai={provider:prov.id,model:r.model,ms:r.ms,check};
+   data.observations.forEach((o,i)=>{const k=(data.assoc&&data.assoc.holes||[]).findIndex(h=>Math.abs(h.du.cx-o.geom.cx)<1e-6&&Math.abs(h.du.cy-o.geom.cy)<1e-6),
+    t=k>=0?V.holeHint(check.perHole[k]):'',el=$('#plateAi'+i);if(el){el.textContent=t;el.hidden=!t;}});
+   out.innerHTML=`<p class="hint">Ответ за ${(r.ms/1000).toFixed(1)} с (${esc(r.model||'')}). Подсказки — под отверстиями.</p>`+
+    (check.ignored.length?`<div class="chk warn">⚠ ИИ назвал отверстия, которых нет на рисунке, — не используются: ${check.ignored.map(h=>`(${h.x??'?'}, ${h.y??'?'}) Ø${h.d??'?'}`).map(esc).join(', ')}</div>`:'')+
+    (check.unread.length?`<div class="chk nv">ℹ ИИ прочитал надписи, которых нет в распознанном: ${check.unread.map(t=>'«'+esc(t)+'»').join(', ')} — сверь с чертежом</div>`:'')+
+    (check.plate&&(check.plate.w==='differs'||check.plate.h==='differs')?`<div class="chk warn">⚠ ИИ видит габарит ${esc(String(check.plate.ai.w))} × ${esc(String(check.plate.ai.h))} — не совпадает с распознанным</div>`:'');
+  }catch(e){out.innerHTML=`<div class="chk warn">⚠ ИИ: ${esc(e.message)}. Мастер работает и без него.</div>`;}
+  run.disabled=false;
+ };
+ refresh();
 }
 /** Показать сохранённый исходник чертежа (из IndexedDB этого устройства) и проверить, что файл не изменился. */
 window.plateSrc=async id=>{

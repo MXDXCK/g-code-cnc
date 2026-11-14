@@ -74,6 +74,33 @@ jobs:
         if: always()
         with: { name: ai-bench-paddleocr, path: results, retention-days: 30 }
 
+  fresa-ollama:
+    name: Fresa + Ollama (настоящая модель, сквозной тест)
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Ollama (официальная установка) и модель qwen3-vl:2b
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          sudo systemctl stop ollama || true
+          OLLAMA_ORIGINS='*' nohup ollama serve > ollama.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:11434/api/tags && break; sleep 2; done
+          ollama --version | tee ollama-version.txt
+          ollama pull qwen3-vl:2b
+          ollama list
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Fresa в браузере → Ollama → подсказки
+        env: { CI: '1', FRESA_REAL_OLLAMA: '1' }
+        run: npx playwright test tests/e2e/ai-ollama-real.spec.js --workers=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: fresa-ollama-real, path: 'test-results/ollama-real.json', retention-days: 30 }
+
   report:
     needs: [vlm, paddleocr]
     if: always()

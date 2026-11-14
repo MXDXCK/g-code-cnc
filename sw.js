@@ -5,7 +5,7 @@ const C = 'gcnc-v1';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/apple-touch-icon.png',
   // модули «По чертежу» и хранилища — заранее, иначе без сети мастер не откроется, если им ни разу не пользовались онлайн
   './src/storage/idb.js', './src/drawing/pipeline.js', './src/drawing/import-dxf.js', './src/drawing/import-pdf.js',
-  './src/drawing/import-raster.js', './src/drawing/associate.js', './src/drawing/dimtext.js'];
+  './src/drawing/import-raster.js', './src/drawing/associate.js', './src/drawing/dimtext.js', './src/ai/provider.js', './src/ai/validate.js'];
 // three.js нужен уже при запуске страницы. При первом визите страница ещё не под управлением этого файла,
 // поэтому без предзагрузки офлайн-запуск работал только со второго визита.
 const LIBS = ['https://unpkg.com/three@0.160.0/build/three.module.js', 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js'];
