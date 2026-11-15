@@ -31,13 +31,15 @@ npx playwright test              # все тесты
 | `e2e/drawing-scenario.spec.js` | сквозной сценарий PDF/фото/DXF → подтверждение → G-код → проверка → 3D → исходник из проекта; «Не обрабатывать» |
 | `e2e/regression-drawing.spec.js` | настоящий 3D (карта высот после сверления), ноль, конфликт, неизвестные размеры, экспорт/импорт, офлайн (сайт) |
 | `e2e/check-safety.spec.js` | проверка программы: 15 испорченных вариантов ловятся; эталоны — без ложных тревог |
-| `e2e/drawing-set.spec.js` | матрица эталонов №01–09 × форматы; таблица — `node tests/matrix-report.js` → `docs/DRAWING_TEST_MATRIX.md` |
+| `e2e/drawing-set.spec.js` | матрица эталонов №01–10 × форматы + искусственные «фото» `synth-*.jpg` (перспектива, тень, размытие, фон, помехи — `fixtures/drawings/gen-synth.js`); таблица — `node tests/matrix-report.js` → `docs/DRAWING_TEST_MATRIX.md` |
+| `e2e/drawing-milling.spec.js` | «По чертежу» → карман, паз, круглый карман, наружный контур, сквозное окно, фаска: траектория по G-коду, настоящий 3D, запреты |
+| `e2e/private-drawings.spec.js` | свои чертежи владельца (`npm run test:private`, папка `fixtures/private/` или `FRESA_PRIVATE_DIR`; не публикуются — см. `fixtures/private/README.md`) |
 | `e2e/storage-quota.spec.js` | нехватка места в IndexedDB: план не меняется, понятное сообщение, повтор |
 | `e2e/ai-helper.spec.js` | ИИ-помощник: выключен по умолчанию, Ollama недоступна, подменённый ответ модели — только подсказки |
 | `e2e/ai-ollama-real.spec.js` | настоящая Ollama (только в `ai-bench.yml`, иначе пропускается) |
-| `unit/*.test.mjs` | `npm run test:unit` — разбор надписей и DXF, привязка размеров, проверка ответа ИИ — без браузера |
+| `unit/*.test.mjs` | `npm run test:unit` — разбор надписей и DXF, привязка размеров, проверка ответа ИИ, объединение двух проходов OCR, защита папки своих чертежей — без браузера |
 
-Фото-тесты используют Tesseract: в CI — с jsDelivr, локально без сети — `TESS_DIR` (папка с tesseract.min.js, worker.min.js, core и eng.traineddata). PDF — `PDFJS_DIR` (пакет pdfjs-dist 6.2.108).
+Фото-тесты используют Tesseract: в CI — с jsDelivr, локально без сети — `TESS_DIR` (папка с tesseract.min.js, worker.min.js, core, eng.traineddata и rus.traineddata). PDF — `PDFJS_DIR` (пакет pdfjs-dist 6.2.108).
 
 ## Эталонные чертежи
 

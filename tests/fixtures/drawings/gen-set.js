@@ -289,4 +289,4 @@ async function main() {
   console.log('готово:', SET.map(d => d.id).join(', '), '+ 08-bad-scan');
 }
 if (require.main === module) main();
-module.exports = { SET };
+module.exports = { SET, svg, dxf, PX };

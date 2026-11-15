@@ -5,7 +5,8 @@
   "scripts": {
     "test": "playwright test",
     "test:unit": "node --test tests/unit/*.test.mjs",
-    "test:golden:update": "UPDATE_GOLDEN=1 playwright test tests/e2e/golden.spec.js"
+    "test:golden:update": "UPDATE_GOLDEN=1 playwright test tests/e2e/golden.spec.js",
+    "test:private": "playwright test tests/e2e/private-drawings.spec.js --workers=1"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

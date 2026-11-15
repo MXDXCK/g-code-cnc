@@ -79,7 +79,34 @@ async function decode(blob, maxSide) {
   const c = cv.getContext('2d', { willReadFrequently: true }); c.fillStyle = '#fff'; c.fillRect(0, 0, W, H); c.drawImage(bm, 0, 0, W, H);
   const d = c.getImageData(0, 0, W, H).data, g = new Float32Array(W * H);
   for (let i = 0; i < W * H; i++) g[i] = 0.299 * d[4 * i] + 0.587 * d[4 * i + 1] + 0.114 * d[4 * i + 2];
+  flatten(g, W, H);
+  // OCR читает выровненную картинку (тени и неровный свет убраны)
+  const id = c.createImageData(W, H);
+  for (let i = 0; i < W * H; i++) { const v = g[i]; id.data[4 * i] = id.data[4 * i + 1] = id.data[4 * i + 2] = v; id.data[4 * i + 3] = 255; }
+  c.putImageData(id, 0, 0);
   return { cv, g, W, H, k, srcW: bm.width, srcH: bm.height };
+}
+
+/** Выровнять освещение: яркость бумаги оценивается максимумом по крупным клеткам (чернила тёмные и тонкие), сглаживается
+ *  и делится — тени, виньетка и неравномерный свет пропадают, линии остаются. На ровном скане почти ничего не меняет. */
+export function flatten(g, W, H) {
+  const B = Math.max(16, Math.round(Math.max(W, H) / 40)), nx = Math.ceil(W / B), ny = Math.ceil(H / B), M = new Float32Array(nx * ny);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const v = []; for (let y = j * B; y < Math.min(H, (j + 1) * B); y += 2) for (let x = i * B; x < Math.min(W, (i + 1) * B); x += 2) v.push(g[y * W + x]);
+    v.sort((a, b) => b - a); M[j * nx + i] = v[Math.floor(v.length * 0.1)] || 255;    // 90-й перцентиль: «бумага», не одиночный блик
+  }
+  // сгладить (3×3 максимум, затем среднее) — чтобы клетка, целиком занятая линией, не стала «бумагой»
+  const M2 = new Float32Array(nx * ny);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { let m = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < nx && b < ny) m = Math.max(m, M[b * nx + a]); } M2[j * nx + i] = m; }
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { let s = 0, n = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < nx && b < ny) { s += M2[b * nx + a]; n++; } } M[j * nx + i] = s / n; }
+  for (let y = 0; y < H; y++) {
+    const fy = Math.min(ny - 1.001, Math.max(0, y / B - 0.5)), j0 = Math.floor(fy), ty = fy - j0;
+    for (let x = 0; x < W; x++) {
+      const fx = Math.min(nx - 1.001, Math.max(0, x / B - 0.5)), i0 = Math.floor(fx), tx = fx - i0;
+      const bg = (M[j0 * nx + i0] * (1 - tx) + M[j0 * nx + i0 + 1] * tx) * (1 - ty) + (M[(j0 + 1) * nx + i0] * (1 - tx) + M[(j0 + 1) * nx + i0 + 1] * tx) * ty;
+      g[y * W + x] = Math.min(255, 255 * g[y * W + x] / Math.max(40, bg));
+    }
+  }
 }
 
 /** Распознать слова с рамками; второй проход — картинка, повёрнутая на 90°, для вертикальных размеров. */

@@ -18,3 +18,7 @@ windows/out/
 node_modules/
 test-results/
 test-report/
+
+# свои чертежи владельца — никогда не публикуются (tests/fixtures/private/README.md)
+tests/fixtures/private/*
+!tests/fixtures/private/README.md
