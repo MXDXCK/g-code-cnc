@@ -1778,15 +1778,15 @@ async function plateAIImage(data){
 }
 function bindPlateAI(data){
  const sel=$('#aiProv'),run=$('#aiRun'),stat=$('#aiStatus'),cfg=$('#aiCfg'),out=$('#aiOut');if(!sel)return;
- let P=null,S=null;
+ let P=null,S=null,seq=0;   // seq: выбор пользователя важнее проверки, начатой раньше (гонка при медленной загрузке модуля)
  const refresh=async()=>{
-  P=P||await import('./src/ai/provider.js');S=P.loadSettings();sel.value=S.provider;
+  const my=++seq;P=P||await import('./src/ai/provider.js');if(my!==seq)return;S=P.loadSettings();sel.value=S.provider;
   cfg.innerHTML=S.provider==='ollama'?`<div class="grid"><label>Адрес Ollama<input id="aiUrl" value="${esc(S.url)}"></label><label>Модель<input id="aiModel" value="${esc(S.model)}"></label></div>`:'';
   if(S.provider==='ollama'){$('#aiUrl').onchange=$('#aiModel').onchange=()=>{S.url=$('#aiUrl').value.trim();S.model=$('#aiModel').value.trim();P.saveSettings(S);refresh();};}
   stat.textContent='Проверяю…';run.disabled=true;
-  const st0=await P.current().status();stat.textContent=(st0.ok?'✓ ':'— ')+st0.reason;run.disabled=!st0.ok||S.provider==='none';
+  const st0=await P.current().status();if(my!==seq)return;stat.textContent=(st0.ok?'✓ ':'— ')+st0.reason;run.disabled=!st0.ok||S.provider==='none';
  };
- sel.onchange=async()=>{P=P||await import('./src/ai/provider.js');S=P.loadSettings();S.provider=sel.value;P.saveSettings(S);refresh();};
+ sel.onchange=async()=>{const v=sel.value;++seq;P=P||await import('./src/ai/provider.js');S=P.loadSettings();S.provider=v;P.saveSettings(S);refresh();};
  run.onclick=async()=>{
   run.disabled=true;out.textContent='ИИ смотрит чертёж… (на ПК без видеокарты — до нескольких минут)';
   try{
