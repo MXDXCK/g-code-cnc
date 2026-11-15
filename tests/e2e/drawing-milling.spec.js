@@ -13,11 +13,11 @@ const TOOLS = [
   { id: 'tcent', num: 21, type: 'center', d: 10, fl: 2, s: 1500, f: 150 },
   { id: 'tdr10', num: 22, type: 'drill', d: 10, fl: 2, s: 800, f: 100 },
 ];
-async function prepare(page, stock = { x: 120, y: 80, z: 10 }) {
+async function prepare(page, stock = { x: 120, y: 80, z: 10 }, extra = []) {
   const errors = await openApp(page);
   await page.evaluate(({ stock, TOOLS }) => {
     const s = __fcam.st(); Object.assign(s.stock, { shape: 'rect', ...stock, rr: 0, rch: 0, origin: 'corner' }); s.ops = []; s.prog.fmt = 'plain'; s.tools.push(...TOOLS);
-  }, { stock, TOOLS });
+  }, { stock, TOOLS: [...TOOLS, ...extra] });
   await page.getByRole('button', { name: 'Меню', exact: true }).click();
   await page.locator('#shBody').getByRole('button', { name: /По чертежу/ }).click();
   return errors;
@@ -175,8 +175,8 @@ test('запрет: противоречивый размер кармана н�
 
 /* ---------- наружный контур и сквозное окно → «Контур по элементам» ---------- */
 // №02: пластина 100×60, углы R8, 2 отв. Ø8. Заготовка 120×80, деталь по центру → левый нижний угол детали (10, 10).
-async function outerReady(page, file, { tool = 'em10', depth = '5', zero = 'center', stock = { x: 120, y: 80, z: 10 } } = {}) {
-  const errors = await prepare(page, stock);
+async function outerReady(page, file, { tool = 'em10', depth = '5', zero = 'center', stock = { x: 120, y: 80, z: 10 }, extra = [] } = {}) {
+  const errors = await prepare(page, stock, extra);
   await page.locator('#plateFile').setInputFiles(fixture('drawings', '02-contour-radii', file));
   await expect(f(page, 'ok_out')).toHaveCount(1, { timeout: 140000 });
   await f(page, 'zero').selectOption(zero);
@@ -290,4 +290,55 @@ test('запрет: окно — фреза больше R углов; глух�
   await blocked(page, 'только сквозное');
   await f(page, 'fz0').fill('11'); await f(page, 'fk0').selectOption('window'); await f(page, 'wslug').uncheck(); await f(page, 'setup').check();
   await blocked(page, 'подтверди подкладку');
+});
+
+/* ---------- фаска по верхней кромке → «Фаска по контуру» ---------- */
+// профиль среза поперёк кромки по узлам сетки 3D: [x узла, z]; кромка при x = edge, металл при x > edge (sgn = +1) или x < edge (−1)
+const chamferProfile = (page, y, edge, sgn) => page.evaluate(({ y, edge, sgn }) => {
+  const h = __fcam.hm(), j = Math.round((y - h.y0) / h.dy), out = [];
+  for (let i = 0; i <= h.nx; i++) { const k = j * (h.nx + 1) + i, d = (h.px[k] - edge) * sgn; if (d > 0.05 && d < 2) out.push([+d.toFixed(3), +h.H[k].toFixed(3)]); }
+  return out;
+}, { y, edge, sgn });
+// фаска C×45°: на расстоянии d от кромки внутрь металла срез глубиной C − d (0 при d ≥ C); допуск — шаг сетки 3D
+const expectChamfer = (P, C, tol) => { expect(P.length).toBeGreaterThan(1); for (const [d, z] of P) expect(Math.abs(z - Math.min(0, d - C))).toBeLessThanOrEqual(tol); };
+const CHT = { id: 'tch', num: 41, type: 'chamfer', d: 12, ang: 90, tip: 0.5, fl: 2, s: 4000, f: 300 };
+test('фаска C1 по наружному контуру (R8) и по карману №03: «Фаска по контуру», 3D — срез 45° у кромки', async ({ page }) => {
+  // наружный контур №02 + фаска
+  await outerReady(page, 'drawing.dxf', { extra: [CHT] });
+  await f(page, 'ok_out').selectOption('mill');
+  await f(page, 'chout').check(); await f(page, 'chtool').selectOption('tch'); await f(page, 'chc').fill('1');
+  await millSetup(page, 'em10', '5');
+  const r = await genCode(page);
+  expect(r.ops.map(o => o.type)).toEqual(['contour', 'chamf']);
+  expect(r.errs).toEqual([]);
+  const ch = await page.evaluate(() => { const o = __fcam.st().ops[1]; return { src: o.src, side: o.side, cx: o.cx, cy: o.cy, w: o.w, h: o.h, rc: o.rc, c: o.c, z0: o.z0 }; });
+  expect(ch).toEqual({ src: 'rect', side: 'out', cx: 60, cy: 40, w: 100, h: 60, rc: 8, c: 1, z0: 0 });
+  // вершина фаскоснима: Z = −(C + 0.3), центр — на кромке + (0.25 + 0.3) от неё (Ø вершины 0.5)
+  expect(cutBox(r.segs, 41).z).toBeCloseTo(-1.3, 3);
+  if (!THREE.real) return;
+  const H = await sim(page);
+  expectChamfer(await chamferProfile(page, 40, 10, 1), 1, 0.12);            // левая кромка x = 10, металл справа
+  expectChamfer(await chamferProfile(page, 40, 110, -1), 1, 0.12);          // правая кромка x = 110
+  expect(await H([[60, 40]])).toEqual([0]);
+});
+test('фаска по карману №03 после кармана; запреты: инструмент не 90°, фаска ≥ глубины, карман не фрезеруется', async ({ page }) => {
+  await prepare(page, undefined, [CHT, { ...CHT, id: 'tc60', num: 42, type: 'center', ang: 60 }]);
+  await page.locator('#plateFile').setInputFiles(fixture('drawings', '03-pocket', 'drawing.dxf'));
+  await f(page, 'zero').selectOption('part');
+  await f(page, 'chpk0').check(); await f(page, 'chtool').selectOption('tch'); await f(page, 'chc').fill('1');
+  await f(page, 'fz0').fill('5'); await f(page, 'fk0').selectOption('skip'); await millSetup(page, 'em10', '2.5');
+  await blocked(page, 'карман не фрезеруется');
+  await f(page, 'fk0').selectOption('mill'); await f(page, 'chtool').selectOption('tc60'); await f(page, 'setup').check();
+  await blocked(page, 'нужен инструмент с углом 90°');
+  await f(page, 'chtool').selectOption('tch'); await f(page, 'chc').fill('5'); await f(page, 'setup').check();
+  await blocked(page, 'не меньше глубины кромки');
+  await f(page, 'chc').fill('1'); await f(page, 'setup').check();
+  const r = await genCode(page);
+  expect(r.ops.map(o => o.type)).toEqual(['pocketRect', 'chamf']);
+  expect(r.errs).toEqual([]);
+  const ch = await page.evaluate(() => { const o = __fcam.st().ops[1]; return { side: o.side, cx: o.cx, cy: o.cy, w: o.w, h: o.h, rc: o.rc }; });
+  expect(ch).toEqual({ side: 'in', cx: 60, cy: 40, w: 60, h: 30, rc: 5 });   // угол кромки = радиус фрезы Ø10
+  if (!THREE.real) return;
+  await sim(page);
+  expectChamfer(await chamferProfile(page, 40, 30, -1), 1, 0.12);           // стенка кармана x = 30, металл слева
 });

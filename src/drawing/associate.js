@@ -400,6 +400,7 @@ export function associate(inp) {
   const thick = T.find(t => t.p.kind === 'thick');
   const depthTexts = T.filter(t => t.p.kind === 'depth').map(t => ({ id: t.id, text: t.p.raw, value: t.p.value }));
   const through = T.filter(t => t.p.kind === 'through').map(t => ({ id: t.id, text: t.p.raw }));
+  const chamferTexts = T.filter(t => t.p.kind === 'chamfer').map(t => ({ id: t.id, text: t.p.raw, value: t.p.value }));   // «Фаска 1×45°» — только подсказка
   const plate = outline ? {
     du: outline,
     corners: outline.corners.map(c => ({ at: c.at, kind: c.kind, r: c.kind === 'sharp' ? null : radDims[c.at] || { value: Number.isFinite(s) ? +(c.r * s).toFixed(units === 'mm' ? 3 : 2) : null, source: 'measured' } })),
@@ -408,9 +409,9 @@ export function associate(inp) {
   } : null;
   const used = new Set(dims.filter(d => d.status !== 'unassociated').map(d => d.textId));
   if (thick) used.add(thick.id);
-  for (const t of [...depthTexts, ...through]) used.add(t.id);
+  for (const t of [...depthTexts, ...through, ...chamferTexts]) used.add(t.id);
   return {
-    units, tol, scale, outline: plate, holes, features, depthTexts, through, dims, conflicts, notes,
+    units, tol, scale, outline: plate, holes, features, depthTexts, through, chamferTexts, dims, conflicts, notes,
     thickness: thick ? { value: thick.p.value, source: 'dimension', textId: thick.id } : null,
     unassigned: T.filter(t => !used.has(t.id) && t.p.kind !== 'text').map(t => ({ id: t.id, text: t.p.raw })),
     otherText: T.filter(t => t.p.kind === 'text').map(t => t.p.raw),
