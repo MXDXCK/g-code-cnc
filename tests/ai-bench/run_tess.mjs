@@ -45,13 +45,14 @@ for (const lang of ['eng', 'rus', 'rus+eng']) {
   await w.terminate();
   rows.push({ engine: 'tesseract-' + lang, summary: true, load_ms: tLoad, ms_per_image: Math.round(tSum / E.items.length), peak_rss_mb: Math.round(peak / 2 ** 20) });
 }
-// комбинация: слова из rus, остальное (числа, Ø, R, ×, °) — из eng
+// комбинация как в Fresa (src/drawing/import-raster.js combineRu): строка с русским ключевым словом из прохода rus+eng
+// заменяет строку eng, только если числа совпадают и в eng нет Ø; иначе остаётся eng (с поправкой «@10»/«010» → Ø10)
+const fixO = t => t.replace(/(^|\s)[0OoQ@DОоФф](\d+(?:[.,]\d+)?)([A-Za-z]{1,2}\d{1,2})?$/, '$1Ø$2$3');
+const KEY = /толщ|глуб|сквозн|фаск|карман|паз|отв|радиус|неуказ/i, dig = t => (String(t).match(/\d+(?:[.,]\d+)?/g) || []).join(' ');
 for (const it of E.items) {
-  const r = res[it.file], ws = words(r.rus);
-  const engTok = r.eng.split(/\s+/).filter(t => /\d/.test(t) || !/[a-z]{3,}/i.test(t));
-  const combo = [...ws, ...engTok].join(' ');
-  const sc = score(it.text, combo);
-  rows.push({ engine: 'tesseract-combo', file: it.file, variant: it.variant, font: it.font, text: it.text, got: combo, ...sc, exact: null });
+  const r = res[it.file], e = fixO(r.eng), ru = r['rus+eng'];
+  const combo = /[а-яё]{3,}/i.test(ru) && KEY.test(ru) && dig(ru) === dig(e) && !/Ø/.test(e) ? ru : (e || (KEY.test(ru) ? ru : ''));
+  rows.push({ engine: 'tesseract-fresa-combo', file: it.file, variant: it.variant, font: it.font, text: it.text, got: combo, ...score(it.text, combo) });
 }
 // чертежи целиком (psm 11 — как в мастере «По чертежу»): сколько надписей найдено
 for (const lang of ['eng', 'rus+eng']) {

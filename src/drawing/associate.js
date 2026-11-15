@@ -403,8 +403,8 @@ export function associate(inp) {
   const plate = outline ? {
     du: outline,
     corners: outline.corners.map(c => ({ at: c.at, kind: c.kind, r: c.kind === 'sharp' ? null : radDims[c.at] || { value: Number.isFinite(s) ? +(c.r * s).toFixed(units === 'mm' ? 3 : 2) : null, source: 'measured' } })),
-    w: SX.edge1 ? { value: SX.edge1.v, source: 'dimension', note: SX.edge1.src } : { value: Number.isFinite(s) ? +((outline.x1 - outline.x0) * s).toFixed(2) : null, source: 'measured' },
-    h: SY.edge1 ? { value: SY.edge1.v, source: 'dimension', note: SY.edge1.src } : { value: Number.isFinite(s) ? +((outline.y1 - outline.y0) * s).toFixed(2) : null, source: 'measured' },
+    w: SX.edge1 ? { value: SX.edge1.v, source: 'dimension', note: SX.edge1.src, ...(SX.edge1.bad ? { conflict: { why: 'выведено из спорного размера' } } : {}) } : { value: Number.isFinite(s) ? +((outline.x1 - outline.x0) * s).toFixed(2) : null, source: 'measured' },
+    h: SY.edge1 ? { value: SY.edge1.v, source: 'dimension', note: SY.edge1.src, ...(SY.edge1.bad ? { conflict: { why: 'выведено из спорного размера' } } : {}) } : { value: Number.isFinite(s) ? +((outline.y1 - outline.y0) * s).toFixed(2) : null, source: 'measured' },
   } : null;
   const used = new Set(dims.filter(d => d.status !== 'unassociated').map(d => d.textId));
   if (thick) used.add(thick.id);

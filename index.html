@@ -1315,7 +1315,9 @@ async function plateRead(file,say){
  if(!kind)throw Error('Нужен файл DXF, PDF или фото (JPG, PNG)');
  if(file.size>(kind==='dxf'?5:25)*1024*1024)throw Error(kind==='dxf'?'Файл DXF больше 5 МБ':'Файл больше 25 МБ');
  const env={at:window.__at,status:say,pdfjs:async()=>(await import('./src/drawing/import-pdf.js')).loadPdfjs(pdfLocal()),
-  ocr:()=>window.__fresaOcrWorker({tessedit_pageseg_mode:'11'})};
+  ocr:()=>window.__fresaOcrWorker({tessedit_pageseg_mode:'11'}),
+  // второй проход с русским словарём — только русские слова надписей (числа и Ø — из основного прохода), см. combineRu
+  ocrRu:()=>window.__fresaOcrWorker({tessedit_pageseg_mode:'11'},null,'rus+eng')};
  if(kind==='dxf'){
   const text=await file.text(),base=plateObservations(text);let r=null;
   try{r=await P.readDrawing(file,{...env,text});}catch(e){}
@@ -1332,18 +1334,51 @@ async function plateRead(file,say){
  return {kind,observations,features:a.features,unitless:false,unmatched:plateUnmatched(a),unmatchedText:plateUnmatchedText(a),assoc:a,view:r.d,warnings:r.warnings};
 }
 const plateZero0=data=>data.kind==='dxf'?'dxf':'part';
+/** Габарит детали по размерам чертежа (только «по размеру» и не спорный; иначе NaN). */
+const outlineWH=a=>{const v=q=>q&&q.value!=null&&!q.conflict&&q.source==='dimension'?+q.value:NaN;return a&&a.outline?[v(a.outline.w),v(a.outline.h)]:[NaN,NaN];};
+/** Левый нижний угол детали в координатах проекта. 'part' — совпадает с углом заготовки; 'center' — деталь по центру заготовки
+ *  (только если габарит известен по размерам и помещается); 'dxf' — как в файле. null — неизвестно (поля пустые, вводит человек). */
+function partOrigin(data,zero){
+ const a=data.assoc;if(!a||!a.outline)return null;
+ if(zero==='dxf')return [a.outline.du.x0,a.outline.du.y0];
+ const g=stockGeo();if(zero==='part')return [g.x0,g.y0];
+ if(zero==='center'){const [W,H]=outlineWH(a);if(!(W>0&&H>0)||W>g.x1-g.x0+1e-9||H>g.y1-g.y0+1e-9)return null;return [g.x0+(g.x1-g.x0-W)/2,g.y0+(g.y1-g.y0-H)/2];}
+ return null;
+}
+/** Углы наружного контура: один вид на все 4 угла (иначе kind=null — обход пока не поддерживается) и одно значение R / фаски. */
+function outlineCorners(a){
+ const C=a.outline.corners||[],k=C.length===4&&C.every(c=>c.kind===C[0].kind)?C[0].kind:null;
+ if(!k)return {kind:null,r:{value:null}};
+ if(k==='sharp')return {kind:k,r:{value:0,source:'dimension'}};
+ const rs=C.map(c=>c.r||{}),dim=rs.find(r=>r.source==='dimension'&&r.value!=null&&!r.conflict),m=rs.filter(r=>r.source!=='dimension').map(r=>r.value);
+ const near=(v,t)=>v!=null&&Math.abs(v-t)<=Math.max(a.units==='mm'?0.05:0.6,t*(a.units==='mm'?0.01:0.15));
+ if(dim)return m.every(v=>near(v,dim.value))?{kind:k,r:{value:dim.value,source:'dimension'}}:{kind:k,r:{value:null,source:'measured',note:'углы на рисунке разные'}};
+ return m.every(v=>near(v,m[0]))?{kind:k,r:{value:m[0],source:'measured'}}:{kind:k,r:{value:null,source:'measured',note:'углы на рисунке разные'}};
+}
+/** Замкнутый прямоугольный контур для операции «Контур по элементам»: старт — середина нижней стороны.
+ *  dir 'cw' — снаружи (по часовой, фреза слева = снаружи, попутно), 'ccw' — изнутри (окно). ck — sharp | fillet | chamfer, R — радиус или катет фаски. */
+function rectEls(x0,y0,W,H,ck,R,dir){
+ const r=ck==='sharp'?0:R,xm=x0+W/2,A=dir==='cw'?'CW':'CCW',P=[];
+ // углы по ходу: [вершина, точка перед углом, точка после угла]
+ const corner=(px,py,ax,ay,bx,by)=>{if(!r)P.push({t:'L',x:px,y:py,r:0});else{P.push({t:'L',x:ax,y:ay,r:0});P.push(ck==='fillet'?{t:A,x:bx,y:by,r}:{t:'L',x:bx,y:by,r:0});}};
+ if(dir==='cw'){corner(x0,y0,x0+r,y0,x0,y0+r);corner(x0,y0+H,x0,y0+H-r,x0+r,y0+H);corner(x0+W,y0+H,x0+W-r,y0+H,x0+W,y0+H-r);corner(x0+W,y0,x0+W,y0+r,x0+W-r,y0);}
+ else{corner(x0+W,y0,x0+W-r,y0,x0+W,y0+r);corner(x0+W,y0+H,x0+W,y0+H-r,x0+W-r,y0+H);corner(x0,y0+H,x0+r,y0+H,x0,y0+H-r);corner(x0,y0,x0,y0+r,x0+r,y0);}
+ P.push({t:'L',x:xm,y:y0,r:0});
+ const R3=v=>+(+v).toFixed(4);
+ return {sx:R3(xm),sy:R3(y0),els:P.map(e=>({...e,x:R3(e.x),y:R3(e.y)}))};
+}
 /** Предложенные X, Y, Ø (в координатах проекта) — только как начальные значения полей. */
 function plateGuess(data,o,zero){
  const v=q=>q&&q.value!=null&&!q.conflict&&Number.isFinite(+q.value)?+q.value:NaN;   // спорное значение не подставляем
  const d=data.kind==='dxf'?2*o.geom.r:v(o.dims&&o.dims.d);
  if(zero==='dxf')return [o.geom.cx,o.geom.cy,d];
- if(!data.assoc||!data.assoc.outline)return [NaN,NaN,d];
- const g=stockGeo();return [g.x0+v(o.dims&&o.dims.x),g.y0+v(o.dims&&o.dims.y),d];
+ const O=partOrigin(data,zero);if(!O)return [NaN,NaN,d];
+ return [O[0]+v(o.dims&&o.dims.x),O[1]+v(o.dims&&o.dims.y),d];
 }
 const plateVal=x=>Number.isFinite(x)?nf(x):'';
 function plateSrcNote(data,o,zero){
  const s=q=>!q||q.value==null?'нет данных — введи':q.conflict?`⚠ по размеру ${nf(q.value)}, на рисунке ≈ ${nf(q.conflict.measured)} — реши и введи сам`:q.source==='dimension'?'по размеру'+(q.note&&/^размер /.test(q.note)?' '+q.note.slice(7):''):'≈ измерено по рисунку — проверь';
- const xy=zero==='dxf'?'X, Y — из файла DXF':!data.assoc||!data.assoc.outline?'X, Y — контур детали не найден, введи сам':`X: ${s(o.dims&&o.dims.x)} · Y: ${s(o.dims&&o.dims.y)}`;
+ const xy=zero==='dxf'?'X, Y — из файла DXF':!data.assoc||!data.assoc.outline?'X, Y — контур детали не найден, введи сам':!partOrigin(data,zero)?'X, Y — положение детали на заготовке неизвестно (габарит не по размерам), введи сам':`X: ${s(o.dims&&o.dims.x)} · Y: ${s(o.dims&&o.dims.y)}`;
  const d=data.kind==='dxf'?(o.dims&&o.dims.d&&o.dims.d.source==='dimension'?'Ø: из файла, совпадает с надписью':'Ø: из файла'):'Ø: '+s(o.dims&&o.dims.d);
  return xy+' · '+d+(o.conflict?' · ⚠ надпись не совпадает с рисунком':'');
 }
@@ -1354,12 +1389,12 @@ function featGuess(data,f,zero){
  const v=q=>q&&q.value!=null&&!q.conflict&&Number.isFinite(+q.value)?+q.value:NaN,du=f.du;
  const a=f.kind==='slot'?v(f.l):v(f.w),b=f.kind==='slot'?v(f.w):v(f.h),r=f.kind==='pocketRect'?v(f.r):NaN;
  if(zero==='dxf'){const cx=f.kind==='slot'?(du.ax==='h'?(du.a+du.b)/2:du.mid):(du.x0+du.x1)/2,cy=f.kind==='slot'?(du.ax==='h'?du.mid:(du.a+du.b)/2):(du.y0+du.y1)/2;return {cx,cy,a,b,r};}
- if(!data.assoc||!data.assoc.outline)return {cx:NaN,cy:NaN,a,b,r};
- const g=stockGeo();return {cx:g.x0+v(f.cx),cy:g.y0+v(f.cy),a,b,r};
+ const O=partOrigin(data,zero);if(!O)return {cx:NaN,cy:NaN,a,b,r};
+ return {cx:O[0]+v(f.cx),cy:O[1]+v(f.cy),a,b,r};
 }
 function featNote(data,f,zero){
  const s=q=>q&&q.conflict?'⚠ спорно (надпись ≠ рисунок) — введи сам':!q||q.value==null?'нет — введи':q.source==='dimension'?'по размеру':'≈ измерено — проверь';
- const pos=zero==='dxf'?'центр — из файла DXF':!data.assoc||!data.assoc.outline?'центр — контур детали не найден, введи сам':`центр X: ${s(f.cx)}, Y: ${s(f.cy)}`;
+ const pos=zero==='dxf'?'центр — из файла DXF':!data.assoc||!data.assoc.outline?'центр — контур детали не найден, введи сам':!partOrigin(data,zero)?'центр — положение детали на заготовке неизвестно, введи сам':`центр X: ${s(f.cx)}, Y: ${s(f.cy)}`;
  const sz=f.kind==='slot'?`L: ${s(f.l)} · W: ${s(f.w)} · ${f.ang?'вдоль Y':'вдоль X'}`:`длина: ${s(f.w)} · ширина: ${s(f.h)} · углы: ${f.sharp?'острые на чертеже':'R '+s(f.r)}`;
  const dt=(data.assoc&&data.assoc.depthTexts||[]).map(t=>'«'+t.text+'»');
  return pos+' · '+sz+(dt.length?' · на чертеже: '+dt.join(', ')+' — глубину введи сам':'');
@@ -1384,7 +1419,7 @@ function plateForm(data){
  const tools=(type,label)=>`<label>${label}<select name="${type}"><option value="">Выбери инструмент</option>${st.tools.filter(t=>t.type===type).map(t=>
   `<option value="${esc(t.id)}">T${esc(t.num)} · Ø${esc(t.d)} · S${esc(t.s)} · F${esc(t.f)}${t.name?' · '+esc(t.name):''}</option>`).join('')}</select></label>`;
  const a=data.assoc,zero=plateZero0(data),kn={dxf:'DXF',pdf:'PDF',image:'фото'}[data.kind];
- const mm=q=>q&&q.value!=null?nf(q.value)+(q.source==='dimension'?'':' ≈'):'?';
+ const mm=q=>q&&q.value!=null?nf(q.value)+(q.conflict?' ⚠ спорно':q.source==='dimension'?'':' ≈'):'?';
  const msgs=[...(a?a.conflicts.map(c=>['err','⛔ '+c.msg]):[]),...(data.warnings||[]).map(w=>['nv','ℹ '+w]),...(a?a.notes.map(n=>['nv','ℹ '+n]):[])];
  const sz=a&&a.outline?`Деталь по чертежу: ${mm(a.outline.w)} × ${mm(a.outline.h)} мм${a.thickness?' · толщина '+nf(a.thickness.value):''}. Заготовка: ${esc(stkShort())}.`:'Контур детали на чертеже не найден — координаты введи сам.';
  return `<form id="plateForm">
@@ -1392,7 +1427,7 @@ function plateForm(data){
   <canvas id="plateCv" style="width:100%;border-radius:10px;display:block;margin:6px 0" aria-label="Чертёж с номерами найденных окружностей"></canvas>
   <p class="hint">${sz}${data.kind==='image'?' Фото: проверь каждую цифру — распознавание может ошибаться.':''}</p>
   ${msgs.map(([c,m])=>`<div class="chk ${c}">${esc(m)}</div>`).join('')}
-  <label>Ноль координат<select name="zero">${data.kind==='dxf'?'<option value="dxf">Начало координат DXF = ноль проекта</option>':''}<option value="part"${a&&a.outline?'':' disabled'}>Левый нижний угол детали = левый нижний угол заготовки</option></select></label>
+  <label>Ноль координат<select name="zero">${data.kind==='dxf'?'<option value="dxf">Начало координат DXF = ноль проекта</option>':''}<option value="part"${a&&a.outline?'':' disabled'}>Левый нижний угол детали = левый нижний угол заготовки</option><option value="center"${partOrigin(data,'center')?'':' disabled'}>Деталь по центру заготовки (припуск поровну со всех сторон)</option></select></label>
   <p class="hint">X и Y — от нуля текущего проекта, Z0 — верх заготовки. Если ноль чертежа другой, исправь координаты. Глубина — до вершины сверла, с учётом выхода для сквозного отверстия. Лишнюю окружность (не отверстие, или не сверлим) отметь «Не обрабатывать».</p>
   ${data.observations.map((o,i)=>{const [x,y,d]=plateGuess(data,o,zero);return `<fieldset class="card"><legend>Отверстие ${i+1}</legend><div class="grid">
    ${field('x'+i,'X, мм',plateVal(x))}${field('y'+i,'Y, мм',plateVal(y))}${field('d'+i,'Ø, мм',plateVal(d))}${field('z'+i,'Глубина, мм')}
@@ -1405,13 +1440,15 @@ function plateForm(data){
    ${field('fa'+j,f.kind==='slot'?'Длина L (по торцам), мм':'Длина по X, мм',plateVal(q.a))}${field('fb'+j,f.kind==='slot'?'Ширина W, мм':'Ширина по Y, мм',plateVal(q.b))}
    ${f.kind==='pocketRect'?field('fr'+j,'Радиус углов по чертежу, мм',plateVal(q.r)):''}${field('fz'+j,'Глубина, мм')}
    </div><p class="hint" id="plateFSrc${j}">${esc(featNote(data,f,zero))}</p>
-   <label>Что делать<select name="fk${j}"><option value="">— выбери —</option><option value="mill">${f.kind==='slot'?'Фрезеровать паз (операция «Карман овальный»)':'Фрезеровать карман (операция «Карман прямоугольный»)'}</option><option value="skip">Не обрабатывать (это не карман / не обрабатываем)</option></select></label></fieldset>`;}).join('')}
+   <label>Что делать<select name="fk${j}"><option value="">— выбери —</option><option value="mill">${f.kind==='slot'?'Фрезеровать паз (операция «Карман овальный»)':'Фрезеровать карман (операция «Карман прямоугольный»)'}</option>${f.kind==='pocketRect'?'<option value="window">Сквозное окно: обойти изнутри (операция «Контур по элементам»)</option>':''}<option value="skip">Не обрабатывать (это не карман / не обрабатываем)</option></select></label></fieldset>`;}).join('')}
+  ${a&&a.outline?outlineSet(data,zero):''}
   ${data.unitless?'<label class="ctsy"><input type="checkbox" name="mm"> Единицы чертежа — миллиметры</label>':''}
-  <h3>Фрезерование карманов и пазов</h3>
-  <p class="hint">Нужно, если выбран карман, паз или круглый карман. Траекторию строит существующая операция Fresa, смещение на радиус фрезы считает программа (без G41/G42). Углы кармана получаются радиусом фрезы: для R по чертежу нужна фреза Ø ≤ 2R. Врезание: в прямоугольный и круглый карман — вертикально в центре (на подаче врезания), в паз — наклонно вдоль паза.</p>
+  <h3>Фрезерование: карманы, пазы, окна, наружный контур</h3>
+  <p class="hint">Нужно, если выбран карман, паз, круглый карман, окно или наружный контур. Контур и окно обходятся операцией «Контур по элементам»: попутно, радиус фрезы учитывает программа, заход и выход по касательной; наружный контур — с проходами вбок до края заготовки. Траекторию строит существующая операция Fresa, смещение на радиус фрезы считает программа (без G41/G42). Углы кармана получаются радиусом фрезы: для R по чертежу нужна фреза Ø ≤ 2R. Врезание: в прямоугольный и круглый карман — вертикально в центре (на подаче врезания), в паз — наклонно вдоль паза.</p>
   <div class="grid">${(()=>{const T=st.tools.filter(t=>['endmill','bull'].includes(t.type));return `<label>Фреза<select name="mill"><option value="">Выбери фрезу</option>${T.map(t=>`<option value="${esc(t.id)}">T${esc(t.num)} · Ø${esc(t.d)} · S${esc(t.s)} · F${esc(t.f)}${t.name?' · '+esc(t.name):''}</option>`).join('')}</select></label>`;})()}
    ${field('mstep','Шаг по Z, мм')}${field('mover','Шаг вбок, % от Ø фрезы','45')}</div>
   <label class="ctsy"><input type="checkbox" name="mplunge"> Фреза режет центром (врезание вертикальное / наклонное без предварительного отверстия)</label>
+  <label class="ctsy"><input type="checkbox" name="wslug"> Для сквозного окна: под деталью подкладка (фреза выйдет снизу), вырезанная середина закреплена или безопасно выпадет — не зажмёт фрезу</label>
   <h3>Наладка · цикл G81</h3>
   <p class="hint">Нужно, если выбрано хотя бы одно отверстие «сверлить». Сверление — G81 (центровка, затем сверло на заданную глубину). Резьба, зенковка, глухие с плоским дном — пока нет.<br>
   Заготовка и материал: <b>${esc(stkShort())}</b> · система координат <b>${esc(st.stock.wcs||'G54')}</b> · ноль XY: <b>${esc(ORIG[st.stock.origin]||'—')}</b>, Z0 — верх. Если что-то не так — исправь в «Заготовка и ноль» и открой чертёж снова.</p>
@@ -1422,8 +1459,26 @@ function plateForm(data){
   <p id="plateValidation" role="status"></p><button class="btn p" type="submit" disabled>Добавить операции и открыть G-код</button>
   </form>`;
 }
+function outlineNote(data,zero){
+ const a=data.assoc,oc=outlineCorners(a),s=q=>q&&q.conflict?'⚠ спорно (надпись ≠ рисунок) — введи сам':!q||q.value==null?'нет — введи':q.source==='dimension'?'по размеру':'≈ измерено — проверь';
+ const pos=zero==='dxf'?'угол — из файла DXF':partOrigin(data,zero)?(zero==='center'?'угол — деталь по центру заготовки':'угол — угол заготовки'):'угол — положение детали неизвестно, введи сам';
+ const CN={ll:'левый нижний',lr:'правый нижний',ur:'правый верхний',ul:'левый верхний'},one=c=>CN[c.at]+' — '+(c.kind==='sharp'?'острый':(c.kind==='fillet'?'R':'фаска ')+(c.r&&c.r.value!=null?(c.r.source==='dimension'?'':'≈')+nf(c.r.value):'?'));
+ const cn=!oc.kind?'углы на рисунке распознаны по-разному ('+(a.outline.corners||[]).map(one).join(', ')+') — выбери вид углов сам':oc.kind==='sharp'?'углы острые':(oc.kind==='fillet'?'углы R ':'углы — фаски ')+s(oc.r)+(oc.r.note?' ('+oc.r.note+')':'');
+ return `${pos} · длина: ${s(a.outline.w)} · ширина: ${s(a.outline.h)} · ${cn}`;
+}
+function outlineSet(data,zero){
+ const a=data.assoc,oc=outlineCorners(a),O=partOrigin(data,zero),v=q=>q&&q.value!=null&&!q.conflict&&Number.isFinite(+q.value)?+q.value:NaN;
+ const field=(name,label,value='')=>`<label>${label}<input name="${name}" inputmode="decimal" value="${value}"></label>`;
+ return `<div class="card" id="plateOuter"><h3>Наружный контур детали</h3><div class="grid">
+  ${field('ox','Левый нижний угол детали X, мм',O?plateVal(O[0]):'')}${field('oy','Левый нижний угол детали Y, мм',O?plateVal(O[1]):'')}
+  ${field('ow','Длина по X, мм',plateVal(v(a.outline.w)))}${field('oh','Ширина по Y, мм',plateVal(v(a.outline.h)))}
+  <label>Углы контура<select name="ock"><option value="">— выбери —</option>${[['sharp','острые'],['fillet','скругление R'],['chamfer','фаска 45°']].map(([k,l])=>`<option value="${k}"${oc.kind===k?' selected':''}>${l}</option>`).join('')}</select></label>
+  ${field('orr','R углов или катет фаски, мм',oc.kind&&oc.kind!=='sharp'?plateVal(v(oc.r)):'')}${field('oz','Глубина обхода, мм')}
+  </div><p class="hint" id="plateOSrc">${esc(outlineNote(data,zero))}</p>
+  <label>Что делать<select name="ok_out"><option value="skip">Не обрабатывать (заготовка уже в размер детали)</option><option value="mill">Обойти контур снаружи (операция «Контур по элементам»)</option></select></label></div>`;
+}
 /** Схема: линии чертежа, контур детали, окружности с номерами (жёлтые — к проверке, зелёные — подтверждены, серые — пропуск). */
-function plateDraw(cv,data,state=()=>'',fstate=()=>''){
+function plateDraw(cv,data,state=()=>'',fstate=()=>'',ostate=''){
  if(!cv)return;const v=data.view||{segs:[]},O=data.observations,W=Math.max(240,cv.clientWidth||320),H=Math.round(W*0.6),k=window.devicePixelRatio||1;
  cv.width=Math.round(W*k);cv.height=Math.round(H*k);cv.style.height=H+'px';const c=cv.getContext('2d');c.setTransform(k,0,0,k,0,0);c.fillStyle='#fff';c.fillRect(0,0,W,H);
  const xs=[],ys=[];for(const s of v.segs||[]){xs.push(s.x1,s.x2);ys.push(s.y1,s.y2);}for(const o of O){xs.push(o.geom.cx-o.geom.r,o.geom.cx+o.geom.r);ys.push(o.geom.cy-o.geom.r,o.geom.cy+o.geom.r);}
@@ -1431,8 +1486,8 @@ function plateDraw(cv,data,state=()=>'',fstate=()=>''){
  if(!xs.length)return;const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),m=12,sc=Math.min((W-2*m)/((x1-x0)||1),(H-2*m)/((y1-y0)||1));
  const X=x=>m+(x-x0)*sc+((W-2*m)-(x1-x0)*sc)/2,Y=y=>H-m-(y-y0)*sc-((H-2*m)-(y1-y0)*sc)/2;
  c.strokeStyle='#9aa3ad';c.lineWidth=1;c.beginPath();for(const s of v.segs||[]){c.moveTo(X(s.x1),Y(s.y1));c.lineTo(X(s.x2),Y(s.y2));}c.stroke();
- const ol=data.assoc&&data.assoc.outline&&data.assoc.outline.du;if(ol){c.strokeStyle='#2f7fd8';c.lineWidth=2;c.strokeRect(X(ol.x0),Y(ol.y1),(ol.x1-ol.x0)*sc,(ol.y1-ol.y0)*sc);}
- (data.features||[]).forEach((f,j)=>{const s=fstate(j),col=s==='mill'?'#1f9d55':s==='skip'?'#b0b6be':'#d08700',du=f.du;c.strokeStyle=col;c.lineWidth=2.5;c.beginPath();
+ const ol=data.assoc&&data.assoc.outline&&data.assoc.outline.du;if(ol){c.strokeStyle=ostate==='mill'?'#1f9d55':'#2f7fd8';c.lineWidth=ostate==='mill'?3:2;c.strokeRect(X(ol.x0),Y(ol.y1),(ol.x1-ol.x0)*sc,(ol.y1-ol.y0)*sc);}
+ (data.features||[]).forEach((f,j)=>{const s=fstate(j),col=s==='mill'||s==='window'?'#1f9d55':s==='skip'?'#b0b6be':'#d08700',du=f.du;c.strokeStyle=col;c.lineWidth=2.5;c.beginPath();
   if(f.kind==='slot'){const r=du.w/2,[ax,bx]=[du.a,du.b];if(du.ax==='h'){c.arc(X(ax),Y(du.mid),r*sc,Math.PI/2,3*Math.PI/2);c.lineTo(X(bx),Y(du.mid+r));c.arc(X(bx),Y(du.mid),r*sc,-Math.PI/2,Math.PI/2);c.closePath();}
    else{c.arc(X(du.mid),Y(ax),r*sc,0,Math.PI);c.lineTo(X(du.mid-r),Y(bx));c.arc(X(du.mid),Y(bx),r*sc,Math.PI,2*Math.PI);c.closePath();}}
   else c.rect(X(du.x0),Y(du.y1),(du.x1-du.x0)*sc,(du.y1-du.y0)*sc);
@@ -1467,17 +1522,42 @@ function platePlan(form,data){
  (data.features||[]).forEach((f,j)=>{
   const k=fields.get('fk'+j),nm=(f.kind==='slot'?'Паз ':'Карман ')+(j+1);
   if(k==='skip'){skipped.push(f.id);return;}
-  if(k!=='mill')throw Error(`${nm}: выбери «Фрезеровать» или «Не обрабатывать»`);
+  if(k!=='mill'&&!(k==='window'&&f.kind==='pocketRect'))throw Error(`${nm}: выбери «Фрезеровать» или «Не обрабатывать»`);
   const [cx,cy,A,B,depth]=['fx','fy','fa','fb','fz'].map(q=>n(q+j)),R=f.kind==='pocketRect'?n('fr'+j):NaN;
   if(![cx,cy].every(Number.isFinite)||!(A>0&&B>0&&depth>0))throw Error(`${nm}: введи центр, размеры и глубину (спорные и неизвестные размеры не подставляются)`);
   if(f.kind==='pocketRect'&&!(R>=0))throw Error(`${nm}: введи радиус углов по чертежу (0 — острые)`);
   if(f.kind==='slot'&&A<B)throw Error(`${nm}: длина L меньше ширины W — проверь размеры`);
   const ang=f.kind==='slot'?f.ang||0:0,hx=(ang===90?B:A)/2,hy=(ang===90?A:B)/2;
   if(!inStock(cx-hx,cx+hx,cy-hy,cy+hy))throw Error(`${nm} выходит за края заготовки. Проверь ноль и размеры`);
-  if(depth>=g.z)throw Error(`${nm}: глубина ${nf(depth)} ≥ толщины ${nf(g.z)} — это сквозное окно, нужен контур (пока не поддерживается)`);
+  if(k==='window'){
+   if(!(depth>g.z))throw Error(`${nm}: окно по контуру — только сквозное (глубина больше толщины ${nf(g.z)}). Глухой карман — «Фрезеровать карман»`);
+   const ck=f.sharp?'sharp':(f.corners||[]).every(c=>c==='fillet')?'fillet':null;
+   if(!ck)throw Error(`${nm}: углы окна разного вида — обход пока не поддерживается`);
+   mills.push({kind:'window',n:j+1,label:'Окно '+(j+1),x0:cx-A/2,y0:cy-B/2,W:A,H:B,ck,R:ck==='fillet'?R:0,depth,minW:Math.min(A,B),feat:f.id,
+    sug:{cx:f.cx&&f.cx.source,cy:f.cy&&f.cy.source,a:f.w&&f.w.source,b:f.h&&f.h.source}});
+   return;
+  }
+  if(depth>=g.z)throw Error(`${nm}: глубина ${nf(depth)} ≥ толщины ${nf(g.z)} — это сквозное окно${f.kind==='pocketRect'?': выбери «Сквозное окно: обойти изнутри»':', по контуру пока не поддерживается'}`);
   mills.push({kind:f.kind==='slot'?'pocketOval':'pocketRect',n:j+1,label:nm,cx,cy,a:A,b:B,r:R,ang,depth,minW:Math.min(A,B),feat:f.id,
    sug:{cx:f.cx&&f.cx.source,cy:f.cy&&f.cy.source,a:(f.kind==='slot'?f.l:f.w)&&(f.kind==='slot'?f.l:f.w).source,b:(f.kind==='slot'?f.w:f.h)&&(f.kind==='slot'?f.w:f.h).source}});
  });
+ // наружный контур детали (по умолчанию «Не обрабатывать»: заготовка уже в размер)
+ const a0=data.assoc;
+ if(a0&&a0.outline&&fields.get('ok_out')==='mill'){
+  const oc=outlineCorners(a0),nm='Наружный контур',ck=fields.get('ock');
+  if(!['sharp','fillet','chamfer'].includes(ck))throw Error(`${nm}: выбери вид углов (острые, R или фаска)`);
+  const [ox,oy,W,H,depth]=['ox','oy','ow','oh','oz'].map(n),R=ck==='sharp'?0:n('orr');
+  if(![ox,oy].every(Number.isFinite)||!(W>0&&H>0&&depth>0))throw Error(`${nm}: введи угол детали X, Y, длину, ширину и глубину (спорные и неизвестные размеры не подставляются)`);
+  if(ck!=='sharp'&&!(R>0))throw Error(`${nm}: введи ${ck==='fillet'?'радиус углов':'катет фасок углов'}`);
+  if(2*R>Math.min(W,H)-1e-9)throw Error(`${nm}: ${ck==='fillet'?'радиус':'фаска'} углов больше половины стороны — проверь размеры`);
+  if(oc.kind&&ck!==oc.kind)warns.push(`${nm}: вид углов выбран не как на рисунке — проверь по чертежу`);
+  if(!inStock(ox,ox+W,oy,oy+H))throw Error(`${nm}: деталь выходит за края заготовки. Проверь ноль и размеры`);
+  if(depth>=g.z)throw Error(`${nm}: глубина ${nf(depth)} ≥ толщины ${nf(g.z)} — деталь отделится от заготовки. Отрезка по контуру пока не поддерживается`);
+  const wall=Math.max(ox-g.x0,g.x1-ox-W,oy-g.y0,g.y1-oy-H);
+  if(wall<0.01)warns.push(`${nm}: деталь уже в размер заготовки — обход только пройдёт по кромке`);
+  mills.push({kind:'outer',label:nm,x0:ox,y0:oy,W,H,ck,R,depth,wall,minW:Infinity,feat:'outline',
+   sug:{w:a0.outline.w&&a0.outline.w.source,h:a0.outline.h&&a0.outline.h.source,r:oc.r&&oc.r.source}});
+ }
  if(!holes.length&&!mills.length)throw Error('Отметь хотя бы один элемент для обработки');
  if(holes.some(({geom:a},i)=>holes.slice(0,i).some(({geom:b})=>Math.hypot(a.cx-b.cx,a.cy-b.cy)<(a.d+b.d)/2)))
   throw Error('Отверстия пересекаются. Проверь X, Y и диаметры');
@@ -1508,9 +1588,16 @@ function platePlan(form,data){
     if(m.r>0&&rt<m.r-0.01)warns.push(`${m.label}: углы получатся R${nf(rt)} вместо R${nf(m.r)} по чертежу (фреза меньше 2R) — проверь, допустимо ли`);
     if(!(m.r>0))warns.push(`${m.label}: на чертеже углы острые — фреза оставит R${nf(rt)}; острые углы фрезой не получить`);
    }
+   if(m.kind==='window'){
+    if(m.ck==='fillet'&&rt>m.R+0.01)throw Error(`${m.label}: фреза Ø${nf(D)} больше R${nf(m.R)} углов окна. Нужна фреза Ø ≤ ${nf(2*m.R)}`);
+    if(m.ck==='sharp')warns.push(`${m.label}: на чертеже углы острые — фреза оставит R${nf(rt)}`);
+    if(m.minW<2*D+1)throw Error(`${m.label}: окно ${nf(m.minW)} мм слишком мало для захода по контуру фрезой Ø${nf(D)} (нужно не меньше ${nf(2*D+1)} мм)`);
+    warns.push(`${m.label}: фреза выйдет из заготовки снизу на ${nf(m.depth-g.z)} мм — проверь подкладку`);
+   }
   }
   if(!(safe>0))throw Error('Введи безопасную высоту Z');
   if(!fields.has('mplunge'))throw Error('Подтверди способ врезания: фреза должна резать центром');
+  if(mills.some(m=>m.kind==='window')&&!fields.has('wslug'))throw Error('Сквозное окно: подтверди подкладку и что вырезанная середина не зажмёт фрезу');
  }
  if(!fields.has('setup'))throw Error('Подтверди наладку');
  return {holes,skipped,mills,warns,center,drill,centerZ,rp,safe,mill,mstep,mover};
@@ -1539,7 +1626,7 @@ function bindPlate(){
    bindPlateAI(data);
    const form=$('#plateForm'),validation=$('#plateValidation'),button=form.querySelector('button[type=submit]');
    const redraw=()=>plateDraw($('#plateCv'),data,i=>form.elements['ok'+i].checked?'ok':form.elements['cpk'+i].checked?'cpk':form.elements['skip'+i].checked?'skip':'',
-    j=>form.elements['fk'+j].value);
+    j=>form.elements['fk'+j].value,form.elements.ok_out?form.elements.ok_out.value:'');
    const check=()=>{try{const p=platePlan(form,data),z=stockGeo().z,deep=p.holes.filter(h=>h.geom.depth>z);
      const W=[...(deep.length?[`⚠ Сверло выйдет из заготовки снизу на ${nf(Math.max(...deep.map(h=>h.geom.depth))-z)} мм (толщина ${nf(z)}) — проверь подкладку или зазор под деталью`]:[]),...p.warns.map(w=>'⚠ '+w)];
      validation.textContent=W.join(' · ');button.disabled=false;}
@@ -1549,10 +1636,12 @@ function bindPlate(){
     if(nm==='zero'){data.observations.forEach((o,i)=>{const v=plateGuess(data,o,nm&&e.target.value);form.elements['x'+i].value=plateVal(v[0]);form.elements['y'+i].value=plateVal(v[1]);
      form.elements['ok'+i].checked=form.elements['cpk'+i].checked=false;$('#plateSrc'+i).textContent=plateSrcNote(data,o,e.target.value);});
      (data.features||[]).forEach((f,j)=>{const q=featGuess(data,f,e.target.value);form.elements['fx'+j].value=plateVal(q.cx);form.elements['fy'+j].value=plateVal(q.cy);
-      if(form.elements['fk'+j].value==='mill')form.elements['fk'+j].value='';$('#plateFSrc'+j).textContent=featNote(data,f,e.target.value);});}
+      if(form.elements['fk'+j].value)form.elements['fk'+j].value='';$('#plateFSrc'+j).textContent=featNote(data,f,e.target.value);});
+     if(form.elements.ok_out){const O=partOrigin(data,e.target.value);form.elements.ox.value=O?plateVal(O[0]):'';form.elements.oy.value=O?plateVal(O[1]):'';form.elements.ok_out.value='skip';$('#plateOSrc').textContent=outlineNote(data,e.target.value);}}
     else if(m&&/^[xydz]/.test(nm))form.elements['ok'+m[1]].checked=form.elements['cpk'+m[1]].checked=false;
     else if(m&&e.target.checked){for(const k of ['ok','cpk','skip'])if(!nm.startsWith(k))form.elements[k+m[1]].checked=false;}
-    else if(mf&&form.elements['fk'+mf[1]].value==='mill')form.elements['fk'+mf[1]].value='';   // правка размеров снимает подтверждение
+    else if(mf&&['mill','window'].includes(form.elements['fk'+mf[1]].value))form.elements['fk'+mf[1]].value='';   // правка размеров снимает подтверждение
+    else if(/^o[xywhz]$|^orr$|^ock$/.test(nm)&&form.elements.ok_out)form.elements.ok_out.value='skip';
     form.elements.setup.checked=nm==='setup'&&e.target.checked;
     redraw();check();
    };
@@ -1574,11 +1663,18 @@ function bindPlate(){
      if(p.holes.length){ops.push(op(p.center,p.centerZ,p.holes));for(const depth of new Set(p.holes.map(h=>h.geom.depth)))ops.push(op(p.drill,depth,p.holes.filter(h=>h.geom.depth===depth)));}
      // карманы и пазы — существующие операции Fresa; траекторию считает их генератор
      for(const m of p.mills){
+      if(m.kind==='outer'||m.kind==='window'){
+       // контур — существующая операция «Контур по элементам»: попутно (G41-сторона), радиус фрезы считает программа
+       const D=+p.mill.d,so=Math.max(0.1,D*p.mover/100),passes=m.kind==='outer'?Math.max(0,Math.ceil((m.wall+0.5-D)/so)):0;
+       ops.push(Object.assign(newOp('contour'),rectEls(m.x0,m.y0,m.W,m.H,m.ck,m.R,m.kind==='outer'?'cw':'ccw'),
+        {tool:p.mill.id,closed:'1',comp:'41',cmode:'prog',mirror:'none',depth:m.depth,step:p.mstep,lead:m.kind==='outer'?5:0,passes,over:p.mover,safe:p.safe}));
+       continue;
+      }
       const base={tool:p.mill.id,depth:m.depth,step:p.mstep,over:p.mover,safe:p.safe,cx:m.cx,cy:m.cy};
       ops.push(Object.assign(newOp(m.kind),base,m.kind==='pocketRect'?{w:m.a,h:m.b,rf:0}:m.kind==='pocketOval'?{l:m.a,w:m.b,ang:m.ang,rf:0}:{d:m.d,rf:0}));
      }
      const conf=[...p.holes,...p.mills.map(m=>({id:(m.feat||m.obs)+'-op',type:m.kind,status:'confirmed',units:'mm',
-      geom:m.kind==='pocketCircle'?{cx:m.cx,cy:m.cy,d:m.d,depth:m.depth}:{cx:m.cx,cy:m.cy,a:m.a,b:m.b,r:m.r,ang:m.ang,depth:m.depth},
+      geom:m.kind==='pocketCircle'?{cx:m.cx,cy:m.cy,d:m.d,depth:m.depth}:m.kind==='outer'||m.kind==='window'?{x0:m.x0,y0:m.y0,w:m.W,h:m.H,corners:m.ck,r:m.R,depth:m.depth}:{cx:m.cx,cy:m.cy,a:m.a,b:m.b,r:m.r,ang:m.ang,depth:m.depth},
       source:{by:'user',featureId:m.feat||null,observationId:m.obs||null,zero:fields0.get('zero')||plateZero0(data),suggested:m.sug}}))];
      const a=data.assoc;
      const drawing={schema:'fresa.drawing/1',id,sources:[source],observations:data.observations,features:data.features||[],confirmed:conf,skipped:p.skipped,
@@ -2344,7 +2440,7 @@ async function ocrScript(){if(!window.Tesseract)await new Promise((ok,no)=>{cons
 /* __fresaOcrPaths — только для автотестов без сети (tests/helpers.js) */
 const ocrOpts=log=>Object.assign({logger:m=>log&&log(m)},window.__fresaOcrPaths?{workerPath:__fresaOcrPaths.worker,corePath:__fresaOcrPaths.core,langPath:__fresaOcrPaths.lang,gzip:false,workerBlobURL:false}:OCR_LOCAL?{workerPath:OCR_LIB()+'worker.min.js',corePath:OCR_LIB(),langPath:OCR_LIB().replace(/\/$/,''),gzip:false,workerBlobURL:false}:{});
 /* отдельный распознаватель для чертежей (src/drawing/import-raster.js): свои настройки, общий движок */
-window.__fresaOcrWorker=async(params,log)=>{await ocrScript();const w=await Tesseract.createWorker('eng',1,ocrOpts(log));if(params)await w.setParameters(params);return w;};
+window.__fresaOcrWorker=async(params,log,lang='eng')=>{await ocrScript();const w=await Tesseract.createWorker(lang,1,ocrOpts(log));if(params)await w.setParameters(params);return w;};
 async function ocrLoad(){await ocrScript();
  if(!ocrW){ocrW=await Tesseract.createWorker('eng',1,ocrOpts(m=>ocrLog&&ocrLog(m)));await ocrW.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1',tessedit_char_whitelist:OCR_WL});}return ocrW;}
 /* подготовка снимка: серый, светлый текст на тёмном экране → инвертировать, растянуть контраст, локальный порог */

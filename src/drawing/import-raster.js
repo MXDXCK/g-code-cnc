@@ -118,13 +118,34 @@ function phrases(words) {
   }
   for (const p of out) {
     // «010», «O10», «@10» перед числом — почти всегда знак Ø; отмечаем пониженной уверенностью
-    const m = /(^|\s)[0OoQ@D](\d+(?:[.,]\d+)?)$/.exec(p.s);
-    if (m && !/^\d+$/.test(p.s.trim()) || (m && /^0\d/.test(p.s.trim()))) { p.s = p.s.replace(/(^|\s)[0OoQ@D](\d+(?:[.,]\d+)?)$/, '$1Ø$2'); p.conf = Math.min(p.conf, 0.6); p.guess = 'Ø из «' + m[0].trim() + '»'; }
+    // (с русским словарём знак Ø читается и как кириллические «О», «о», «Ф», «ф»)
+    // (и с полем допуска: «@10H7» → «Ø10H7»)
+    const m = /(^|\s)[0OoQ@DОоФф](\d+(?:[.,]\d+)?)([A-Za-z]{1,2}\d{1,2})?$/.exec(p.s);
+    if (m && !/^\d+$/.test(p.s.trim()) || (m && /^0\d/.test(p.s.trim()))) { p.s = p.s.replace(/(^|\s)[0OoQ@DОоФф](\d+(?:[.,]\d+)?)([A-Za-z]{1,2}\d{1,2})?$/, '$1Ø$2$3'); p.conf = Math.min(p.conf, 0.6); p.guess = 'Ø из «' + m[0].trim() + '»'; }
     p.s = p.s.replace(/(\d+)\s*(?:OTB|0TB|oTB|OTS|ors|ove|otb|отв)\.?/i, '$1 отв.');
   }
   // «слова» без цифр с низкой уверенностью — обычно это углы и штрихи чертежа («L», «=)»), а не надписи:
   // их не берём, чтобы они не закрывали линии под собой
   return out.filter(p => /\d/.test(p.s) || p.conf >= 0.85);
+}
+
+/** Объединить основной OCR (eng) и проход с русским словарём: строка с русским ключевым словом заменяет строку основного
+ *  прохода на том же месте, только если числа в них совпадают и в основной нет знака Ø; новая строка добавляется,
+ *  если на её месте основной проход ничего не прочёл. Иначе остаётся основная строка. */
+export function combineRu(E, R) {
+  const KEY = /толщ|глуб|сквозн|фаск|карман|паз|отв|радиус|неуказ/i;
+  const digits = s => (String(s).match(/\d+(?:[.,]\d+)?/g) || []).join(' ');
+  const ov = (a, b) => a.ang === b.ang && a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  const out = E.map(e => ({ ...e }));
+  for (const r of R) {
+    if (!/[а-яё]{3,}/i.test(r.s) || !KEY.test(r.s)) continue;
+    const hits = out.filter(e => ov(e, r));
+    if (!hits.length) { if (r.conf >= 0.6) out.push({ ...r, ru: true }); continue; }
+    if (hits.length === 1 && digits(hits[0].s) === digits(r.s) && !/Ø/.test(hits[0].s)) {
+      const e = hits[0]; Object.assign(e, { s: r.s, x0: Math.min(e.x0, r.x0), y0: Math.min(e.y0, r.y0), x1: Math.max(e.x1, r.x1), y1: Math.max(e.y1, r.y1), conf: Math.min(e.conf, r.conf), ru: true });
+    }
+  }
+  return out;
 }
 
 /** Порог Оцу по гистограмме яркости (чернила / бумага). */
@@ -189,8 +210,15 @@ function houghCircles(g, W, H, skip, rMin, rMax) {
 export async function importRaster(blob, env) {
   const { cv, g, W, H, k, srcW, srcH } = await decode(blob, env.maxSide || 1600);
   const warn = [];
-  const words = env.ocr ? phrases(await ocrWords(cv, env.ocr)) : [];
+  let words = env.ocr ? phrases(await ocrWords(cv, env.ocr)) : [];
   if (!env.ocr) warn.push('надписи не распознавались — размеры нужно ввести вручную');
+  // второй проход с русским словарём — только для русских слов («Толщина», «Глубина», «Сквозное», «Фаска»…):
+  // числа и знак Ø остаются из основного (английского) прохода — так меньше путаницы «Ø10 → 210»
+  if (env.ocr && env.ocrRu) {
+    const w2 = await env.ocrRu().catch(() => null);
+    if (!w2) warn.push('русские надписи не распознавались (нет словаря) — «Толщина», «Глубина» и т. п. проверь сам');
+    else try { words = combineRu(words, phrases(await ocrWords(cv, w2))); } finally { if (w2.terminate) await w2.terminate().catch(() => {}); }
+  }
   const inText = (x, y, m = 3) => words.some(w => x >= w.x0 - m && x <= w.x1 + m && y >= w.y0 - m && y <= w.y1 + m);
   const raw0 = env.at.atLines(g, W, H, 50);
   const raw = [...raw0.filter(x => x.circle), ...linkPieces(raw0.filter(x => !x.circle && x.P.length).map(x => x.P)).map(P => ({ P }))];

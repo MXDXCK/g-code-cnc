@@ -53,6 +53,9 @@ jobs:
             curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/$f -o $T/$f
           done
           curl -fsSL https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int/eng.traineddata.gz -o $T/eng.traineddata.gz
+          # русский словарь — второй проход OCR по надписям чертежей («Толщина», «Глубина», «Сквозное»…), ~5 МБ
+          curl -fsSL https://cdn.jsdelivr.net/npm/@tesseract.js-data/rus@1.0.0/4.0.0_best_int/rus.traineddata.gz -o $T/rus.traineddata.gz
+          gunzip -f $T/rus.traineddata.gz
           gunzip -f $T/eng.traineddata.gz
           # чертежи PDF (pdf.js, Apache-2.0) — внутрь приложения; .js вместо .mjs, чтобы WebView отдал файл как скрипт
           P=dist/lib/pdfjs; mkdir -p $P
@@ -102,6 +105,7 @@ jobs:
           mkdir -p out && cp $A "out/Fresa-TEST-${{ needs.web.outputs.version }}-${{ needs.web.outputs.tag }}.apk"
           unzip -l $A | tee list.txt | grep -q 'assets/src/storage/idb.js'
           grep -q 'assets/lib/tesseract/eng.traineddata' list.txt
+          grep -q 'assets/lib/tesseract/rus.traineddata' list.txt
           grep -q 'assets/lib/pdfjs/pdf.min.js' list.txt
           grep -q 'assets/src/drawing/pipeline.js' list.txt
           echo "OK: src/, tesseract и pdf.js в APK"
@@ -125,7 +129,7 @@ jobs:
           $names = $asm.GetManifestResourceNames() | ForEach-Object { $_.Replace('\','/') }
           $names | Sort-Object | Out-File res.txt
           Get-Content res.txt
-          foreach ($need in 'web/index.html','web/lib/three.module.js','web/lib/tesseract/eng.traineddata','web/lib/pdfjs/pdf.min.js','web/src/storage/idb.js','web/src/drawing/pipeline.js') {
+          foreach ($need in 'web/index.html','web/lib/three.module.js','web/lib/tesseract/eng.traineddata','web/lib/tesseract/rus.traineddata','web/lib/pdfjs/pdf.min.js','web/src/storage/idb.js','web/src/drawing/pipeline.js') {
             if (-not ($names -contains $need)) { Write-Error "нет в EXE: $need"; exit 1 }
           }
           Write-Host "OK: все нужные файлы встроены"

@@ -16,7 +16,8 @@ export function kindOf(file) {
 /**
  * @param {File|Blob} file
  * @param {{at:object, pdfjs:()=>Promise<object>, ocr:()=>Promise<object|null>, status?:(s:string)=>void, text?:string}} env
- *   at — автообводка Fresa (window.__at); pdfjs/ocr — загрузчики (по требованию, чтобы не тянуть библиотеки зря)
+ *   at — автообводка Fresa (window.__at); pdfjs/ocr — загрузчики (по требованию, чтобы не тянуть библиотеки зря);
+ *   ocrRu — необязательный загрузчик OCR с русским словарём (второй проход только для русских слов)
  * @returns {Promise<{kind:string, vector:boolean, d:object, a:object, warnings:string[]}>}
  */
 export async function readDrawing(file, env) {
@@ -26,7 +27,7 @@ export async function readDrawing(file, env) {
   const raster = async blob => {
     say('Распознаю надписи на картинке… (первый раз — до минуты)');
     const ocr = await env.ocr().catch(() => null);
-    try { return await importRaster(blob, { at: env.at, ocr }); } finally { if (ocr && ocr.terminate) await ocr.terminate().catch(() => {}); }
+    try { return await importRaster(blob, { at: env.at, ocr, ocrRu: env.ocrRu }); } finally { if (ocr && ocr.terminate) await ocr.terminate().catch(() => {}); }
   };
   if (kind === 'dxf') d = importDXF(env.text ?? await file.text());
   else if (kind === 'pdf') {

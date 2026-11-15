@@ -11,6 +11,9 @@ export function normalizeText(s) {
     .replace(/%%[cC]/g, 'Ø').replace(/%%[dD]/g, '°').replace(/%%[pP]/g, '±')     // коды DXF
     .replace(/\\[Pp]/g, ' ').replace(/\{\\[^;{}]*;|\}|\{/g, '')                 // форматирование MTEXT
     .replace(/[⌀∅]/g, 'Ø').replace(/(^|[\s(])[Фф](?=\s?\d)/g, (m, a) => a + 'Ø') // «Ф10» → «Ø10». «O10»/«010» от OCR сюда не входят: путаница с нулём решается в import-raster с пониженной уверенностью
+    // OCR с русским словарём: похожие кириллические буквы в обозначениях — латиницей («М6» → M6, «Ø10Н7» → Ø10H7)
+    .replace(/(^|[\s(x×])М(?=\s?\d)/g, '$1M')
+    .replace(/(\d)([АВЕКМНРСТ])(?=\d{1,2}(?!\d))/g, (m, d, c) => d + 'ABEKMHPCT'['АВЕКМНРСТ'.indexOf(c)])
     .replace(/[×хХ*]/g, 'x').replace(/\s+/g, ' ').trim();
 }
 
@@ -42,6 +45,8 @@ export function parseDimText(raw) {
     r.kind = 'linear'; r.value = toN(m[1]);
     if (m[2]) r.tol = { upper: toN(m[2]), lower: -toN(m[2]) };
     else if (m[3]) { const a = toN(m[3].replace(/\s/g, '')), b = m[4] ? toN(m[4].replace(/\s/g, '')) : 0; r.tol = { upper: Math.max(a, b), lower: Math.min(a, b) }; }
+  } else if ((m = new RegExp('^' + NUM + String.raw`\s*([A-Za-z]{1,2}\d{1,2})$`).exec(s))) {   // «12h9», «20H7» — размер с полем допуска
+    r.kind = 'linear'; r.value = toN(m[1]); r.tol = { fit: m[2], upper: null, lower: null };
   } else if (r.count) r.kind = 'count';
   return r;
 }

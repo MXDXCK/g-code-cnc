@@ -47,6 +47,9 @@ jobs:
             curl -fsSL https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/$f -o $T/$f
           done
           curl -fsSL https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int/eng.traineddata.gz -o $T/eng.traineddata.gz
+          # русский словарь — второй проход OCR по надписям чертежей («Толщина», «Глубина», «Сквозное»…), ~5 МБ
+          curl -fsSL https://cdn.jsdelivr.net/npm/@tesseract.js-data/rus@1.0.0/4.0.0_best_int/rus.traineddata.gz -o $T/rus.traineddata.gz
+          gunzip -f $T/rus.traineddata.gz
           gunzip -f $T/eng.traineddata.gz   # Android-сборщик всё равно распаковывает .gz — храним сразу распакованным
           # чертежи PDF (pdf.js, Apache-2.0) — внутрь приложения; .js вместо .mjs, чтобы WebView отдал файл как скрипт
           P=dist/lib/pdfjs; mkdir -p $P

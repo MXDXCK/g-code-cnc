@@ -56,8 +56,8 @@ for (const file of ['drawing.dxf', 'drawing.pdf', 'drawing.png']) test(`карм
   await expect(f(page, 'fx0')).toHaveValue('60'); await expect(f(page, 'fy0')).toHaveValue('40');
   await expect(f(page, 'fa0')).toHaveValue('60'); await expect(f(page, 'fb0')).toHaveValue('30');
   await expect(f(page, 'fz0')).toHaveValue('');
-  // надпись «Карман глубина 5» показывается, но глубина не подставляется; на фото OCR (eng) кириллицу не читает — K-21
-  if (!file.endsWith('.png')) await expect(page.locator('#plateFSrc0')).toContainText('«Карман глубина 5» — глубину введи сам');
+  // надпись «Карман глубина 5» показывается, но глубина не подставляется (на фото — второй проход OCR с русским словарём)
+  await expect(page.locator('#plateFSrc0')).toContainText('«Карман глубина 5» — глубину введи сам');
   if (file.endsWith('.png')) await f(page, 'fr0').fill('5');   // на фото радиус угла измерен приблизительно
   await expect(submit(page)).toBeDisabled();                    // ничего не обрабатывается без решения
   await f(page, 'fz0').fill('5'); await f(page, 'fk0').selectOption('mill');
@@ -171,4 +171,123 @@ test('запрет: противоречивый размер кармана н�
   await expect(f(page, 'fx0')).toHaveValue('');                       // центр по X выведен из спорного размера — тоже пусто
   await f(page, 'fa0').fill('60'); await f(page, 'fx0').fill('60'); await f(page, 'fk0').selectOption('mill'); await f(page, 'setup').check();
   await expect(submit(page)).toBeEnabled();
+});
+
+/* ---------- наружный контур и сквозное окно → «Контур по элементам» ---------- */
+// №02: пластина 100×60, углы R8, 2 отв. Ø8. Заготовка 120×80, деталь по центру → левый нижний угол детали (10, 10).
+async function outerReady(page, file, { tool = 'em10', depth = '5', zero = 'center', stock = { x: 120, y: 80, z: 10 } } = {}) {
+  const errors = await prepare(page, stock);
+  await page.locator('#plateFile').setInputFiles(fixture('drawings', '02-contour-radii', file));
+  await expect(f(page, 'ok_out')).toHaveCount(1, { timeout: 140000 });
+  await f(page, 'zero').selectOption(zero);
+  await f(page, 'skip0').check(); await f(page, 'skip1').check();
+  await expect(f(page, 'ok_out')).toHaveValue('skip');                 // по умолчанию контур не обрабатывается
+  if (depth) await f(page, 'oz').fill(depth);
+  return errors;
+}
+for (const file of ['drawing.dxf', 'drawing.pdf', 'drawing.png']) test(`наружный контур №02 (${file}): R8 по чертежу → «Контур по элементам» снаружи; траектория и 3D`, async ({ page }) => {
+  test.setTimeout(150000);
+  const errors = await outerReady(page, file);
+  await expect(f(page, 'ox')).toHaveValue('10'); await expect(f(page, 'oy')).toHaveValue('10');
+  await expect(f(page, 'ow')).toHaveValue('100'); await expect(f(page, 'oh')).toHaveValue('60');
+  if (file.endsWith('.png')) {
+    // на фото углы распознаются ненадёжно (у угла сходятся выносные линии) — вид углов и R решает человек
+    await expect(f(page, 'ock')).toHaveValue(''); await expect(page.locator('#plateOSrc')).toContainText('выбери вид углов сам');
+    await f(page, 'ock').selectOption('fillet'); await f(page, 'orr').fill('8');
+  } else { await expect(f(page, 'ock')).toHaveValue('fillet'); await expect(f(page, 'orr')).toHaveValue('8'); }
+  await expect(page.locator('#plateOSrc')).toContainText('по центру заготовки');
+  await f(page, 'ok_out').selectOption('mill');
+  await millSetup(page, 'em10', '2.5');
+  const r = await genCode(page);
+  expect(r.ops.map(o => o.type)).toEqual(['contour']);
+  expect(r.errs).toEqual([]);
+  const op = await page.evaluate(() => { const o = __fcam.st().ops[0]; return { sx: o.sx, sy: o.sy, els: o.els, closed: o.closed, comp: o.comp, cmode: o.cmode, passes: o.passes, depth: o.depth }; });
+  expect(op).toMatchObject({ sx: 60, sy: 10, closed: '1', comp: '41', cmode: 'prog', passes: 1, depth: 5 });
+  expect(op.els.filter(e => e.t === 'CW').map(e => e.r)).toEqual([8, 8, 8, 8]);
+  // центр фрезы на чистовом проходе: стенка + R5 → X 5…115, Y 5…75, углы — дуги R13 (8 + 5)
+  expect(r.code).toMatch(/G1 X18\. Y5\.\nG2 X5\. Y18\. I0\. J13\./);
+  expect(r.code).toMatch(/G2 X115\. Y62\. I0\. J-13\./);
+  const B = cutBox(r.segs, 31);
+  expect(B.z).toBe(-5);
+  // врезание — за пределами заготовки (фреза не врезается в металл)
+  const plunges = r.segs.filter(s => s.t === 31 && !s.r && s.b.z < s.a.z && s.a.x === s.b.x && s.a.y === s.b.y).map(s => s.b);
+  expect(plunges.length).toBeGreaterThan(0);
+  for (const p of plunges) expect(p.x < -5 || p.x > 125 || p.y < -5 || p.y > 85).toBe(true);
+  if (!THREE.real) return;
+  const H = await sim(page);
+  // снято вокруг детали до края заготовки; деталь и угол R8 целы; кромка — ровно по контуру
+  const [ring, ringCorner, stockEdge, inPart, inCornerR, outCornerR, edgeIn, edgeOut] =
+    await H([[5, 40], [3, 3], [1, 40], [12, 40], [10 + 8 - 8 * 0.7071 + 0.6, 10 + 8 - 8 * 0.7071 + 0.6], [10 + 8 - 8 * 0.7071 - 0.6, 10 + 8 - 8 * 0.7071 - 0.6], [10.4, 40], [9.6, 40]]);
+  expect([ring, stockEdge, outCornerR, edgeOut]).toEqual([-5, -5, -5, -5]);
+  expect([inPart, inCornerR, edgeIn]).toEqual([0, 0, 0]);
+  expect(ringCorner).toBeLessThanOrEqual(0);                    // угол заготовки: может остаться «уголок» — вне детали
+  expect(errors).toEqual([]);
+});
+test('наружный контур с фасками углов (выбрано человеком вместо R): предупреждение, кромка фаски в 3D', async ({ page }) => {
+  await outerReady(page, 'drawing.dxf');
+  await f(page, 'ock').selectOption('chamfer'); await f(page, 'orr').fill('5');
+  await f(page, 'ok_out').selectOption('mill'); await millSetup(page, 'em10', '5');
+  await expect(page.locator('#plateValidation')).toContainText('вид углов выбран не как на рисунке');
+  const r = await genCode(page);
+  expect(r.errs).toEqual([]);
+  if (!THREE.real) return;
+  const H = await sim(page);
+  // угол (10,10) с фаской 5: линия x + y = 25. Внутри детали — цело, снаружи — снято
+  expect(await H([[13, 13], [12, 12], [10.6, 15.2], [15.2, 10.6], [10.6, 13.8], [13.8, 10.6]])).toEqual([0, -5, 0, 0, -5, -5]);
+});
+test('запрет: наружный контур на всю толщину (деталь отделится от заготовки)', async ({ page }) => {
+  await outerReady(page, 'drawing.dxf', { depth: '10' });
+  await f(page, 'ok_out').selectOption('mill'); await millSetup(page);
+  await blocked(page, 'деталь отделится');
+});
+test('запрет: деталь не помещается в заготовку; ноль «по центру» недоступен', async ({ page }) => {
+  await outerReady(page, 'drawing.dxf', { zero: 'part', stock: { x: 90, y: 80, z: 10 } });
+  await expect(page.locator('#plateForm [name=zero] option[value=center]')).toHaveAttribute('disabled', '');
+  await f(page, 'ok_out').selectOption('mill'); await millSetup(page);
+  await blocked(page, 'выходит за края заготовки');
+});
+test('наружный контур: правка размера снимает решение; неизвестный радиус не подставляется', async ({ page }) => {
+  await outerReady(page, 'drawing.dxf');
+  await f(page, 'ok_out').selectOption('mill'); await millSetup(page);
+  await expect(submit(page)).toBeEnabled();
+  await f(page, 'orr').fill('');
+  await expect(f(page, 'ok_out')).toHaveValue('skip');
+  await f(page, 'ok_out').selectOption('mill'); await f(page, 'setup').check();
+  await blocked(page, 'введи радиус углов');
+});
+
+// №03 как сквозное окно 60×30 R5 в пластине 10 мм: обход изнутри, фреза Ø8 (R4 ≤ R5), глубина 11 (выход 1 мм)
+async function windowReady(page, { tool = 'em8', depth = '11', slug = true } = {}) {
+  await prepare(page);
+  await page.locator('#plateFile').setInputFiles(fixture('drawings', '03-pocket', 'drawing.dxf'));
+  await f(page, 'zero').selectOption('part');
+  await f(page, 'fz0').fill(depth); await f(page, 'fk0').selectOption('window');
+  await millSetup(page, tool, '2');
+  if (slug) { await f(page, 'wslug').check(); await f(page, 'setup').check(); }
+}
+test('сквозное окно №03: «Контур по элементам» изнутри; траектория, выход снизу, 3D', async ({ page }) => {
+  await windowReady(page);
+  await expect(page.locator('#plateValidation')).toContainText('выйдет из заготовки снизу на 1 мм');
+  const r = await genCode(page);
+  expect(r.ops.map(o => o.type)).toEqual(['contour']);
+  expect(r.errs).toEqual(['warn: Обработка ниже дна заготовки (Z-11., высота заготовки 10.) — проверьте, что под деталью есть зазор']);
+  // центр фрезы: стенка − R4 → X 34…86, Y 29…51, углы R1 (5 − 4), против часовой
+  expect(r.code).toMatch(/G1 X85\. Y29\.\nG3 X86\. Y30\. I0\. J1\./);
+  const B = cutBox(r.segs, 32);
+  expect(B).toMatchObject({ x0: 34, x1: 86, z: -11 });
+  expect(B.y0).toBeGreaterThanOrEqual(29); expect(B.y1).toBeLessThanOrEqual(51);
+  if (!THREE.real) return;
+  const H = await sim(page);
+  const [wallIn, wallOut, cornerOut, ring] = await H([[30.6, 40], [29.4, 40], [30.8, 25.8], [31.5, 40]]);
+  expect(ring).toBeLessThan(-9.9);                                // кольцо прорезано насквозь (дно сима — низ заготовки)
+  expect([wallOut, cornerOut]).toEqual([0, 0]);                   // за стенкой и в углу R5 — металл цел
+  expect(wallIn).toBeLessThan(-9.9);
+});
+test('запрет: окно — фреза больше R углов; глухое «окно»; без подтверждения пробки', async ({ page }) => {
+  await windowReady(page, { tool: 'em12' });
+  await blocked(page, 'больше R5 углов окна');
+  await f(page, 'mill').selectOption('em8'); await f(page, 'fz0').fill('5'); await f(page, 'fk0').selectOption('window'); await f(page, 'setup').check();
+  await blocked(page, 'только сквозное');
+  await f(page, 'fz0').fill('11'); await f(page, 'fk0').selectOption('window'); await f(page, 'wslug').uncheck(); await f(page, 'setup').check();
+  await blocked(page, 'подтверди подкладку');
 });
