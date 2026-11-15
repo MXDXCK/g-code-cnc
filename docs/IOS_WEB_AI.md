@@ -39,6 +39,19 @@
 
 - Хранилище: с `37f3309` — IndexedDB (резервная копия `fcam*`, исходники чертежей); для моделей позже — IndexedDB / Cache Storage.
 
+## Компактный OCR без нейросети-«великана» (15.11.2026)
+
+Режим без ИИ в Safari сохраняет все функции: DXF, PDF (pdf.js), фото (Tesseract.js, WebAssembly), привязку размеров, карманы/пазы/контуры/фаски, G-код, проверку и 3D. Это проверено автотестами в Chromium; **на настоящем iPhone — не проверено**.
+
+| Вариант | Размер | Что даёт | Состояние |
+|---|---|---|---|
+| Tesseract.js eng (сейчас) | 5 МБ словарь + ядро WASM | числа, латиница; Ø часто как «@»/«0» | работает в Fresa |
+| + rus (второй проход, D-28) | +4,8 МБ, ~+100 МБ ОЗУ, +40 % времени | русские слова надписей | встроено 15.11; в Safari — загрузка словаря с jsDelivr при первом фото, затем кэш |
+| PaddleOCR.js (`@paddleocr/paddleocr-js`, ONNX Runtime Web) с PP-OCRv5 mobile det + кириллический rec | порядка 5 + 8 МБ (rec `eslav_PP-OCRv5_mobile_rec` — 7,8 МБ в замере) | на фразах точнее Tesseract (числа 98 % против 68–81 %), Ø читает как «О»/«0» | **не проверено в браузере**: в замере 15.11 работал серверный детектор (85 МБ, ~30 с на чертёж, 11,7 ГБ ОЗУ) — это не для телефона. Нужно: мобильный детектор в ONNX, замер в Safari на iPhone |
+| Свои алгоритмы (без OCR) | 0 | линии, окружности, контур, карманы, пазы, выравнивание освещения | работают в Fresa |
+
+Вывод: для iPhone ближайший реальный шаг — не мультимодальная модель, а PaddleOCR.js mobile как необязательный третий проход OCR после замера в Safari. До проверки на настоящем iPhone ничего не обещаем.
+
 ## План
 
 1. `BrowserAIProvider` в Web Worker: Transformers.js или ONNX Runtime Web (WebGPU, запасной путь — WASM) [3].
@@ -59,3 +72,5 @@
 4. https://t-j.ru/hugging-face/
 5. https://github.com/orgs/community/discussions/45446
 6. https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits
+7. https://www.paddleocr.ai/latest/en/version3.x/inference_deployment/cross_platform/browser.html
+8. https://huggingface.co/PaddlePaddle/PP-OCRv5_mobile_det_onnx
