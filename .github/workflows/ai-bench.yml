@@ -1,5 +1,6 @@
 name: Замер локальных моделей на чертежах
 
+# При push (изменения в tests/ai-bench) запускаются только sweep и ocr; остальное — вручную (workflow_dispatch).
 # Сравнение открытых Vision-моделей на эталонных чертежах Fresa (tests/fixtures/drawings).
 # Только замер для разработки: модели не попадают в приложение и никуда не публикуются.
 # Бесплатно: публичный репозиторий, обычные раннеры GitHub (4 ядра CPU, 16 ГБ). Сеть нужна только здесь —
@@ -8,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       only:
-        description: 'all — всё; ollama — только сквозной тест Fresa + Ollama'
+        description: 'all — всё; vlm — сравнение моделей; sweep — Qwen3-VL-2B по контексту/квантованию; ocr — Tesseract/PaddleOCR на русских надписях; ollama — Fresa + Ollama'
         default: all
   push:
     branches-ignore: [main]
@@ -24,7 +25,7 @@ concurrency:
 jobs:
   vlm:
     name: ${{ matrix.name }}
-    if: github.event_name != 'workflow_dispatch' || inputs.only != 'ollama'
+    if: github.event_name == 'workflow_dispatch' && (inputs.only == 'all' || inputs.only == 'vlm')
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
@@ -74,7 +75,7 @@ jobs:
 
   paddleocr:
     name: paddleocr (PP-OCRv5)
-    if: github.event_name != 'workflow_dispatch' || inputs.only != 'ollama'
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'ocr'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     continue-on-error: true
@@ -84,12 +85,14 @@ jobs:
         with: { python-version: '3.11' }
       - run: pip install --quiet paddlepaddle paddleocr
       - run: cd tests/ai-bench && python3 run_paddle.py ../../results
+      - run: du -sh ~/.paddlex/official_models/* 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: ai-bench-paddleocr, path: results, retention-days: 30 }
 
   fresa-ollama:
     name: Fresa + Ollama (настоящая модель, сквозной тест)
+    if: github.event_name == 'workflow_dispatch' && (inputs.only == 'all' || inputs.only == 'ollama')
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
@@ -116,9 +119,69 @@ jobs:
         if: always()
         with: { name: fresa-ollama-real, path: 'test-results/ollama-real.json', retention-days: 30 }
 
+  # Qwen3-VL-2B (главный кандидат для Android): память и скорость при разном контексте, кванте, размере картинки, кэше KV
+  sweep:
+    name: 'qwen3-vl-2b ${{ matrix.q }} ctx${{ matrix.ctx }} ${{ matrix.px }}px ${{ matrix.tag }}'
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'sweep'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { q: Q4_K_M, mm: F16,  ctx: 4096,  px: 1280, tag: '', extra: '' }
+          - { q: Q4_K_M, mm: F16,  ctx: 8192,  px: 1280, tag: '', extra: '' }
+          - { q: Q4_K_M, mm: F16,  ctx: 4096,  px: 896,  tag: '', extra: '' }
+          - { q: Q4_K_M, mm: F16,  ctx: 4096,  px: 640,  tag: '', extra: '' }
+          - { q: Q4_K_M, mm: Q8_0, ctx: 4096,  px: 1280, tag: '', extra: '' }
+          - { q: Q8_0,   mm: F16,  ctx: 4096,  px: 1280, tag: '', extra: '' }
+          - { q: Q4_K_M, mm: F16,  ctx: 4096,  px: 1280, tag: kvq8, extra: '-fa on -ctk q8_0 -ctv q8_0' }
+    steps:
+      - uses: actions/checkout@v4
+      - name: llama.cpp (последний релиз, CPU, Linux x64)
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          mkdir -p llama && cd llama
+          gh release view --repo ggml-org/llama.cpp --json tagName,assets -q '.tagName, .assets[].name' | tee assets.txt
+          A=$(tail -n +2 assets.txt | grep -i ubuntu | grep -iE 'x64|x86_64|amd64' | grep -viE 'vulkan|cuda|rocm|hip|sycl|s390|arm|aarch|openvino|kleidi' | head -1)
+          gh release download --repo ggml-org/llama.cpp --pattern "$A" --clobber
+          case "$A" in *.zip) unzip -q "$A";; *.tar.gz) tar xzf "$A";; esac
+          CLI=$(find "$PWD" -name llama-mtmd-cli -type f | head -1); test -n "$CLI"; echo "CLI=$CLI" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(dirname "$CLI"):$(find "$PWD" -name 'libggml*.so' -printf '%h\n' | sort -u | tr '\n' ':')" >> $GITHUB_ENV
+          head -1 assets.txt > ../llama-version.txt
+      - id: m
+        run: python3 tests/ai-bench/fetch_model.py Qwen/Qwen3-VL-2B-Instruct-GGUF models '${{ matrix.q }}' '${{ matrix.mm }}'
+      - name: Замер
+        run: |
+          pip install --quiet pillow
+          N='qwen3vl2b-${{ matrix.q }}-mm${{ matrix.mm }}-c${{ matrix.ctx }}-p${{ matrix.px }}${{ matrix.tag && format('-{0}', matrix.tag) || '' }}'
+          mkdir -p results
+          python3 tests/ai-bench/run_llama.py --cli "$CLI" --model '${{ steps.m.outputs.model }}' --mmproj '${{ steps.m.outputs.mmproj }}' \
+            --name "$N" --out results --threads 4 --ctx ${{ matrix.ctx }} --maxpx ${{ matrix.px }} --extra '${{ matrix.extra }}'
+          cp models/meta.json "results/$N.meta.json"; cp llama-version.txt "results/$N.llama.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'ai-bench-sweep-${{ strategy.job-index }}', path: results, retention-days: 30 }
+
+  # Tesseract.js (тот же, что в Fresa): eng / rus / rus+eng / комбинация на русских надписях и на эталонных чертежах
+  ocr:
+    name: tesseract.js eng/rus
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'ocr'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: mkdir -p /tmp/t && cd /tmp/t && npm init -y >/dev/null && npm install --no-audit --no-fund tesseract.js@5.1.1
+      - run: cd /tmp/t && node $GITHUB_WORKSPACE/tests/ai-bench/run_tess.mjs $GITHUB_WORKSPACE/results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: ai-bench-tesseract, path: 'results/tesseract.json', retention-days: 30 }
+
   report:
-    needs: [vlm, paddleocr]
-    if: always() && (github.event_name != 'workflow_dispatch' || inputs.only != 'ollama')
+    needs: [vlm, paddleocr, sweep, ocr]
+    if: always() && !(github.event_name == 'workflow_dispatch' && inputs.only == 'ollama')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

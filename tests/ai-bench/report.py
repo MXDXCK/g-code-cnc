@@ -7,7 +7,7 @@ print('|---|---|---|---|---|---|---|---|---|---|---|---|')
 for f in sorted(glob.glob(os.path.join(d, '*.json'))):
     if f.endswith('meta.json'): continue
     R = json.load(open(f, encoding='utf-8'));
-    if not R: continue
+    if not isinstance(R, list) or not R or 'ocr' not in R[0] or 'model' not in R[0]: continue
     name = R[0]['model']; meta = {}
     mp = os.path.join(d, name + '.meta.json')
     if os.path.exists(mp): meta = json.load(open(mp))

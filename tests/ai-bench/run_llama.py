@@ -49,9 +49,9 @@ def extract_json(text):
     return best
 
 
-def run(cli, model, mmproj, image, prompt, threads, ctx):
+def run(cli, model, mmproj, image, prompt, threads, ctx, extra=()):
     cmd = ['/usr/bin/time', '-v', cli, '-m', model, '--mmproj', mmproj, '--image', image, '-p', prompt,
-           '--temp', '0', '-n', '600', '-t', str(threads), '-c', str(ctx), '--no-warmup']
+           '--temp', '0', '-n', '600', '-t', str(threads), '-c', str(ctx), '--no-warmup', *extra]
     t0 = time.time()
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
     dt = time.time() - t0
@@ -99,6 +99,8 @@ def main():
     ap.add_argument('--cli', required=True); ap.add_argument('--model', required=True); ap.add_argument('--mmproj', required=True)
     ap.add_argument('--name', required=True); ap.add_argument('--out', default='results'); ap.add_argument('--threads', type=int, default=4)
     ap.add_argument('--ctx', type=int, default=8192); ap.add_argument('--limit', type=int, default=0)
+    ap.add_argument('--maxpx', type=int, default=1280, help='длинная сторона картинки, пикс.')
+    ap.add_argument('--extra', default='', help='доп. параметры llama-mtmd-cli, через пробел')
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     imgs = sorted(glob.glob(os.path.join(DRAW, '*', 'drawing.png')) + glob.glob(os.path.join(DRAW, '*', 'plate.png')) + glob.glob(os.path.join(DRAW, '*', 'scan.jpg')))
@@ -109,14 +111,16 @@ def main():
     from PIL import Image
     tmp = os.path.join(a.out, '_img'); os.makedirs(tmp, exist_ok=True)
     for img in imgs:
-        im = Image.open(img).convert('RGB'); im.thumbnail((1280, 1280))
+        im = Image.open(img).convert('RGB'); im.thumbnail((a.maxpx, a.maxpx))
         small = os.path.join(tmp, os.path.basename(os.path.dirname(img)) + '.png'); im.save(small)
         E = json.load(open(os.path.join(os.path.dirname(img), 'expected.json'), encoding='utf-8'))
         if 'dims' not in E:   # эталон №01 старого формата — надписи известны из генератора
             E['dims'] = ['15', '90', '120', '15', '50', '80', '4 отв. Ø10', 'Толщина 10']
-        row = {'model': a.name, 'drawing': os.path.basename(os.path.dirname(img))}
-        o1, t1, m1, rc1, e1 = run(a.cli, a.model, a.mmproj, small, P_OCR, a.threads, a.ctx)
-        o2, t2, m2, rc2, e2 = run(a.cli, a.model, a.mmproj, small, P_STRUCT, a.threads, a.ctx)
+        row = {'model': a.name, 'drawing': os.path.basename(os.path.dirname(img)), 'ctx': a.ctx, 'maxpx': a.maxpx, 'extra': a.extra,
+               'quant': os.path.basename(a.model), 'mmproj': os.path.basename(a.mmproj)}
+        ex = a.extra.split()
+        o1, t1, m1, rc1, e1 = run(a.cli, a.model, a.mmproj, small, P_OCR, a.threads, a.ctx, ex)
+        o2, t2, m2, rc2, e2 = run(a.cli, a.model, a.mmproj, small, P_STRUCT, a.threads, a.ctx, ex)
         row.update({'ocr': score_ocr(E, o1), 'struct': score_struct(E, o2), 'sec': [round(t1, 1), round(t2, 1)],
                     'rss_mb': max(x for x in (m1, m2, 0) if x is not None), 'rc': [rc1, rc2],
                     'raw_ocr': o1[-1200:], 'raw_struct': o2[-1500:], 'err': (e1 if rc1 else '') + (e2 if rc2 else '')})

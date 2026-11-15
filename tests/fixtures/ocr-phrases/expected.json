@@ -1,0 +1,1102 @@
+{
+ "note": "Искусственные изображения надписей (не фото). Шрифт не ГОСТ 2.304.",
+ "phrases": [
+  "Толщина 10",
+  "4 отв. Ø8",
+  "Глубина 5",
+  "Сквозное",
+  "Фаска 1×45°",
+  "R8",
+  "Ø10H7",
+  "50±0,1",
+  "2 паза 10×40",
+  "Карман глубина 5",
+  "3 отв. М6-7Н",
+  "Ra 3,2",
+  "12h9",
+  "Неуказанные радиусы R2",
+  "Ø20 +0,021"
+ ],
+ "items": [
+  {
+   "file": "p01-dejavu-it-clean.png",
+   "text": "Толщина 10",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p01-dejavu-it-small.png",
+   "text": "Толщина 10",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p01-dejavu-it-blur.png",
+   "text": "Толщина 10",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p01-dejavu-it-shadow-noise.png",
+   "text": "Толщина 10",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p01-dejavu-it-skew.png",
+   "text": "Толщина 10",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p01-dejavu-it-low-contrast.png",
+   "text": "Толщина 10",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p01-freesans-clean.png",
+   "text": "Толщина 10",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p01-freesans-small.png",
+   "text": "Толщина 10",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p01-freesans-blur.png",
+   "text": "Толщина 10",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p01-freesans-shadow-noise.png",
+   "text": "Толщина 10",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p01-freesans-skew.png",
+   "text": "Толщина 10",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p01-freesans-low-contrast.png",
+   "text": "Толщина 10",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p02-dejavu-it-clean.png",
+   "text": "4 отв. Ø8",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p02-dejavu-it-small.png",
+   "text": "4 отв. Ø8",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p02-dejavu-it-blur.png",
+   "text": "4 отв. Ø8",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p02-dejavu-it-shadow-noise.png",
+   "text": "4 отв. Ø8",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p02-dejavu-it-skew.png",
+   "text": "4 отв. Ø8",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p02-dejavu-it-low-contrast.png",
+   "text": "4 отв. Ø8",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p02-freesans-clean.png",
+   "text": "4 отв. Ø8",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p02-freesans-small.png",
+   "text": "4 отв. Ø8",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p02-freesans-blur.png",
+   "text": "4 отв. Ø8",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p02-freesans-shadow-noise.png",
+   "text": "4 отв. Ø8",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p02-freesans-skew.png",
+   "text": "4 отв. Ø8",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p02-freesans-low-contrast.png",
+   "text": "4 отв. Ø8",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p03-dejavu-it-clean.png",
+   "text": "Глубина 5",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p03-dejavu-it-small.png",
+   "text": "Глубина 5",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p03-dejavu-it-blur.png",
+   "text": "Глубина 5",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p03-dejavu-it-shadow-noise.png",
+   "text": "Глубина 5",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p03-dejavu-it-skew.png",
+   "text": "Глубина 5",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p03-dejavu-it-low-contrast.png",
+   "text": "Глубина 5",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p03-freesans-clean.png",
+   "text": "Глубина 5",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p03-freesans-small.png",
+   "text": "Глубина 5",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p03-freesans-blur.png",
+   "text": "Глубина 5",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p03-freesans-shadow-noise.png",
+   "text": "Глубина 5",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p03-freesans-skew.png",
+   "text": "Глубина 5",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p03-freesans-low-contrast.png",
+   "text": "Глубина 5",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p04-dejavu-it-clean.png",
+   "text": "Сквозное",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p04-dejavu-it-small.png",
+   "text": "Сквозное",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p04-dejavu-it-blur.png",
+   "text": "Сквозное",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p04-dejavu-it-shadow-noise.png",
+   "text": "Сквозное",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p04-dejavu-it-skew.png",
+   "text": "Сквозное",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p04-dejavu-it-low-contrast.png",
+   "text": "Сквозное",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p04-freesans-clean.png",
+   "text": "Сквозное",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p04-freesans-small.png",
+   "text": "Сквозное",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p04-freesans-blur.png",
+   "text": "Сквозное",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p04-freesans-shadow-noise.png",
+   "text": "Сквозное",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p04-freesans-skew.png",
+   "text": "Сквозное",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p04-freesans-low-contrast.png",
+   "text": "Сквозное",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p05-dejavu-it-clean.png",
+   "text": "Фаска 1×45°",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p05-dejavu-it-small.png",
+   "text": "Фаска 1×45°",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p05-dejavu-it-blur.png",
+   "text": "Фаска 1×45°",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p05-dejavu-it-shadow-noise.png",
+   "text": "Фаска 1×45°",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p05-dejavu-it-skew.png",
+   "text": "Фаска 1×45°",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p05-dejavu-it-low-contrast.png",
+   "text": "Фаска 1×45°",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p05-freesans-clean.png",
+   "text": "Фаска 1×45°",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p05-freesans-small.png",
+   "text": "Фаска 1×45°",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p05-freesans-blur.png",
+   "text": "Фаска 1×45°",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p05-freesans-shadow-noise.png",
+   "text": "Фаска 1×45°",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p05-freesans-skew.png",
+   "text": "Фаска 1×45°",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p05-freesans-low-contrast.png",
+   "text": "Фаска 1×45°",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p06-dejavu-it-clean.png",
+   "text": "R8",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p06-dejavu-it-small.png",
+   "text": "R8",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p06-dejavu-it-blur.png",
+   "text": "R8",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p06-dejavu-it-shadow-noise.png",
+   "text": "R8",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p06-dejavu-it-skew.png",
+   "text": "R8",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p06-dejavu-it-low-contrast.png",
+   "text": "R8",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p06-freesans-clean.png",
+   "text": "R8",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p06-freesans-small.png",
+   "text": "R8",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p06-freesans-blur.png",
+   "text": "R8",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p06-freesans-shadow-noise.png",
+   "text": "R8",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p06-freesans-skew.png",
+   "text": "R8",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p06-freesans-low-contrast.png",
+   "text": "R8",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p07-dejavu-it-clean.png",
+   "text": "Ø10H7",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p07-dejavu-it-small.png",
+   "text": "Ø10H7",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p07-dejavu-it-blur.png",
+   "text": "Ø10H7",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p07-dejavu-it-shadow-noise.png",
+   "text": "Ø10H7",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p07-dejavu-it-skew.png",
+   "text": "Ø10H7",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p07-dejavu-it-low-contrast.png",
+   "text": "Ø10H7",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p07-freesans-clean.png",
+   "text": "Ø10H7",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p07-freesans-small.png",
+   "text": "Ø10H7",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p07-freesans-blur.png",
+   "text": "Ø10H7",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p07-freesans-shadow-noise.png",
+   "text": "Ø10H7",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p07-freesans-skew.png",
+   "text": "Ø10H7",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p07-freesans-low-contrast.png",
+   "text": "Ø10H7",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p08-dejavu-it-clean.png",
+   "text": "50±0,1",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p08-dejavu-it-small.png",
+   "text": "50±0,1",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p08-dejavu-it-blur.png",
+   "text": "50±0,1",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p08-dejavu-it-shadow-noise.png",
+   "text": "50±0,1",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p08-dejavu-it-skew.png",
+   "text": "50±0,1",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p08-dejavu-it-low-contrast.png",
+   "text": "50±0,1",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p08-freesans-clean.png",
+   "text": "50±0,1",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p08-freesans-small.png",
+   "text": "50±0,1",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p08-freesans-blur.png",
+   "text": "50±0,1",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p08-freesans-shadow-noise.png",
+   "text": "50±0,1",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p08-freesans-skew.png",
+   "text": "50±0,1",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p08-freesans-low-contrast.png",
+   "text": "50±0,1",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p09-dejavu-it-clean.png",
+   "text": "2 паза 10×40",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p09-dejavu-it-small.png",
+   "text": "2 паза 10×40",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p09-dejavu-it-blur.png",
+   "text": "2 паза 10×40",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p09-dejavu-it-shadow-noise.png",
+   "text": "2 паза 10×40",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p09-dejavu-it-skew.png",
+   "text": "2 паза 10×40",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p09-dejavu-it-low-contrast.png",
+   "text": "2 паза 10×40",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p09-freesans-clean.png",
+   "text": "2 паза 10×40",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p09-freesans-small.png",
+   "text": "2 паза 10×40",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p09-freesans-blur.png",
+   "text": "2 паза 10×40",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p09-freesans-shadow-noise.png",
+   "text": "2 паза 10×40",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p09-freesans-skew.png",
+   "text": "2 паза 10×40",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p09-freesans-low-contrast.png",
+   "text": "2 паза 10×40",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p10-dejavu-it-clean.png",
+   "text": "Карман глубина 5",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p10-dejavu-it-small.png",
+   "text": "Карман глубина 5",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p10-dejavu-it-blur.png",
+   "text": "Карман глубина 5",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p10-dejavu-it-shadow-noise.png",
+   "text": "Карман глубина 5",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p10-dejavu-it-skew.png",
+   "text": "Карман глубина 5",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p10-dejavu-it-low-contrast.png",
+   "text": "Карман глубина 5",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p10-freesans-clean.png",
+   "text": "Карман глубина 5",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p10-freesans-small.png",
+   "text": "Карман глубина 5",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p10-freesans-blur.png",
+   "text": "Карман глубина 5",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p10-freesans-shadow-noise.png",
+   "text": "Карман глубина 5",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p10-freesans-skew.png",
+   "text": "Карман глубина 5",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p10-freesans-low-contrast.png",
+   "text": "Карман глубина 5",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p11-dejavu-it-clean.png",
+   "text": "3 отв. М6-7Н",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p11-dejavu-it-small.png",
+   "text": "3 отв. М6-7Н",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p11-dejavu-it-blur.png",
+   "text": "3 отв. М6-7Н",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p11-dejavu-it-shadow-noise.png",
+   "text": "3 отв. М6-7Н",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p11-dejavu-it-skew.png",
+   "text": "3 отв. М6-7Н",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p11-dejavu-it-low-contrast.png",
+   "text": "3 отв. М6-7Н",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p11-freesans-clean.png",
+   "text": "3 отв. М6-7Н",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p11-freesans-small.png",
+   "text": "3 отв. М6-7Н",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p11-freesans-blur.png",
+   "text": "3 отв. М6-7Н",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p11-freesans-shadow-noise.png",
+   "text": "3 отв. М6-7Н",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p11-freesans-skew.png",
+   "text": "3 отв. М6-7Н",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p11-freesans-low-contrast.png",
+   "text": "3 отв. М6-7Н",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p12-dejavu-it-clean.png",
+   "text": "Ra 3,2",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p12-dejavu-it-small.png",
+   "text": "Ra 3,2",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p12-dejavu-it-blur.png",
+   "text": "Ra 3,2",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p12-dejavu-it-shadow-noise.png",
+   "text": "Ra 3,2",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p12-dejavu-it-skew.png",
+   "text": "Ra 3,2",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p12-dejavu-it-low-contrast.png",
+   "text": "Ra 3,2",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p12-freesans-clean.png",
+   "text": "Ra 3,2",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p12-freesans-small.png",
+   "text": "Ra 3,2",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p12-freesans-blur.png",
+   "text": "Ra 3,2",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p12-freesans-shadow-noise.png",
+   "text": "Ra 3,2",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p12-freesans-skew.png",
+   "text": "Ra 3,2",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p12-freesans-low-contrast.png",
+   "text": "Ra 3,2",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p13-dejavu-it-clean.png",
+   "text": "12h9",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p13-dejavu-it-small.png",
+   "text": "12h9",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p13-dejavu-it-blur.png",
+   "text": "12h9",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p13-dejavu-it-shadow-noise.png",
+   "text": "12h9",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p13-dejavu-it-skew.png",
+   "text": "12h9",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p13-dejavu-it-low-contrast.png",
+   "text": "12h9",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p13-freesans-clean.png",
+   "text": "12h9",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p13-freesans-small.png",
+   "text": "12h9",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p13-freesans-blur.png",
+   "text": "12h9",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p13-freesans-shadow-noise.png",
+   "text": "12h9",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p13-freesans-skew.png",
+   "text": "12h9",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p13-freesans-low-contrast.png",
+   "text": "12h9",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p14-dejavu-it-clean.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p14-dejavu-it-small.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p14-dejavu-it-blur.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p14-dejavu-it-shadow-noise.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p14-dejavu-it-skew.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p14-dejavu-it-low-contrast.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p14-freesans-clean.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p14-freesans-small.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p14-freesans-blur.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p14-freesans-shadow-noise.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p14-freesans-skew.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p14-freesans-low-contrast.png",
+   "text": "Неуказанные радиусы R2",
+   "font": "freesans",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p15-dejavu-it-clean.png",
+   "text": "Ø20 +0,021",
+   "font": "dejavu-it",
+   "variant": "clean"
+  },
+  {
+   "file": "p15-dejavu-it-small.png",
+   "text": "Ø20 +0,021",
+   "font": "dejavu-it",
+   "variant": "small"
+  },
+  {
+   "file": "p15-dejavu-it-blur.png",
+   "text": "Ø20 +0,021",
+   "font": "dejavu-it",
+   "variant": "blur"
+  },
+  {
+   "file": "p15-dejavu-it-shadow-noise.png",
+   "text": "Ø20 +0,021",
+   "font": "dejavu-it",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p15-dejavu-it-skew.png",
+   "text": "Ø20 +0,021",
+   "font": "dejavu-it",
+   "variant": "skew"
+  },
+  {
+   "file": "p15-dejavu-it-low-contrast.png",
+   "text": "Ø20 +0,021",
+   "font": "dejavu-it",
+   "variant": "low-contrast"
+  },
+  {
+   "file": "p15-freesans-clean.png",
+   "text": "Ø20 +0,021",
+   "font": "freesans",
+   "variant": "clean"
+  },
+  {
+   "file": "p15-freesans-small.png",
+   "text": "Ø20 +0,021",
+   "font": "freesans",
+   "variant": "small"
+  },
+  {
+   "file": "p15-freesans-blur.png",
+   "text": "Ø20 +0,021",
+   "font": "freesans",
+   "variant": "blur"
+  },
+  {
+   "file": "p15-freesans-shadow-noise.png",
+   "text": "Ø20 +0,021",
+   "font": "freesans",
+   "variant": "shadow-noise"
+  },
+  {
+   "file": "p15-freesans-skew.png",
+   "text": "Ø20 +0,021",
+   "font": "freesans",
+   "variant": "skew"
+  },
+  {
+   "file": "p15-freesans-low-contrast.png",
+   "text": "Ø20 +0,021",
+   "font": "freesans",
+   "variant": "low-contrast"
+  }
+ ]
+}
