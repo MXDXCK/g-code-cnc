@@ -4,6 +4,7 @@
 // Подробно: docs/DIMENSION_ASSOCIATION.md
 
 import { parseDimText } from './dimtext.js';
+import { findFeatures, keypoints } from './features.js';
 
 const DEG = Math.PI / 180;
 const len = s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1);
@@ -19,11 +20,11 @@ function ptSeg(px, py, s) {
 }
 
 /**
- * Найти контур пластины: наибольший прямоугольник, каждая сторона которого — ОДНА непрерывная линия.
+ * Перебор прямоугольников, каждая сторона которых — ОДНА непрерывная линия.
  * Углы могут быть острыми, скруглёнными (R) или со срезом (фаска): тогда обе стороны не доходят до угла на одну
- * и ту же величину, а через точку на 45° проходит дуга или срез. Возвращает {x0,x1,y0,y1, corners:[{at,kind,r}]}.
+ * и ту же величину, а через угол проходит дуга или срез.
  */
-export function findOutline(segs, circles, tol, units = 'mm') {
+function scanRects(segs, tol, units, skip, take) {
   // стороны — только отрезки по оси: кусочки дуг скругления сюда не входят и не «склеивают» сторону с выносной
   // в векторе — строго (кусочки дуг идеально ровные); на фото концы сторон у углов скелет слегка закругляет — допуск целиком
   const ax = s => units === 'px' ? tol : Math.min(tol, Math.max(0.02 * len(s), tol / 2));
@@ -76,10 +77,9 @@ export function findOutline(segs, circles, tol, units = 'mm') {
     if ([0.25, 0.5, 0.75].every(t => onLine(cx + sx * r * t, cy + sy * r * (1 - t)))) return { at, kind: 'chamfer', r };
     return null;
   };
-  let best = null;
   for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) for (let k = 0; k < ys.length; k++) for (let l = k + 1; l < ys.length; l++) {
     const [x0, x1, y0, y1] = [xs[i], xs[j], ys[k], ys[l]], area = (x1 - x0) * (y1 - y0);
-    if (best && area <= best.area * 0.5) continue;
+    if (skip && skip(area)) continue;
     const B = run(H, 'h', y0, x0, x1), T = run(H, 'h', y1, x0, x1), Lf = run(V, 'v', x0, y0, y1), R = run(V, 'v', x1, y0, y1);
     if (!B || !T || !Lf || !R) continue;
     const w = x1 - x0, h = y1 - y0, sd = Math.min(w, h);
@@ -89,10 +89,24 @@ export function findOutline(segs, circles, tol, units = 'mm') {
     // без скруглений и фасок — как раньше: сторона покрыта на ≥ 97%
     if (C.every(c => c.kind === 'sharp') && [B.g0 + B.g1 > 0.03 * w, T.g0 + T.g1 > 0.03 * w, Lf.g0 + Lf.g1 > 0.03 * h, R.g0 + R.g1 > 0.03 * h].some(Boolean)) continue;
     if (C.some(c => c.r > 0.35 * sd)) continue;
-    const inside = circles.filter(c => c.cx > x0 && c.cx < x1 && c.cy > y0 && c.cy < y1).length;
-    const score = area * (circles.length && inside === circles.length ? 1 : 0.1);
-    if (!best || score > best.score) best = { x0, x1, y0, y1, area, score, corners: C, inside };
+    take({ x0, x1, y0, y1, area, corners: C });
   }
+}
+
+/** Все прямоугольники рисунка, у которых каждая сторона — одна непрерывная линия (углы острые, R или фаска). */
+export function findRects(segs, tol, units = 'mm') { const out = []; scanRects(segs, tol, units, null, r => out.push(r)); return out; }
+
+/**
+ * Контур детали: наибольший такой прямоугольник, внутри которого лежат найденные окружности.
+ * Возвращает {x0,x1,y0,y1, corners:[{at,kind,r}]}.
+ */
+export function findOutline(segs, circles, tol, units = 'mm') {
+  let best = null;
+  scanRects(segs, tol, units, area => best && area <= best.area * 0.5, r => {
+    const inside = circles.filter(c => c.cx > r.x0 && c.cx < r.x1 && c.cy > r.y0 && c.cy < r.y1).length;
+    const score = r.area * (circles.length && inside === circles.length ? 1 : 0.1);
+    if (!best || score > best.score) best = { ...r, score, inside };
+  });
   // прямоугольник, внутри которого нет всех найденных отверстий, — скорее полоса между размерными линиями, чем деталь.
   // Неверная база опаснее отсутствующей: тогда «контур не найден», координаты вводит человек
   if (best && circles.length && best.inside < Math.max(1, circles.length / 2)) return null;
@@ -113,6 +127,11 @@ export function associate(inp) {
   const T = texts.map((t, i) => ({ ...t, id: t.id || 'txt' + i, ang: t.ang || 0, p: parseDimText(t.s) }));
   const C = circles.map((c, i) => ({ ...c, id: c.id || 'c' + i }));
   const outline = findOutline(segs, C, tol, units);
+  // карманы и пазы внутри контура (только геометрия) и их опорные точки для размеров
+  const FE = findFeatures(segs, outline, tol, (sg, t) => findRects(sg, t, units)), KP = keypoints(FE);
+  const fbox = id => { const [k, i] = [id.slice(0, 2), +id.slice(2)]; if (k === 'pk') return FE.pockets[i];
+    const sl = FE.slots[i], r = sl.w / 2; return sl.ax === 'h' ? { x0: sl.a - r, x1: sl.b + r, y0: sl.mid - r, y1: sl.mid + r } : { x0: sl.mid - r, x1: sl.mid + r, y0: sl.a - r, y1: sl.b + r }; };
+  const boxDist = (b, x, y) => Math.hypot(Math.max(b.x0 - x, 0, x - b.x1), Math.max(b.y0 - y, 0, y - b.y1));
 
   /* ---------- 1. Линейные размеры: размерная линия + выносные ---------- */
   const lin = [];
@@ -164,6 +183,10 @@ export function associate(inp) {
     const pos = [e.s.x1, e.s.y1], d = m.d;
     const coord = p => p[0] * d[0] + p[1] * d[1], at = coord(pos);
     const c = C.filter(c => near(coord([c.cx, c.cy]), at, tol * 1.5)).sort((p, q) => Math.hypot(p.cx - e.far[0], p.cy - e.far[1]) - Math.hypot(q.cx - e.far[0], q.cy - e.far[1]))[0];
+    // опорная точка кармана/паза на той же оси — если она ближе к концу выносной, чем окружность
+    const ax = Math.abs(d[0]) > Math.abs(d[1]) ? 'x' : 'y';
+    const k = KP.filter(k => k.axis === ax && near(k.at * Math.sign(ax === 'x' ? d[0] : d[1]), at, tol * 1.5)).map(k => ({ k, dist: boxDist(fbox(k.feat), e.far[0], e.far[1]) })).sort((p, q) => p.dist - q.dist)[0];
+    if (k && (!c || k.dist < Math.hypot(c.cx - e.far[0], c.cy - e.far[1]) - c.r)) return { type: 'kp', id: k.k.id, axisCoord: at };
     if (c) return { type: 'circle', id: c.id, axisCoord: coord([c.cx, c.cy]) };
     if (outline) {
       const horiz = Math.abs(d[0]) > Math.abs(d[1]);
@@ -206,9 +229,11 @@ export function associate(inp) {
     || near(sg.x1, outline.x0, tol) && near(sg.x2, outline.x0, tol) || near(sg.x1, outline.x1, tol) && near(sg.x2, outline.x1, tol));
   const leaderSegs = segs.filter(sg => !onOutline(sg));
   // скругления углов контура: центр дуги и радиус в единицах рисунка
-  const fillets = outline ? outline.corners.filter(c => c.kind === 'fillet').map(c => {
-    const sx = c.at[1] === 'l' ? 1 : -1, sy = c.at[0] === 'l' ? 1 : -1, x = c.at[1] === 'l' ? outline.x0 : outline.x1, y = c.at[0] === 'l' ? outline.y0 : outline.y1;
-    return { ...c, cx: x + sx * c.r, cy: y + sy * c.r }; }) : [];
+  // (у кармана углы внутренние: центр дуги — внутри кармана, так же как у контура — внутри детали)
+  const cornersOf = (rc, pre) => rc.corners.filter(c => c.kind === 'fillet').map(c => {
+    const sx = c.at[1] === 'l' ? 1 : -1, sy = c.at[0] === 'l' ? 1 : -1, x = c.at[1] === 'l' ? rc.x0 : rc.x1, y = c.at[0] === 'l' ? rc.y0 : rc.y1;
+    return { ...c, at: pre + c.at, cx: x + sx * c.r, cy: y + sy * c.r }; });
+  const fillets = [...(outline ? cornersOf(outline, '') : []), ...FE.pockets.flatMap((p, i) => cornersOf(p, 'pk' + i + ':'))];
   const onFillet = (x, y) => fillets.find(f => Math.abs(Math.hypot(x - f.cx, y - f.cy) - f.r) <= tol * 2);
   const radDims = {};
   for (const t of T.filter(t => ['dia', 'thread', 'count', 'rad'].includes(t.p.kind))) {
@@ -257,6 +282,9 @@ export function associate(inp) {
   const refPt = (p, axis) => {
     const c = C.find(c => Math.hypot(c.cx - p[0], c.cy - p[1]) <= tol * 1.5);
     if (c) return { type: 'circle', id: c.id };
+    const kk = axis === 'x' ? 0 : 1, k = KP.filter(k => k.axis === axis && near(k.at, p[kk], tol * 1.5) && boxDist(fbox(k.feat), p[0], p[1]) <= tol * 2)
+      .sort((a, b) => boxDist(fbox(a.feat), p[0], p[1]) - boxDist(fbox(b.feat), p[0], p[1]))[0];
+    if (k) return { type: 'kp', id: k.id };
     if (outline) for (const [nm, v, k] of [['x0', outline.x0, 0], ['x1', outline.x1, 0], ['y0', outline.y0, 1], ['y1', outline.y1, 1]])
       if ((axis === 'x' ? k === 0 : k === 1) && near(p[k], v, tol * 1.5)) return { type: 'edge', id: nm };
     return { type: 'point', id: null, at: p };
@@ -288,19 +316,22 @@ export function associate(inp) {
   const ox = outline ? outline.x0 : Math.min(...C.map(c => c.cx - c.r)), oy = outline ? outline.y0 : Math.min(...C.map(c => c.cy - c.r));
   const solve = (axis) => {
     const key = c => axis === 'x' ? c.cx : c.cy, col = [];                       // окружности на одной вертикали/горизонтали — одна координата
-    for (const c of C) { const k = col.find(g => near(g.at, key(c), tol * 1.5)); if (k) k.ids.push(c.id); else col.push({ at: key(c), ids: [c.id] }); }
+    const items = [...C.map(c => ({ id: c.id, at: key(c) })), ...KP.filter(k => k.axis === axis).map(k => ({ id: k.id, at: k.at }))];   // + опорные точки карманов и пазов
+    for (const c of items) { const k = col.find(g => near(g.at, c.at, tol * 1.5)); if (k) k.ids.push(c.id); else col.push({ at: c.at, ids: [c.id] }); }
     const val = new Map();                                                       // имя → {v, src}
     val.set(axis + '0', { v: 0, src: 'база' });
     if (outline) val.set(axis + '1', null);
-    const nodeOf = r => r.type === 'circle' ? 'col:' + col.findIndex(g => g.ids.includes(r.id)) : r.type === 'edge' ? r.id : null;
+    const nodeOf = r => r.type === 'circle' || r.type === 'kp' ? 'col:' + col.findIndex(g => g.ids.includes(r.id)) : r.type === 'edge' ? r.id : null;
     const cons = dims.filter(d => d.kind === 'linear' && d.axis === axis && d.status !== 'unassociated' && d.refs).map(d => ({ a: nodeOf(d.refs[0]), b: nodeOf(d.refs[1]), v: d.value, d }))
       .filter(c => c.a && c.b && c.a !== c.b);
     for (let it = 0; it < 20; it++) {
       let ch = false;
       for (const c of cons) {
         const A = val.get(c.a), B = val.get(c.b);
-        if (A && !B) { val.set(c.b, { v: A.v + c.v, src: 'размер ' + c.d.text }); ch = true; }
-        else if (B && !A) { val.set(c.a, { v: B.v - c.v, src: 'размер ' + c.d.text }); ch = true; }
+        // значение, выведенное из спорного размера (надпись ≠ геометрия), само становится спорным — его не подставляют
+        const bad = c.d.status === 'conflict';
+        if (A && !B) { val.set(c.b, { v: A.v + c.v, src: 'размер ' + c.d.text, bad: A.bad || bad }); ch = true; }
+        else if (B && !A) { val.set(c.a, { v: B.v - c.v, src: 'размер ' + c.d.text, bad: B.bad || bad }); ch = true; }
         else if (A && B && !near(B.v - A.v, c.v, 0.01)) { if (!c.bad) { c.bad = 1; conflicts.push({ textId: c.d.textId, msg: `Размеры противоречат друг другу: ${c.d.text} ≠ ${(B.v - A.v).toFixed(2)}` }); } }
       }
       if (!ch) break;
@@ -312,14 +343,48 @@ export function associate(inp) {
       const mOk = outline && Number.isFinite(meas);
       for (const id of g.ids) res[id] = k ? { value: +k.v.toFixed(3), source: 'dimension', note: k.src, measured: mOk ? +meas.toFixed(3) : null }
         : { value: mOk ? +meas.toFixed(units === 'mm' ? 3 : 1) : null, source: 'measured', note: !outline ? 'контур детали не найден — введите' : units === 'mm' ? 'по геометрии файла' : 'измерено по фото — проверьте', measured: mOk ? meas : null };
-      if (k && mOk && Math.abs(meas - k.v) > (units === 'mm' ? 0.05 : Math.max(0.5, k.v * 0.03))) {
-        conflicts.push({ msg: `Отверстие ${g.ids[0]}: по размеру ${axis.toUpperCase()}=${k.v}, по рисунку ≈ ${meas.toFixed(2)}` });
+      if (k && k.bad) for (const id of g.ids) res[id].conflict = { measured: mOk ? +meas.toFixed(3) : null, why: 'выведено из спорного размера' };
+      else if (k && mOk && Math.abs(meas - k.v) > (units === 'mm' ? 0.05 : Math.max(0.5, k.v * 0.03))) {
+        conflicts.push({ msg: `${/:/.test(g.ids[0]) ? 'Элемент ' + g.ids[0].split(':')[0] : 'Отверстие ' + g.ids[0]}: по размеру ${axis.toUpperCase()}=${k.v}, по рисунку ≈ ${meas.toFixed(2)}` });
         for (const id of g.ids) res[id].conflict = { measured: +meas.toFixed(3) };    // значение спорное: решает человек
       }
     });
-    return { res, edge1: val.get(axis + '1') };
+    // прямой размер между двумя узлами (например, ширина кармана 60), даже если положение от базы неизвестно
+    const direct = (a, b) => { const A = nodeOf({ type: 'kp', id: a }), B = nodeOf({ type: 'kp', id: b }); const c = cons.find(c => c.a === A && c.b === B || c.a === B && c.b === A); return c ? { v: c.v, bad: c.d.status === 'conflict' } : null; };
+    return { res, edge1: val.get(axis + '1'), direct };
   };
   const SX = solve('x'), SY = solve('y');
+
+  /* ---------- 6. Карманы и пазы: положение и размеры из опорных точек ---------- */
+  const R3 = v => +(+v).toFixed(3);
+  const get = (axis, id) => (axis === 'x' ? SX : SY).res[id];
+  // величина = разность двух координат: «по размеру», если обе по размеру или есть прямой размер; иначе «измерено»
+  const diff = (axis, a, b, scaleDu) => {
+    const A = get(axis, a), B = get(axis, b), dr = (axis === 'x' ? SX : SY).direct(a, b);
+    if (dr != null) return { value: R3(dr.v), source: 'dimension', note: 'размер ' + dr.v, ...(dr.bad ? { conflict: { measured: Number.isFinite(s) ? R3(scaleDu * s) : null, why: 'надпись не совпадает с рисунком' } } : {}) };
+    if (A && B && A.value != null && B.value != null) {
+      if (A.conflict || B.conflict) return { value: R3(B.value - A.value), source: 'dimension', conflict: { measured: Number.isFinite(s) ? R3(scaleDu * s) : null } };
+      return { value: R3(B.value - A.value), source: A.source === 'dimension' && B.source === 'dimension' ? 'dimension' : 'measured' };
+    }
+    return { value: Number.isFinite(s) ? R3(scaleDu * s) : null, source: 'measured' };
+  };
+  const mid = (axis, a, b) => { const A = get(axis, a), B = get(axis, b);
+    if (!A || !B || A.value == null || B.value == null || A.conflict || B.conflict) return { value: null, source: 'measured', note: 'нет положения — введите' };
+    return { value: R3((A.value + B.value) / 2), source: A.source === 'dimension' && B.source === 'dimension' ? 'dimension' : 'measured' }; };
+  const features = [
+    ...FE.pockets.map((p, i) => { const f = 'pk' + i, cr = p.corners.filter(c => c.kind === 'fillet');
+      const rr = cr.length ? (radDims[f + ':' + cr[0].at] || { value: Number.isFinite(s) ? R3(cr[0].r * s) : null, source: 'measured' }) : { value: 0, source: 'measured' };
+      return { id: f, kind: 'pocketRect', du: { x0: p.x0, x1: p.x1, y0: p.y0, y1: p.y1, corners: p.corners },
+        cx: mid('x', f + ':x0', f + ':x1'), cy: mid('y', f + ':y0', f + ':y1'), w: diff('x', f + ':x0', f + ':x1', p.x1 - p.x0), h: diff('y', f + ':y0', f + ':y1', p.y1 - p.y0),
+        r: rr, sharp: cr.length === 0, corners: p.corners.map(c => c.kind), x0: get('x', f + ':x0'), y0: get('y', f + ':y0') }; }),
+    ...FE.slots.map((sl, i) => { const f = 'sl' + i, A = sl.ax === 'h' ? 'x' : 'y', B = sl.ax === 'h' ? 'y' : 'x', cc = mid(A, f + ':c1', f + ':c2');
+      const w = diff(B, f + ':s0', f + ':s1', sl.w), cl = diff(A, f + ':c1', f + ':c2', sl.b - sl.a), el = diff(A, f + ':e1', f + ':e2', sl.b - sl.a + sl.w);
+      const L = el.source === 'dimension' ? el : cl.value != null && w.value != null ? { value: R3(cl.value + w.value), source: cl.source === 'dimension' && w.source === 'dimension' ? 'dimension' : 'measured' } : el;
+      const m = get(B, f + ':m'), cm = m && m.value != null && !m.conflict ? { value: m.value, source: m.source } : mid(B, f + ':s0', f + ':s1');
+      return { id: f, kind: 'slot', du: { ax: sl.ax, a: sl.a, b: sl.b, mid: sl.mid, w: sl.w }, ang: sl.ax === 'h' ? 0 : 90,
+        cx: A === 'x' ? cc : cm, cy: A === 'x' ? cm : cc, l: L, w, cc: cl }; }),
+  ];
+  for (const ft of features) for (const k of ['cx', 'cy', 'w', 'h', 'l']) if (ft[k] && ft[k].conflict) ft[k].value = null;
 
   const holes = C.map(c => {
     const dd = dims.find(d => ['dia', 'thread'].includes(d.kind) && d.refs && d.refs.some(r => r.id === c.id));
@@ -333,6 +398,8 @@ export function associate(inp) {
     };
   });
   const thick = T.find(t => t.p.kind === 'thick');
+  const depthTexts = T.filter(t => t.p.kind === 'depth').map(t => ({ id: t.id, text: t.p.raw, value: t.p.value }));
+  const through = T.filter(t => t.p.kind === 'through').map(t => ({ id: t.id, text: t.p.raw }));
   const plate = outline ? {
     du: outline,
     corners: outline.corners.map(c => ({ at: c.at, kind: c.kind, r: c.kind === 'sharp' ? null : radDims[c.at] || { value: Number.isFinite(s) ? +(c.r * s).toFixed(units === 'mm' ? 3 : 2) : null, source: 'measured' } })),
@@ -341,8 +408,9 @@ export function associate(inp) {
   } : null;
   const used = new Set(dims.filter(d => d.status !== 'unassociated').map(d => d.textId));
   if (thick) used.add(thick.id);
+  for (const t of [...depthTexts, ...through]) used.add(t.id);
   return {
-    units, tol, scale, outline: plate, holes, dims, conflicts, notes,
+    units, tol, scale, outline: plate, holes, features, depthTexts, through, dims, conflicts, notes,
     thickness: thick ? { value: thick.p.value, source: 'dimension', textId: thick.id } : null,
     unassigned: T.filter(t => !used.has(t.id) && t.p.kind !== 'text').map(t => ({ id: t.id, text: t.p.raw })),
     otherText: T.filter(t => t.p.kind === 'text').map(t => t.p.raw),

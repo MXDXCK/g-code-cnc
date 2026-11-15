@@ -1294,7 +1294,7 @@ function plateObservations(txt){
  if(units!=='0'&&units!=='4')throw Error('Нужен DXF в миллиметрах');
  const entities=dxfEntities(pairs).filter(e=>!e.d.some(([c,v])=>c===67&&v==='1'||c===410&&v.toUpperCase()!=='MODEL'));
  const circles=entities.filter(e=>e.type==='CIRCLE');
- if(!circles.length)throw Error('В модели DXF нет окружностей CIRCLE — отверстия не найдены');
+ // окружностей может не быть, если на чертеже только карманы/пазы — решает plateRead
  if(circles.length>60)throw Error(`Окружностей слишком много для прототипа: ${circles.length} (до 60)`);
  const observations=circles.map((e,i)=>{
   const get=c=>e.d.find(([key])=>key===c)?.[1];
@@ -1320,15 +1320,16 @@ async function plateRead(file,say){
   const text=await file.text(),base=plateObservations(text);let r=null;
   try{r=await P.readDrawing(file,{...env,text});}catch(e){}
   const a=r&&r.a;
+  if(!base.observations.length&&!(a&&a.features.length))throw Error('В модели DXF нет окружностей CIRCLE и не найдены карманы или пазы');
   for(const o of base.observations){const h=a&&a.holes.find(h=>Math.abs(h.du.cx-o.geom.cx)<1e-6&&Math.abs(h.du.cy-o.geom.cy)<1e-6);o.dims=h?{x:h.x,y:h.y,d:h.d}:null;o.conflict=!!h&&h.status==='conflict';}
-  return {...base,unmatched:a?plateUnmatched(a):base.unmatched,unmatchedText:a?plateUnmatchedText(a):[],kind,assoc:a,view:r&&r.d,warnings:r?r.warnings:[]};
+  return {...base,features:a?a.features:[],unmatched:a?plateUnmatched(a):base.unmatched,unmatchedText:a?plateUnmatchedText(a):[],kind,assoc:a,view:r&&r.d,warnings:r?r.warnings:[]};
  }
  const r=await P.readDrawing(file,env),a=r.a;
- if(!a.holes.length)throw Error('На чертеже не найдены окружности отверстий'+(r.vector?'':'. Сфотографируй ровнее и крупнее, без теней и перспективы'));
+ if(!a.holes.length&&!a.features.length)throw Error('На чертеже не найдены ни окружности, ни карманы, ни пазы'+(r.vector?'':'. Сфотографируй ровнее и крупнее, без теней и перспективы'));
  if(a.holes.length>60)throw Error(`Окружностей слишком много для прототипа: ${a.holes.length} (до 60)`);
  const observations=a.holes.map((h,i)=>({id:'circle-'+(i+1),type:'Circle',status:'observed',units:a.units,geom:{cx:h.du.cx,cy:h.du.cy,r:h.du.r},
   source:{by:kind},dims:{x:h.x,y:h.y,d:h.d},conflict:h.status==='conflict'}));
- return {kind,observations,unitless:false,unmatched:plateUnmatched(a),unmatchedText:plateUnmatchedText(a),assoc:a,view:r.d,warnings:r.warnings};
+ return {kind,observations,features:a.features,unitless:false,unmatched:plateUnmatched(a),unmatchedText:plateUnmatchedText(a),assoc:a,view:r.d,warnings:r.warnings};
 }
 const plateZero0=data=>data.kind==='dxf'?'dxf':'part';
 /** Предложенные X, Y, Ø (в координатах проекта) — только как начальные значения полей. */
@@ -1346,16 +1347,33 @@ function plateSrcNote(data,o,zero){
  const d=data.kind==='dxf'?(o.dims&&o.dims.d&&o.dims.d.source==='dimension'?'Ø: из файла, совпадает с надписью':'Ø: из файла'):'Ø: '+s(o.dims&&o.dims.d);
  return xy+' · '+d+(o.conflict?' · ⚠ надпись не совпадает с рисунком':'');
 }
+/* ---------- «По чертежу»: карманы и пазы → существующие операции pocketRect / pocketOval (и круглый карман pocketCircle) ---------- */
+const FEAT_NAME={pocketRect:'Карман прямоугольный',slot:'Паз со скруглёнными торцами'};
+/** Предложенные центр и размеры элемента (проект: X/Y от нуля проекта). Спорное — пусто. a — длина (X у кармана, L у паза), b — ширина. */
+function featGuess(data,f,zero){
+ const v=q=>q&&q.value!=null&&!q.conflict&&Number.isFinite(+q.value)?+q.value:NaN,du=f.du;
+ const a=f.kind==='slot'?v(f.l):v(f.w),b=f.kind==='slot'?v(f.w):v(f.h),r=f.kind==='pocketRect'?v(f.r):NaN;
+ if(zero==='dxf'){const cx=f.kind==='slot'?(du.ax==='h'?(du.a+du.b)/2:du.mid):(du.x0+du.x1)/2,cy=f.kind==='slot'?(du.ax==='h'?du.mid:(du.a+du.b)/2):(du.y0+du.y1)/2;return {cx,cy,a,b,r};}
+ if(!data.assoc||!data.assoc.outline)return {cx:NaN,cy:NaN,a,b,r};
+ const g=stockGeo();return {cx:g.x0+v(f.cx),cy:g.y0+v(f.cy),a,b,r};
+}
+function featNote(data,f,zero){
+ const s=q=>q&&q.conflict?'⚠ спорно (надпись ≠ рисунок) — введи сам':!q||q.value==null?'нет — введи':q.source==='dimension'?'по размеру':'≈ измерено — проверь';
+ const pos=zero==='dxf'?'центр — из файла DXF':!data.assoc||!data.assoc.outline?'центр — контур детали не найден, введи сам':`центр X: ${s(f.cx)}, Y: ${s(f.cy)}`;
+ const sz=f.kind==='slot'?`L: ${s(f.l)} · W: ${s(f.w)} · ${f.ang?'вдоль Y':'вдоль X'}`:`длина: ${s(f.w)} · ширина: ${s(f.h)} · углы: ${f.sharp?'острые на чертеже':'R '+s(f.r)}`;
+ const dt=(data.assoc&&data.assoc.depthTexts||[]).map(t=>'«'+t.text+'»');
+ return pos+' · '+sz+(dt.length?' · на чертеже: '+dt.join(', ')+' — глубину введи сам':'');
+}
 function plateSaved(){
  const L=st.drawings||[];if(!L.length)return '';
  return `<div class="card"><h3>Чертежи этого проекта</h3>${L.map(d=>{const s=(d.sources||[])[0]||{};
-  return `<div class="row" style="align-items:center"><span style="flex:1">${esc(s.name||d.id)} · отверстий: ${(d.confirmed||[]).length}</span><button class="btn s" type="button" onclick="plateSrc('${esc(d.id)}')">Открыть исходник</button></div>`;}).join('')}
+  return `<div class="row" style="align-items:center"><span style="flex:1">${esc(s.name||d.id)} · элементов: ${(d.confirmed||[]).length}</span><button class="btn s" type="button" onclick="plateSrc('${esc(d.id)}')">Открыть исходник</button></div>`;}).join('')}
   <div id="plateSrcView"></div></div>`;
 }
 function plateView(){
  const s=st.stock;
- return `<div class="card"><h3>По чертежу: отверстия</h3>
-  <p class="hint">Прототип: DXF, PDF или фото чертежа пластины. Fresa находит окружности и читает размеры, но <b>ничего не сверлит сама</b> — каждое отверстие, глубину и наладку подтверждаешь ты. Подтверждённые отверстия добавятся в конец текущего плана: центровка и сверление G81. Подготовь прямоугольную заготовку, ноль и инструменты в проекте.</p>
+ return `<div class="card"><h3>По чертежу: отверстия, карманы, пазы</h3>
+  <p class="hint">Прототип: DXF, PDF или фото чертежа пластины. Fresa находит окружности, прямоугольные карманы и пазы и читает размеры, но <b>ничего не обрабатывает сама</b> — что это за элемент, как его обрабатывать, глубину, фрезу и наладку подтверждаешь ты. Траектории строят существующие операции Fresa (сверление G81, карман прямоугольный, круглый, овальный), они добавятся в конец плана. Подготовь прямоугольную заготовку, ноль и инструменты в проекте.</p>
   <p>${esc(st.prog.name||'Деталь')} · ${esc(stkShort())} · ${esc(s.wcs)} · ноль XY: ${esc(ORIG[s.origin]||'—')}</p>
   <div class="row"><button class="btn s" onclick="closeMenu();show('proj')">Заготовка и ноль</button><button class="btn s" onclick="closeMenu();show('tools')">Инструменты</button></div>
   <label>Чертёж: DXF, PDF или фото<input id="plateFile" type="file" accept=".dxf,.pdf,application/pdf,image/*"></label>
@@ -1370,7 +1388,7 @@ function plateForm(data){
  const msgs=[...(a?a.conflicts.map(c=>['err','⛔ '+c.msg]):[]),...(data.warnings||[]).map(w=>['nv','ℹ '+w]),...(a?a.notes.map(n=>['nv','ℹ '+n]):[])];
  const sz=a&&a.outline?`Деталь по чертежу: ${mm(a.outline.w)} × ${mm(a.outline.h)} мм${a.thickness?' · толщина '+nf(a.thickness.value):''}. Заготовка: ${esc(stkShort())}.`:'Контур детали на чертеже не найден — координаты введи сам.';
  return `<form id="plateForm">
-  <p>Найдено окружностей (${kn}): ${data.observations.length}. Размерных надписей не сопоставлено: ${data.unmatched}${(data.unmatchedText||[]).length?' — '+data.unmatchedText.map(t=>'«'+esc(t)+'»').join(', ')+' (проверь по чертежу сам)':''}.</p>
+  <p>Найдено окружностей (${kn}): ${data.observations.length}, карманов и пазов: ${(data.features||[]).length}. Размерных надписей не сопоставлено: ${data.unmatched}${(data.unmatchedText||[]).length?' — '+data.unmatchedText.map(t=>'«'+esc(t)+'»').join(', ')+' (проверь по чертежу сам)':''}.</p>
   <canvas id="plateCv" style="width:100%;border-radius:10px;display:block;margin:6px 0" aria-label="Чертёж с номерами найденных окружностей"></canvas>
   <p class="hint">${sz}${data.kind==='image'?' Фото: проверь каждую цифру — распознавание может ошибаться.':''}</p>
   ${msgs.map(([c,m])=>`<div class="chk ${c}">${esc(m)}</div>`).join('')}
@@ -1380,28 +1398,47 @@ function plateForm(data){
    ${field('x'+i,'X, мм',plateVal(x))}${field('y'+i,'Y, мм',plateVal(y))}${field('d'+i,'Ø, мм',plateVal(d))}${field('z'+i,'Глубина, мм')}
    </div><p class="hint" id="plateSrc${i}">${esc(plateSrcNote(data,o,zero))}</p><p class="hint" id="plateAi${i}" hidden></p>
    <label class="ctsy"><input type="checkbox" name="ok${i}"> Подтверждаю отверстие ${i+1}: сверлить (центровка + G81)</label>
+   <label class="ctsy"><input type="checkbox" name="cpk${i}"> Это круглый карман: фрезеровать (Ø и глубина — кармана)</label>
    <label class="ctsy"><input type="checkbox" name="skip${i}"> Не обрабатывать</label></fieldset>`;}).join('')}
+  ${(data.features||[]).map((f,j)=>{const q=featGuess(data,f,zero);return `<fieldset class="card"><legend>${f.kind==='slot'?'Паз':'Карман'} ${j+1} — ${FEAT_NAME[f.kind]}</legend><div class="grid">
+   ${field('fx'+j,'Центр X, мм',plateVal(q.cx))}${field('fy'+j,'Центр Y, мм',plateVal(q.cy))}
+   ${field('fa'+j,f.kind==='slot'?'Длина L (по торцам), мм':'Длина по X, мм',plateVal(q.a))}${field('fb'+j,f.kind==='slot'?'Ширина W, мм':'Ширина по Y, мм',plateVal(q.b))}
+   ${f.kind==='pocketRect'?field('fr'+j,'Радиус углов по чертежу, мм',plateVal(q.r)):''}${field('fz'+j,'Глубина, мм')}
+   </div><p class="hint" id="plateFSrc${j}">${esc(featNote(data,f,zero))}</p>
+   <label>Что делать<select name="fk${j}"><option value="">— выбери —</option><option value="mill">${f.kind==='slot'?'Фрезеровать паз (операция «Карман овальный»)':'Фрезеровать карман (операция «Карман прямоугольный»)'}</option><option value="skip">Не обрабатывать (это не карман / не обрабатываем)</option></select></label></fieldset>`;}).join('')}
   ${data.unitless?'<label class="ctsy"><input type="checkbox" name="mm"> Единицы чертежа — миллиметры</label>':''}
+  <h3>Фрезерование карманов и пазов</h3>
+  <p class="hint">Нужно, если выбран карман, паз или круглый карман. Траекторию строит существующая операция Fresa, смещение на радиус фрезы считает программа (без G41/G42). Углы кармана получаются радиусом фрезы: для R по чертежу нужна фреза Ø ≤ 2R. Врезание: в прямоугольный и круглый карман — вертикально в центре (на подаче врезания), в паз — наклонно вдоль паза.</p>
+  <div class="grid">${(()=>{const T=st.tools.filter(t=>['endmill','bull'].includes(t.type));return `<label>Фреза<select name="mill"><option value="">Выбери фрезу</option>${T.map(t=>`<option value="${esc(t.id)}">T${esc(t.num)} · Ø${esc(t.d)} · S${esc(t.s)} · F${esc(t.f)}${t.name?' · '+esc(t.name):''}</option>`).join('')}</select></label>`;})()}
+   ${field('mstep','Шаг по Z, мм')}${field('mover','Шаг вбок, % от Ø фрезы','45')}</div>
+  <label class="ctsy"><input type="checkbox" name="mplunge"> Фреза режет центром (врезание вертикальное / наклонное без предварительного отверстия)</label>
   <h3>Наладка · цикл G81</h3>
-  <p class="hint">Тип обработки в прототипе — только сверление G81 (центровка, затем сверло на заданную глубину). Резьба, зенковка, глухие с плоским дном — пока нет.<br>
+  <p class="hint">Нужно, если выбрано хотя бы одно отверстие «сверлить». Сверление — G81 (центровка, затем сверло на заданную глубину). Резьба, зенковка, глухие с плоским дном — пока нет.<br>
   Заготовка и материал: <b>${esc(stkShort())}</b> · система координат <b>${esc(st.stock.wcs||'G54')}</b> · ноль XY: <b>${esc(ORIG[st.stock.origin]||'—')}</b>, Z0 — верх. Если что-то не так — исправь в «Заготовка и ноль» и открой чертёж снова.</p>
   <div class="grid">${tools('center','Центровка')}${tools('drill','Сверло')}
-   ${field('centerZ','Глубина центровки, мм')}${field('r','Плоскость R, мм')}${field('safe','Безопасная высота Z, мм')}</div>
+   ${field('centerZ','Глубина центровки, мм')}${field('r','Плоскость R, мм')}${field('safe','Безопасная высота Z (для всех операций), мм')}</div>
   <label class="ctsy"><input type="checkbox" name="setup"> Проверил заготовку, материал, ноль и систему координат, инструменты, обороты, подачи и высоты</label>
   ${manual?'<p class="hint">После добавления операций G-код будет пересобран по плану.</p>':''}
   <p id="plateValidation" role="status"></p><button class="btn p" type="submit" disabled>Добавить операции и открыть G-код</button>
   </form>`;
 }
 /** Схема: линии чертежа, контур детали, окружности с номерами (жёлтые — к проверке, зелёные — подтверждены, серые — пропуск). */
-function plateDraw(cv,data,state=()=>''){
+function plateDraw(cv,data,state=()=>'',fstate=()=>''){
  if(!cv)return;const v=data.view||{segs:[]},O=data.observations,W=Math.max(240,cv.clientWidth||320),H=Math.round(W*0.6),k=window.devicePixelRatio||1;
  cv.width=Math.round(W*k);cv.height=Math.round(H*k);cv.style.height=H+'px';const c=cv.getContext('2d');c.setTransform(k,0,0,k,0,0);c.fillStyle='#fff';c.fillRect(0,0,W,H);
  const xs=[],ys=[];for(const s of v.segs||[]){xs.push(s.x1,s.x2);ys.push(s.y1,s.y2);}for(const o of O){xs.push(o.geom.cx-o.geom.r,o.geom.cx+o.geom.r);ys.push(o.geom.cy-o.geom.r,o.geom.cy+o.geom.r);}
+ for(const f of data.features||[]){const d=f.du;if(d.x0!=null){xs.push(d.x0,d.x1);ys.push(d.y0,d.y1);}}
  if(!xs.length)return;const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),m=12,sc=Math.min((W-2*m)/((x1-x0)||1),(H-2*m)/((y1-y0)||1));
  const X=x=>m+(x-x0)*sc+((W-2*m)-(x1-x0)*sc)/2,Y=y=>H-m-(y-y0)*sc-((H-2*m)-(y1-y0)*sc)/2;
  c.strokeStyle='#9aa3ad';c.lineWidth=1;c.beginPath();for(const s of v.segs||[]){c.moveTo(X(s.x1),Y(s.y1));c.lineTo(X(s.x2),Y(s.y2));}c.stroke();
  const ol=data.assoc&&data.assoc.outline&&data.assoc.outline.du;if(ol){c.strokeStyle='#2f7fd8';c.lineWidth=2;c.strokeRect(X(ol.x0),Y(ol.y1),(ol.x1-ol.x0)*sc,(ol.y1-ol.y0)*sc);}
- O.forEach((o,i)=>{const s=state(i),col=s==='ok'?'#1f9d55':s==='skip'?'#b0b6be':o.conflict?'#d93636':'#d08700';
+ (data.features||[]).forEach((f,j)=>{const s=fstate(j),col=s==='mill'?'#1f9d55':s==='skip'?'#b0b6be':'#d08700',du=f.du;c.strokeStyle=col;c.lineWidth=2.5;c.beginPath();
+  if(f.kind==='slot'){const r=du.w/2,[ax,bx]=[du.a,du.b];if(du.ax==='h'){c.arc(X(ax),Y(du.mid),r*sc,Math.PI/2,3*Math.PI/2);c.lineTo(X(bx),Y(du.mid+r));c.arc(X(bx),Y(du.mid),r*sc,-Math.PI/2,Math.PI/2);c.closePath();}
+   else{c.arc(X(du.mid),Y(ax),r*sc,0,Math.PI);c.lineTo(X(du.mid-r),Y(bx));c.arc(X(du.mid),Y(bx),r*sc,Math.PI,2*Math.PI);c.closePath();}}
+  else c.rect(X(du.x0),Y(du.y1),(du.x1-du.x0)*sc,(du.y1-du.y0)*sc);
+  c.stroke();c.fillStyle=col;c.font='bold 13px system-ui,sans-serif';const lx=f.kind==='slot'?(du.ax==='h'?X(du.b+du.w/2):X(du.mid+du.w/2)):X(du.x1),ly=f.kind==='slot'?(du.ax==='h'?Y(du.mid+du.w/2):Y(du.b+du.w/2)):Y(du.y1);
+  c.fillText((f.kind==='slot'?'П':'К')+(j+1),lx+3,ly-3);});
+ O.forEach((o,i)=>{const s=state(i),col=s==='ok'?'#1f9d55':s==='cpk'?'#1f9d55':s==='skip'?'#b0b6be':o.conflict?'#d93636':'#d08700';
   c.strokeStyle=col;c.lineWidth=2.5;c.beginPath();c.arc(X(o.geom.cx),Y(o.geom.cy),Math.max(4,o.geom.r*sc),0,2*Math.PI);c.stroke();
   c.fillStyle=col;c.font='bold 13px system-ui,sans-serif';c.fillText(String(i+1),X(o.geom.cx)+Math.max(4,o.geom.r*sc)+2,Y(o.geom.cy)-Math.max(4,o.geom.r*sc)-2);});
 }
@@ -1412,29 +1449,71 @@ function platePlan(form,data){
  const s=st.stock;
  if(s.shape!=='rect'||+s.rr||+s.rch||!OXY[s.origin]||![s.x,s.y,s.z].every(v=>Number.isFinite(+v)&&+v>0)||st.prog.mp?.mode&&st.prog.mp.mode!=='off')
   throw Error('Для прототипа нужна одна прямоугольная заготовка без скруглений и фасок');
- const g=stockGeo(),holes=[],skipped=[];
+ const g=stockGeo(),holes=[],skipped=[],mills=[],warns=[];
+ const inStock=(x0,x1,y0,y1)=>x0>=g.x0-1e-9&&x1<=g.x1+1e-9&&y0>=g.y0-1e-9&&y1<=g.y1+1e-9;
  data.observations.forEach((ob,i)=>{
   if(fields.has('skip'+i)){skipped.push(ob.id);return;}
   const [x,y,d,depth]=['x','y','d','z'].map(k=>n(k+i));
   if(![x,y].every(Number.isFinite)||!(d>0&&depth>0))throw Error(`Отверстие ${i+1}: введи X, Y, Ø и глубину (до 3 знаков после запятой) или отметь «Не обрабатывать»`);
   const r=d/2;
-  if(x-r<g.x0||x+r>g.x1||y-r<g.y0||y+r>g.y1)throw Error(`Отверстие ${i+1} выходит за края заготовки. Проверь ноль и размеры`);
-  if(!fields.has('ok'+i))throw Error(`Подтверди отверстие ${i+1} или отметь «Не обрабатывать»`);
+  if(!inStock(x-r,x+r,y-r,y+r))throw Error(`Отверстие ${i+1} выходит за края заготовки. Проверь ноль и размеры`);
   const sug=ob.dims?{x:ob.dims.x&&ob.dims.x.source,y:ob.dims.y&&ob.dims.y.source,d:ob.dims.d&&ob.dims.d.source}:null;
+  if(fields.has('cpk'+i)){
+   if(depth>=g.z)throw Error(`Круглый карман ${i+1}: глубина ${nf(depth)} ≥ толщины ${nf(g.z)} — это сквозное окно, нужен контур (пока не поддерживается)`);
+   mills.push({kind:'pocketCircle',n:i+1,label:'Круглый карман '+(i+1),cx:x,cy:y,d,depth,minW:d,obs:ob.id,sug});return;}
+  if(!fields.has('ok'+i))throw Error(`Отверстие ${i+1}: выбери «сверлить», «круглый карман» или «Не обрабатывать»`);
   holes.push({id:'hole-'+(i+1),type:'Hole',status:'confirmed',units:'mm',geom:{cx:x,cy:y,d,depth},source:{by:'user',observationId:ob.id,zero:fields.get('zero')||plateZero0(data),suggested:sug}});
  });
- if(!holes.length)throw Error('Отметь хотя бы одно отверстие для сверления');
+ (data.features||[]).forEach((f,j)=>{
+  const k=fields.get('fk'+j),nm=(f.kind==='slot'?'Паз ':'Карман ')+(j+1);
+  if(k==='skip'){skipped.push(f.id);return;}
+  if(k!=='mill')throw Error(`${nm}: выбери «Фрезеровать» или «Не обрабатывать»`);
+  const [cx,cy,A,B,depth]=['fx','fy','fa','fb','fz'].map(q=>n(q+j)),R=f.kind==='pocketRect'?n('fr'+j):NaN;
+  if(![cx,cy].every(Number.isFinite)||!(A>0&&B>0&&depth>0))throw Error(`${nm}: введи центр, размеры и глубину (спорные и неизвестные размеры не подставляются)`);
+  if(f.kind==='pocketRect'&&!(R>=0))throw Error(`${nm}: введи радиус углов по чертежу (0 — острые)`);
+  if(f.kind==='slot'&&A<B)throw Error(`${nm}: длина L меньше ширины W — проверь размеры`);
+  const ang=f.kind==='slot'?f.ang||0:0,hx=(ang===90?B:A)/2,hy=(ang===90?A:B)/2;
+  if(!inStock(cx-hx,cx+hx,cy-hy,cy+hy))throw Error(`${nm} выходит за края заготовки. Проверь ноль и размеры`);
+  if(depth>=g.z)throw Error(`${nm}: глубина ${nf(depth)} ≥ толщины ${nf(g.z)} — это сквозное окно, нужен контур (пока не поддерживается)`);
+  mills.push({kind:f.kind==='slot'?'pocketOval':'pocketRect',n:j+1,label:nm,cx,cy,a:A,b:B,r:R,ang,depth,minW:Math.min(A,B),feat:f.id,
+   sug:{cx:f.cx&&f.cx.source,cy:f.cy&&f.cy.source,a:(f.kind==='slot'?f.l:f.w)&&(f.kind==='slot'?f.l:f.w).source,b:(f.kind==='slot'?f.w:f.h)&&(f.kind==='slot'?f.w:f.h).source}});
+ });
+ if(!holes.length&&!mills.length)throw Error('Отметь хотя бы один элемент для обработки');
  if(holes.some(({geom:a},i)=>holes.slice(0,i).some(({geom:b})=>Math.hypot(a.cx-b.cx,a.cy-b.cy)<(a.d+b.d)/2)))
   throw Error('Отверстия пересекаются. Проверь X, Y и диаметры');
- const [center,drill]=['center','drill'].map(type=>st.tools.find(t=>t.id===fields.get(type)&&t.type===type));
  const ready=t=>t&&[t.d,t.s,t.f].every(v=>Number.isFinite(+v)&&+v>0)&&Math.round(t.s)>0&&Number.isInteger(+t.num)&&+t.num>0&&st.tools.filter(q=>+q.num===+t.num).length===1;
- if(!ready(center)||!ready(drill))throw Error('Выбери центровку и сверло с заданными оборотами, подачей и уникальными номерами T');
- if(holes.some(h=>Math.abs(h.geom.d-drill.d)>1e-9))throw Error('Диаметр сверла должен совпадать с каждым подтверждённым Ø');
- const [centerZ,rp,safe]=['centerZ','r','safe'].map(n);
- if(!(centerZ>0&&centerZ<=Math.min(...holes.map(h=>h.geom.depth),g.z)&&rp>0&&safe>=rp))
-  throw Error('Проверь глубину центровки и высоты: безопасная Z ≥ R > 0');
+ const safe=n('safe');
+ let center=null,drill=null,centerZ=NaN,rp=NaN;
+ if(holes.length){
+  [center,drill]=['center','drill'].map(type=>st.tools.find(t=>t.id===fields.get(type)&&t.type===type));
+  if(!ready(center)||!ready(drill))throw Error('Выбери центровку и сверло с заданными оборотами, подачей и уникальными номерами T');
+  if(holes.some(h=>Math.abs(h.geom.d-drill.d)>1e-9))throw Error('Диаметр сверла должен совпадать с каждым подтверждённым Ø');
+  [centerZ,rp]=['centerZ','r'].map(n);
+  if(!(centerZ>0&&centerZ<=Math.min(...holes.map(h=>h.geom.depth),g.z)&&rp>0&&safe>=rp))
+   throw Error('Проверь глубину центровки и высоты: безопасная Z ≥ R > 0');
+ }
+ let mill=null,mstep=NaN,mover=NaN;
+ if(mills.length){
+  mill=st.tools.find(t=>t.id===fields.get('mill')&&['endmill','bull'].includes(t.type));
+  if(!ready(mill))throw Error('Выбери фрезу с заданными оборотами, подачей и уникальным номером T');
+  [mstep,mover]=['mstep','mover'].map(n);
+  const D=+mill.d,rt=D/2;
+  if(!(mstep>0))throw Error('Введи шаг по Z для фрезерования');
+  if(!(mover>=10&&mover<=90))throw Error('Шаг вбок — от 10 до 90 % от Ø фрезы');
+  for(const m of mills){
+   if(D>m.minW+1e-9)throw Error(`${m.label}: фреза Ø${nf(D)} шире элемента (${nf(m.minW)} мм) — выбери фрезу меньше`);
+   if(mstep>m.depth+1e-9)throw Error(`${m.label}: шаг по Z больше глубины`);
+   if(m.kind==='pocketRect'){
+    if(m.r>0&&rt>m.r+0.01)throw Error(`${m.label}: фреза Ø${nf(D)} оставит в углах R${nf(rt)} — больше R${nf(m.r)} по чертежу. Нужна фреза Ø ≤ ${nf(2*m.r)}`);
+    if(m.r>0&&rt<m.r-0.01)warns.push(`${m.label}: углы получатся R${nf(rt)} вместо R${nf(m.r)} по чертежу (фреза меньше 2R) — проверь, допустимо ли`);
+    if(!(m.r>0))warns.push(`${m.label}: на чертеже углы острые — фреза оставит R${nf(rt)}; острые углы фрезой не получить`);
+   }
+  }
+  if(!(safe>0))throw Error('Введи безопасную высоту Z');
+  if(!fields.has('mplunge'))throw Error('Подтверди способ врезания: фреза должна резать центром');
+ }
  if(!fields.has('setup'))throw Error('Подтверди наладку');
- return {holes,skipped,center,drill,centerZ,rp,safe};
+ return {holes,skipped,mills,warns,center,drill,centerZ,rp,safe,mill,mstep,mover};
 }
 /** Ошибка сохранения — по-русски и с тем, что делать. Сырые сообщения браузера пользователю не показываем. */
 function plateErr(e){
@@ -1459,16 +1538,21 @@ function bindPlate(){
    review.innerHTML=plateForm(data)+plateAIBox();
    bindPlateAI(data);
    const form=$('#plateForm'),validation=$('#plateValidation'),button=form.querySelector('button[type=submit]');
-   const redraw=()=>plateDraw($('#plateCv'),data,i=>form.elements['ok'+i].checked?'ok':form.elements['skip'+i].checked?'skip':'');
+   const redraw=()=>plateDraw($('#plateCv'),data,i=>form.elements['ok'+i].checked?'ok':form.elements['cpk'+i].checked?'cpk':form.elements['skip'+i].checked?'skip':'',
+    j=>form.elements['fk'+j].value);
    const check=()=>{try{const p=platePlan(form,data),z=stockGeo().z,deep=p.holes.filter(h=>h.geom.depth>z);
-     validation.textContent=deep.length?`⚠ Сверло выйдет из заготовки снизу на ${nf(Math.max(...deep.map(h=>h.geom.depth))-z)} мм (толщина ${nf(z)}) — проверь подкладку или зазор под деталью`:'';button.disabled=false;}
+     const W=[...(deep.length?[`⚠ Сверло выйдет из заготовки снизу на ${nf(Math.max(...deep.map(h=>h.geom.depth))-z)} мм (толщина ${nf(z)}) — проверь подкладку или зазор под деталью`]:[]),...p.warns.map(w=>'⚠ '+w)];
+     validation.textContent=W.join(' · ');button.disabled=false;}
     catch(e){validation.textContent=e.message;button.disabled=true;}};
    form.oninput=e=>{
-    const nm=e.target.name,m=/^(?:[xydz]|ok|skip)(\d+)$/.exec(nm);
-    if(nm==='zero')data.observations.forEach((o,i)=>{const v=plateGuess(data,o,nm&&e.target.value);form.elements['x'+i].value=plateVal(v[0]);form.elements['y'+i].value=plateVal(v[1]);
-     form.elements['ok'+i].checked=false;$('#plateSrc'+i).textContent=plateSrcNote(data,o,e.target.value);});
-    else if(m&&/^[xydz]/.test(nm))form.elements['ok'+m[1]].checked=false;
-    else if(m&&e.target.checked)form.elements[(nm.startsWith('ok')?'skip':'ok')+m[1]].checked=false;
+    const nm=e.target.name,m=/^(?:[xydz]|ok|skip|cpk)(\d+)$/.exec(nm),mf=/^f[xyabrz](\d+)$/.exec(nm);
+    if(nm==='zero'){data.observations.forEach((o,i)=>{const v=plateGuess(data,o,nm&&e.target.value);form.elements['x'+i].value=plateVal(v[0]);form.elements['y'+i].value=plateVal(v[1]);
+     form.elements['ok'+i].checked=form.elements['cpk'+i].checked=false;$('#plateSrc'+i).textContent=plateSrcNote(data,o,e.target.value);});
+     (data.features||[]).forEach((f,j)=>{const q=featGuess(data,f,e.target.value);form.elements['fx'+j].value=plateVal(q.cx);form.elements['fy'+j].value=plateVal(q.cy);
+      if(form.elements['fk'+j].value==='mill')form.elements['fk'+j].value='';$('#plateFSrc'+j).textContent=featNote(data,f,e.target.value);});}
+    else if(m&&/^[xydz]/.test(nm))form.elements['ok'+m[1]].checked=form.elements['cpk'+m[1]].checked=false;
+    else if(m&&e.target.checked){for(const k of ['ok','cpk','skip'])if(!nm.startsWith(k))form.elements[k+m[1]].checked=false;}
+    else if(mf&&form.elements['fk'+mf[1]].value==='mill')form.elements['fk'+mf[1]].value='';   // правка размеров снимает подтверждение
     form.elements.setup.checked=nm==='setup'&&e.target.checked;
     redraw();check();
    };
@@ -1477,7 +1561,7 @@ function bindPlate(){
     if(button.disabled)return;
     let store,id,linked=false;
     try{
-     const p=platePlan(form,data),before=JSON.stringify(st);
+     const p=platePlan(form,data),before=JSON.stringify(st),fields0=new FormData(form);
      button.disabled=true;input.disabled=true;
      form.querySelectorAll('input,select').forEach(el=>el.disabled=true);
      validation.textContent='Сохраняю чертёж…';
@@ -1486,10 +1570,18 @@ function bindPlate(){
      const source={kind:data.kind,name:file.name,type:file.type||'',size:file.size,sha256:await store.sha256(file)};
      const list=H=>H.map(({geom:g})=>`${g.cx} ${g.cy}`).join('; ');
      const op=(tool,depth,H)=>Object.assign(newOp('drill'),{tool:tool.id,cycle:'G81',pat:'list',list:list(H),depth,rp:p.rp,safe:p.safe});
-     const ops=[op(p.center,p.centerZ,p.holes)];
-     for(const depth of new Set(p.holes.map(h=>h.geom.depth)))ops.push(op(p.drill,depth,p.holes.filter(h=>h.geom.depth===depth)));
+     const ops=[];
+     if(p.holes.length){ops.push(op(p.center,p.centerZ,p.holes));for(const depth of new Set(p.holes.map(h=>h.geom.depth)))ops.push(op(p.drill,depth,p.holes.filter(h=>h.geom.depth===depth)));}
+     // карманы и пазы — существующие операции Fresa; траекторию считает их генератор
+     for(const m of p.mills){
+      const base={tool:p.mill.id,depth:m.depth,step:p.mstep,over:p.mover,safe:p.safe,cx:m.cx,cy:m.cy};
+      ops.push(Object.assign(newOp(m.kind),base,m.kind==='pocketRect'?{w:m.a,h:m.b,rf:0}:m.kind==='pocketOval'?{l:m.a,w:m.b,ang:m.ang,rf:0}:{d:m.d,rf:0}));
+     }
+     const conf=[...p.holes,...p.mills.map(m=>({id:(m.feat||m.obs)+'-op',type:m.kind,status:'confirmed',units:'mm',
+      geom:m.kind==='pocketCircle'?{cx:m.cx,cy:m.cy,d:m.d,depth:m.depth}:{cx:m.cx,cy:m.cy,a:m.a,b:m.b,r:m.r,ang:m.ang,depth:m.depth},
+      source:{by:'user',featureId:m.feat||null,observationId:m.obs||null,zero:fields0.get('zero')||plateZero0(data),suggested:m.sug}}))];
      const a=data.assoc;
-     const drawing={schema:'fresa.drawing/1',id,sources:[source],observations:data.observations,confirmed:p.holes,skipped:p.skipped,
+     const drawing={schema:'fresa.drawing/1',id,sources:[source],observations:data.observations,features:data.features||[],confirmed:conf,skipped:p.skipped,
       operations:ops.map(o=>o.id),unmatched:data.unmatched,
       association:a?{units:a.units,scale:a.scale,outline:a.outline&&{w:a.outline.w,h:a.outline.h},thickness:a.thickness,conflicts:a.conflicts}:null,
       ai:data.ai?{provider:data.ai.provider,model:data.ai.model,ms:data.ai.ms,ignored:data.ai.check.ignored.length,unread:data.ai.check.unread,hints:data.ai.check.perHole.map(h=>h.ai?{x:h.x,y:h.y,d:h.d}:null)}:null};

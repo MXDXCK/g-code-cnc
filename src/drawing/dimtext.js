@@ -1,5 +1,6 @@
 // Разбор размерных надписей чертежа: что написано, а не где. Чистые функции, без DOM.
-// Поддержка: Ø/⌀/∅/%%c/Ф10, «4 отв. Ø10», «4×Ø10», R5, M8, M8x1.25, 50±0.1, Ø10H7, «s10», «Толщина 10», «10×45°».
+// Поддержка: Ø/⌀/∅/%%c/Ф10, «4 отв. Ø10», «4×Ø10», R5, M8, M8x1.25, 50±0.1, Ø10H7, «s10», «Толщина 10», «10×45°»,
+// «Глубина 5» / «глуб. 5», «Фаска 1×45°», «Сквозное».
 
 const NUM = String.raw`(\d+(?:[.,]\d+)?)`;
 const toN = s => +String(s).replace(',', '.');
@@ -15,7 +16,7 @@ export function normalizeText(s) {
 
 /**
  * Разобрать одну надпись.
- * @returns {{kind:'dia'|'rad'|'thread'|'thick'|'chamfer'|'linear'|'count'|'text', value?:number, count?:number, pitch?:number, tol?:{upper:number,lower:number,fit?:string}, raw:string}}
+ * @returns {{kind:'dia'|'rad'|'thread'|'thick'|'depth'|'through'|'chamfer'|'linear'|'count'|'text', value?:number, count?:number, pitch?:number, tol?:{upper:number,lower:number,fit?:string}, raw:string}}
  */
 export function parseDimText(raw) {
   const s = normalizeText(raw);
@@ -31,7 +32,11 @@ export function parseDimText(raw) {
     r.kind = 'rad'; r.value = toN(m[1]);
   } else if ((m = new RegExp(String.raw`(?:^|\s)(?:s|S)\s*` + NUM + String.raw`(?:\s*мм)?$|толщ[а-яё]*\s*` + NUM, 'i').exec(s))) {
     r.kind = 'thick'; r.value = toN(m[1] || m[2]);
-  } else if ((m = new RegExp('^' + NUM + String.raw`\s*x\s*45\s*°?$`).exec(s))) {
+  } else if ((m = new RegExp(String.raw`глуб[а-яё]*\.?\s*` + NUM, 'i').exec(s))) {
+    r.kind = 'depth'; r.value = toN(m[1]);
+  } else if (/сквозн/i.test(s)) {
+    r.kind = 'through';
+  } else if ((m = new RegExp(String.raw`(?:^|фаска\s*)` + NUM + String.raw`\s*x\s*45\s*°?$`, 'i').exec(s))) {
     r.kind = 'chamfer'; r.value = toN(m[1]);
   } else if ((m = new RegExp('^' + NUM + String.raw`(?:\s*±\s*` + NUM + String.raw`|\s*([+-]\s*\d+(?:[.,]\d+)?)\s*([+-]\s*\d+(?:[.,]\d+)?)?)?$`).exec(s))) {
     r.kind = 'linear'; r.value = toN(m[1]);
