@@ -1,6 +1,6 @@
 name: Замер локальных моделей на чертежах
 
-# При push (изменения в tests/ai-bench) запускаются только sweep и ocr; остальное — вручную (workflow_dispatch).
+# При push (изменения в tests/ai-bench или этом файле) — только сборка llama.cpp под Android; замеры — вручную (workflow_dispatch, поле only).
 # Сравнение открытых Vision-моделей на эталонных чертежах Fresa (tests/fixtures/drawings).
 # Только замер для разработки: модели не попадают в приложение и никуда не публикуются.
 # Бесплатно: публичный репозиторий, обычные раннеры GitHub (4 ядра CPU, 16 ГБ). Сеть нужна только здесь —
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       only:
-        description: 'all — всё; vlm — сравнение моделей; sweep — Qwen3-VL-2B по контексту/квантованию; ocr — Tesseract/PaddleOCR на русских надписях; ollama — Fresa + Ollama'
+        description: 'all — всё; vlm — сравнение моделей; sweep — Qwen3-VL-2B по контексту/квантованию; ocr — Tesseract/PaddleOCR на русских надписях; android — сборка llama.cpp+mtmd под Android; ollama — Fresa + Ollama'
         default: all
   push:
     branches-ignore: [main]
@@ -75,7 +75,7 @@ jobs:
 
   paddleocr:
     name: paddleocr (PP-OCRv5)
-    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'ocr'
+    if: github.event_name == 'workflow_dispatch' && (inputs.only == 'all' || inputs.only == 'ocr')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     continue-on-error: true
@@ -122,7 +122,7 @@ jobs:
   # Qwen3-VL-2B (главный кандидат для Android): память и скорость при разном контексте, кванте, размере картинки, кэше KV
   sweep:
     name: 'qwen3-vl-2b ${{ matrix.q }} ctx${{ matrix.ctx }} ${{ matrix.px }}px ${{ matrix.tag }}'
-    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'sweep'
+    if: github.event_name == 'workflow_dispatch' && (inputs.only == 'all' || inputs.only == 'sweep')
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
@@ -168,7 +168,7 @@ jobs:
   # Tesseract.js (тот же, что в Fresa): eng / rus / rus+eng / комбинация на русских надписях и на эталонных чертежах
   ocr:
     name: tesseract.js eng/rus
-    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'ocr'
+    if: github.event_name == 'workflow_dispatch' && (inputs.only == 'all' || inputs.only == 'ocr')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -181,9 +181,36 @@ jobs:
         if: always()
         with: { name: ai-bench-tesseract, path: 'results/tesseract.json', retention-days: 30 }
 
+  # Эксперимент для тестовой Android-сборки: собирается ли llama.cpp с mtmd (картинки) под arm64-v8a и сколько весит.
+  # Только сборка: модель не скачивается, в APK ничего не добавляется, на телефоне не запускалось.
+  android-llama:
+    name: llama.cpp + mtmd для Android arm64 (только сборка)
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'android'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Исходники llama.cpp (свежий тег сборки bNNNN)
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          T=$(gh release list --repo ggml-org/llama.cpp --limit 30 --json tagName -q '.[].tagName' | grep -E '^b[0-9]+$' | head -1)
+          test -n "$T"; echo "тег $T"; echo "$T" > llama-tag.txt
+          git clone -q --depth 1 --branch "$T" https://github.com/ggml-org/llama.cpp src
+      - name: Сборка NDK (arm64-v8a, Android 9+, статически, без OpenMP и curl)
+        run: |
+          NDK="${ANDROID_NDK_LATEST_HOME:-$ANDROID_NDK_HOME}"; echo "NDK: $NDK"; test -d "$NDK"
+          cmake -S src -B build -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-28 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_OPENMP=OFF -DLLAMA_CURL=OFF \
+            -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_SERVER=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TOOLS=ON
+          cmake --build build -j 4 --target llama-mtmd-cli
+          B=$(find build -name llama-mtmd-cli -type f | head -1); test -n "$B"
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" -o mtmd-arm64 "$B"
+          file mtmd-arm64; ls -la "$B" mtmd-arm64
+          { echo "## llama.cpp $(cat llama-tag.txt) + mtmd под Android arm64-v8a"; echo; echo "Собрано: $(file -b mtmd-arm64 | cut -c1-90)"; \
+            echo; echo "Размер после strip: $(( $(stat -c %s mtmd-arm64) / 1024 / 1024 )) МБ (без модели). На телефоне не запускалось."; } >> $GITHUB_STEP_SUMMARY
+
   report:
     needs: [vlm, paddleocr, sweep, ocr]
-    if: always() && !(github.event_name == 'workflow_dispatch' && inputs.only == 'ollama')
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.only != 'ollama' && inputs.only != 'android'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
